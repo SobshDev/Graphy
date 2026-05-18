@@ -5,12 +5,29 @@ const net = require('node:net')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 
-function resolveSafePath(root, file) {
-  if (typeof root !== 'string' || typeof file !== 'string') {
-    throw new Error('Invalid root or file path')
+let projectRootPromise
+
+function getProjectRoot() {
+  if (!projectRootPromise) {
+    const argvRoot = process.argv[2]
+    const candidate = argvRoot
+      ? path.resolve(process.cwd(), argvRoot)
+      : path.join(process.cwd(), 'tests/fixtures')
+    projectRootPromise = fsp.realpath(candidate)
   }
-  const absoluteRoot = path.resolve(root)
-  const absoluteFile = path.resolve(absoluteRoot, file)
+  return projectRootPromise
+}
+
+async function resolveSafePath(file) {
+  if (typeof file !== 'string') {
+    throw new Error('Invalid file path')
+  }
+  const absoluteRoot = await getProjectRoot()
+  const candidate = path.resolve(absoluteRoot, file)
+  const absoluteFile = await fsp.realpath(candidate).catch((err) => {
+    if (err && err.code === 'ENOENT') return candidate
+    throw err
+  })
   const relative = path.relative(absoluteRoot, absoluteFile)
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error('File path escapes project root')
@@ -27,8 +44,8 @@ function splitLines(text) {
 }
 
 ipcMain.handle('function:read', async (_event, payload) => {
-  const { root, file, startLine, endLine } = payload ?? {}
-  const absolute = resolveSafePath(root, file)
+  const { file, startLine, endLine } = payload ?? {}
+  const absolute = await resolveSafePath(file)
   const raw = await fsp.readFile(absolute, 'utf8')
   const lines = splitLines(raw)
   const start = Math.max(1, Number(startLine) | 0)
@@ -38,11 +55,11 @@ ipcMain.handle('function:read', async (_event, payload) => {
 })
 
 ipcMain.handle('function:write', async (_event, payload) => {
-  const { root, file, startLine, endLine, source } = payload ?? {}
+  const { file, startLine, endLine, source } = payload ?? {}
   if (typeof source !== 'string') {
     throw new Error('Missing source content')
   }
-  const absolute = resolveSafePath(root, file)
+  const absolute = await resolveSafePath(file)
   const raw = await fsp.readFile(absolute, 'utf8')
   const eol = detectLineEnding(raw)
   const lines = splitLines(raw)
