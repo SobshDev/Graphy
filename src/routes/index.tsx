@@ -4,6 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { Sidebar } from '@/app/layout/sidebar'
 import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
+import { FileExplorer } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
@@ -18,7 +19,10 @@ function App() {
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col">
               <TopBar />
-              <Canvas />
+              <div className="flex min-h-0 flex-1">
+                <FileExplorer />
+                <Canvas />
+              </div>
             </div>
             <AiChatPanel />
           </main>
