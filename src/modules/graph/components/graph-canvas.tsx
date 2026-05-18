@@ -85,7 +85,10 @@ export function GraphCanvas() {
       fitView
       fitViewOptions={{ padding: 0.25 }}
       proOptions={{ hideAttribution: true }}
-      defaultEdgeOptions={{ type: 'smoothstep' }}
+      defaultEdgeOptions={{
+        type: 'default',
+        pathOptions: { curvature: 0.55 },
+      }}
       minZoom={0.2}
       maxZoom={2.5}
     >

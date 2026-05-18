@@ -6,7 +6,7 @@ import type { Graph } from '@/modules/parser'
 import type { CodeNodeData } from '@/modules/graph/types'
 
 const NODE_WIDTH = 240
-const NODE_HEIGHT = 72
+const NODE_HEIGHT = 54
 const UNUSED_COLUMNS = 4
 const UNUSED_COLUMN_GAP = 300
 const UNUSED_ROW_GAP = 120
@@ -43,6 +43,7 @@ export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
     id: `${edge.source}->${edge.target}:${edge.type}:${index}`,
     source: edge.source,
     target: edge.target,
+    className: 'graph-edge',
   }))
 
   if (nodes.length === 0) return { nodes, edges }
