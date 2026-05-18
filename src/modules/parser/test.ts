@@ -1,7 +1,7 @@
 import path from 'node:path'
-import { loadProject } from './parser/projectLoader.js'
-import { extractFunctions } from './parser/functionExtractor.js'
-import { extractClasses } from './parser/classExtractor.js'
+import { loadProject } from './projectLoader.js'
+import { extractFunctions } from './functionExtractor.js'
+import { extractClasses } from './classExtractor.js'
 
 const cwd = process.cwd()
 const project = loadProject(cwd)
