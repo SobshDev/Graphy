@@ -9,14 +9,13 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/shared/ui/breadcrumb'
-import { Separator } from '@/shared/ui/separator'
 
 export function TopBar() {
   const nodeCount = useStore((s) => s.nodes.length)
   const edgeCount = useStore((s) => s.edges.length)
 
   return (
-    <header className="bg-sidebar border-sidebar-border app-drag titlebar-inset flex h-12 shrink-0 items-center justify-between border-b pl-5 pr-6">
+    <header className="bg-sidebar border-sidebar-border app-drag titlebar-inset flex h-12 shrink-0 items-center justify-between border-b pl-5 pr-2">
       <Breadcrumb>
         <BreadcrumbList className="font-mono text-[12px]">
           <BreadcrumbItem>
@@ -40,10 +39,6 @@ export function TopBar() {
           <span>
             <span className="text-muted-foreground">{edgeCount}</span> edges
           </span>
-        </div>
-
-        <div className="flex h-4 items-center">
-          <Separator orientation="vertical" />
         </div>
 
         <AiChatToggle />
