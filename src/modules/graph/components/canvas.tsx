@@ -28,11 +28,6 @@ export function Canvas() {
         </span>
         <span>·</span>
         <span>typescript</span>
-        <span>·</span>
-        <span>
-          ln <span className="text-muted-foreground">0</span>, col{' '}
-          <span className="text-muted-foreground">0</span>
-        </span>
       </div>
 
       <ZoomControls />
