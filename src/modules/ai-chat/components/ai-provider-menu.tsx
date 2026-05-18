@@ -1,7 +1,6 @@
 import { Check, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 
-import { Button } from '@/shared/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,58 +9,50 @@ import {
 } from '@/shared/ui/dropdown-menu'
 
 import { useAiChat } from '../hooks/use-ai-chat'
-import type { AiProvider } from '../types'
-import { AI_PROVIDERS, AI_PROVIDER_LABELS } from '../types'
+import type { AiProvider, ChatModel } from '../types'
+import { CHAT_MODEL_LABELS, CHAT_MODEL_PROVIDER, CHAT_MODELS } from '../types'
 import { ApiKeyDialog } from './api-key-dialog'
 
 export function AiProviderMenu() {
-  const { activeProvider, keys, setActiveProvider, setKey } = useAiChat()
+  const { activeModel, keys, setActiveModel, setKey } = useAiChat()
   const [pendingProvider, setPendingProvider] = useState<AiProvider | null>(
     null,
   )
+  const [pendingModel, setPendingModel] = useState<ChatModel | null>(null)
 
-  const handleSelect = (provider: AiProvider) => {
+  const handleSelect = (model: ChatModel) => {
+    const provider = CHAT_MODEL_PROVIDER[model]
     if (keys[provider]) {
-      setActiveProvider(provider)
+      setActiveModel(model)
       return
     }
     setPendingProvider(provider)
+    setPendingModel(model)
   }
 
   const handleSave = (provider: AiProvider, key: string) => {
     setKey(provider, key)
-    setActiveProvider(provider)
+    if (pendingModel) setActiveModel(pendingModel)
   }
-
-  const label = activeProvider
-    ? AI_PROVIDER_LABELS[activeProvider]
-    : 'Select model'
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 font-mono text-[11px]"
-          >
-            {label}
-            <ChevronDown className="size-3" strokeWidth={1.8} />
-          </Button>
+          <button type="button" className="cb-mod" title="Model">
+            <span>{CHAT_MODEL_LABELS[activeModel].toLowerCase()}</span>
+            <ChevronDown size={11} strokeWidth={1.8} />
+          </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[10rem]">
-          {AI_PROVIDERS.map((provider) => (
-            <DropdownMenuItem
-              key={provider}
-              onSelect={() => handleSelect(provider)}
-            >
-              {activeProvider === provider ? (
+        <DropdownMenuContent align="end" className="min-w-[12rem]">
+          {CHAT_MODELS.map((model) => (
+            <DropdownMenuItem key={model} onSelect={() => handleSelect(model)}>
+              {activeModel === model ? (
                 <Check className="size-3.5" strokeWidth={2} />
               ) : (
                 <span className="size-3.5" aria-hidden />
               )}
-              {AI_PROVIDER_LABELS[provider]}
+              {CHAT_MODEL_LABELS[model]}
             </DropdownMenuItem>
           ))}
         </DropdownMenuContent>
@@ -71,7 +62,10 @@ export function AiProviderMenu() {
         provider={pendingProvider}
         open={pendingProvider !== null}
         onOpenChange={(open) => {
-          if (!open) setPendingProvider(null)
+          if (!open) {
+            setPendingProvider(null)
+            setPendingModel(null)
+          }
         }}
         onSave={handleSave}
       />

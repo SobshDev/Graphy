@@ -1,22 +1,22 @@
-import { Eraser, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 
 import '../chat.css'
 
 import { useAiChat } from '../hooks/use-ai-chat'
-import { AI_PROVIDER_LABELS } from '../types'
 import { AiChatComposer } from './ai-chat-composer'
 import { AiChatMessages } from './ai-chat-messages'
-import { AiProviderMenu } from './ai-provider-menu'
 import { ClaudeLogo } from './claude-logo'
 
+function formatTokens(n: number): string {
+  if (n < 1000) return String(n)
+  if (n < 10_000) return `${(n / 1000).toFixed(1)}k`
+  return `${Math.round(n / 1000)}k`
+}
+
 export function AiChatPanel() {
-  const { isOpen, closeChat, clearMessages, messages, activeProvider } =
-    useAiChat()
+  const { isOpen, closeChat, clearMessages, messages, tokenUsage } = useAiChat()
   if (!isOpen) return null
 
-  const providerLabel = activeProvider
-    ? AI_PROVIDER_LABELS[activeProvider].toLowerCase()
-    : 'no model'
   const count = messages.length
 
   return (
@@ -26,23 +26,30 @@ export function AiChatPanel() {
           <ClaudeLogo size={16} />
         </span>
         <div className="title">
-          <span className="ttl">{providerLabel}</span>
+          <span className="ttl">chat</span>
           {count > 0 && (
             <span className="meta">
               · {count} {count === 1 ? 'msg' : 'msgs'}
             </span>
           )}
+          {tokenUsage.total > 0 && (
+            <span
+              className="meta"
+              title={`${tokenUsage.prompt} in · ${tokenUsage.completion} out`}
+            >
+              · {formatTokens(tokenUsage.total)} tok
+            </span>
+          )}
         </div>
-        <AiProviderMenu />
         <button
           type="button"
           className="ix"
-          title="Clear chat"
-          aria-label="Clear chat"
+          title="New chat"
+          aria-label="New chat"
           onClick={clearMessages}
           disabled={messages.length === 0}
         >
-          <Eraser size={14} strokeWidth={1.7} />
+          <Plus size={14} strokeWidth={1.7} />
         </button>
         <button
           type="button"
