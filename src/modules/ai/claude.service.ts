@@ -21,7 +21,7 @@ import type {
   AiUsage,
 } from './ai.interface'
 import { DEFAULT_MAX_TOOL_ROUNDS } from './ai.interface'
-import { splitSystem } from './messages.util'
+import { splitSystem, stringifyResult } from './messages.util'
 
 export interface ClaudeServiceOptions {
   apiKey: string
@@ -68,15 +68,6 @@ function toAnthropicTools(tools: Array<AiToolDefinition<any, any>>): Tool[] {
     description: t.description,
     input_schema: t.inputSchema as Tool['input_schema'],
   }))
-}
-
-function stringifyResult(value: unknown): string {
-  if (typeof value === 'string') return value
-  try {
-    return JSON.stringify(value)
-  } catch {
-    return String(value)
-  }
 }
 
 async function runExecutor(

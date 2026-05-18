@@ -31,3 +31,12 @@ export function flattenToPrompt(messages: AiMessage[]): string {
   }
   return parts.join('\n\n')
 }
+
+export function stringifyResult(value: unknown): string {
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
