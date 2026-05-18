@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
-let open = true
+export type ActivePanel = 'files' | 'git' | null
+
+let active: ActivePanel = 'files'
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void) {
@@ -11,20 +13,20 @@ function subscribe(listener: () => void) {
 }
 
 function getSnapshot() {
-  return open
+  return active
 }
 
-export function usePanelOpen() {
+export function useActivePanel() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
-export function togglePanel() {
-  open = !open
+export function setActivePanel(next: ActivePanel) {
+  if (active === next) return
+  active = next
   for (const listener of listeners) listener()
 }
 
-export function setPanelOpen(next: boolean) {
-  if (open === next) return
-  open = next
+export function toggleActivePanel(id: Exclude<ActivePanel, null>) {
+  active = active === id ? null : id
   for (const listener of listeners) listener()
 }

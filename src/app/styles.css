@@ -23,6 +23,36 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+.thin-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+}
+
+.thin-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.thin-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.1);
+  background-clip: padding-box;
+}
+.thin-scrollbar::-webkit-scrollbar-thumb:active {
+  background: rgba(255, 255, 255, 0.14);
+  background-clip: padding-box;
+}
+.thin-scrollbar::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
 @theme inline {
   --font-heading: var(--font-sans);
   --font-sans: 'Geist Variable', sans-serif;

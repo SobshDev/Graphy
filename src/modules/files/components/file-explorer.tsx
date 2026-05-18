@@ -1,10 +1,11 @@
+import { useActivePanel } from '@/shared/lib/active-panel'
+
 import { useFileTree } from '../hooks/use-file-tree'
-import { usePanelOpen } from '../hooks/use-panel-open'
 import { FileTreeNode } from './file-tree-node'
 
 export function FileExplorer() {
   const state = useFileTree()
-  const open = usePanelOpen()
+  const open = useActivePanel() === 'files'
 
   if (!open) return null
 
@@ -13,7 +14,7 @@ export function FileExplorer() {
       <div className="text-muted-foreground/70 px-3 py-2 text-[11px] font-medium uppercase tracking-wider">
         Files
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto pb-2">
+      <div className="thin-scrollbar min-h-0 flex-1 overflow-y-auto pb-2">
         {state.status === 'loading' && (
           <div className="text-muted-foreground/60 px-3 py-2 text-[12px]">
             Loading…
