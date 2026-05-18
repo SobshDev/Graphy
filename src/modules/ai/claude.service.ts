@@ -35,7 +35,10 @@ function mapFinishReason(
 
 function extractText(content: ContentBlock[]): string {
   return content
-    .filter((block): block is Extract<ContentBlock, { type: 'text' }> => block.type === 'text')
+    .filter(
+      (block): block is Extract<ContentBlock, { type: 'text' }> =>
+        block.type === 'text',
+    )
     .map((block) => block.text)
     .join('')
 }

@@ -71,7 +71,9 @@ export class CodexService implements AiService {
         const prompt = flattenToPrompt(options.messages)
         const model = options.model ?? defaultModel
         const thread = codex.startThread(model ? { model } : undefined)
-        const { events } = await thread.runStreamed(prompt, { signal: options.signal })
+        const { events } = await thread.runStreamed(prompt, {
+          signal: options.signal,
+        })
 
         for await (const event of events) {
           if (event.type === 'item.completed') {

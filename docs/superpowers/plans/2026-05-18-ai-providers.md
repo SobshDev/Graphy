@@ -17,6 +17,7 @@
 ## Task 1: Install SDK dependencies
 
 **Files:**
+
 - Modify: `package.json` (dependencies block)
 - Modify: `bun.lock`
 
@@ -50,6 +51,7 @@ git commit -m "chore(ai): add @anthropic-ai/sdk and @openai/codex-sdk"
 ## Task 2: Shared message helpers
 
 **Files:**
+
 - Create: `src/modules/ai/messages.util.ts`
 
 - [ ] **Step 1: Create `messages.util.ts` with both helpers**
@@ -114,6 +116,7 @@ git commit -m "feat(ai): add message-shaping helpers for providers"
 ## Task 3: `ClaudeService`
 
 **Files:**
+
 - Create: `src/modules/ai/claude.service.ts`
 
 - [ ] **Step 1: Write the full `ClaudeService` implementation**
@@ -296,6 +299,7 @@ git commit -m "feat(ai): add ClaudeService using @anthropic-ai/sdk"
 ## Task 4: `CodexService`
 
 **Files:**
+
 - Create: `src/modules/ai/codex.service.ts`
 
 - [ ] **Step 1: Write the full `CodexService` implementation**
@@ -361,7 +365,9 @@ export class CodexService implements AiService {
         CODEX_API_KEY: options.apiKey,
         ...(options.baseUrl ? { OPENAI_BASE_URL: options.baseUrl } : {}),
       },
-      config: options.defaultModel ? { model: options.defaultModel } : undefined,
+      config: options.defaultModel
+        ? { model: options.defaultModel }
+        : undefined,
     })
     this.defaultModel = options.defaultModel
   }
@@ -445,6 +451,7 @@ git commit -m "feat(ai): add CodexService using @openai/codex-sdk"
 ## Task 5: Re-export from the module barrel
 
 **Files:**
+
 - Modify: `src/modules/ai/index.ts`
 
 - [ ] **Step 1: Replace the contents of `index.ts`**
