@@ -10,7 +10,6 @@ let startedServerUrl
 async function createWindow() {
   const startUrl =
     process.env.ELECTRON_START_URL || (await startBundledServer())
-  const isSmokeTest = process.env.ELECTRON_SMOKE_TEST === '1'
 
   mainWindow = new BrowserWindow({
     width: 1180,
@@ -28,9 +27,7 @@ async function createWindow() {
   })
 
   mainWindow.once('ready-to-show', () => {
-    if (!isSmokeTest) {
-      mainWindow.show()
-    }
+    mainWindow.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -43,11 +40,6 @@ async function createWindow() {
   })
 
   await mainWindow.loadURL(startUrl)
-
-  if (isSmokeTest) {
-    console.log(`Electron loaded ${startUrl}`)
-    app.quit()
-  }
 }
 
 async function startBundledServer() {

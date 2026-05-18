@@ -43,13 +43,6 @@ server bundle:
 bun --bun run start:desktop
 ```
 
-For CI or a quick local verification without keeping the desktop window open:
-
-```bash
-bun --bun run build
-bun --bun run smoke:desktop
-```
-
 ## Quality Checks
 
 ```bash
@@ -66,7 +59,6 @@ electron/
   preload.cjs   Safe renderer bridge exposed through context isolation
 src/
   routes/       TanStack Router file routes
-  components/   Shared React components
   styles.css    Tailwind v4 entrypoint and app tokens
 vite.config.ts  TanStack Start, Tailwind, React, and Nitro config
 ```
