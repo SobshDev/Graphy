@@ -5,6 +5,22 @@ const net = require('node:net')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 
+const IGNORED_DIRS = new Set([
+  'node_modules',
+  '.git',
+  'dist',
+  'build',
+  '.next',
+  '.turbo',
+  '.output',
+  '.vinxi',
+  '.nitro',
+  '.cache',
+  'coverage',
+  'release',
+  'dist-electron',
+])
+
 const { applyMenu } = require('./menu.cjs')
 const { parseFolder } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
@@ -237,6 +253,105 @@ function registerIpc() {
     projectState.clearRecents(app)
     refreshMenu()
     broadcastProject()
+  })
+
+  ipcMain.handle('graphy:file-tree', async (_event, payload) => {
+    if (!currentFolder) return null
+    const root = currentFolder
+    const showHidden = payload?.showHidden === true
+
+    async function walk(absPath) {
+      const entries = await fsp.readdir(absPath, { withFileTypes: true })
+      const nodes = []
+      for (const entry of entries) {
+        if (IGNORED_DIRS.has(entry.name)) continue
+        if (!showHidden && entry.name.startsWith('.')) continue
+        const childAbs = path.join(absPath, entry.name)
+        const rel = path.relative(root, childAbs)
+        if (entry.isDirectory()) {
+          nodes.push({
+            name: entry.name,
+            path: rel,
+            kind: 'dir',
+            children: await walk(childAbs),
+          })
+        } else if (entry.isFile()) {
+          nodes.push({ name: entry.name, path: rel, kind: 'file' })
+        }
+      }
+      nodes.sort((a, b) => {
+        if (a.kind !== b.kind) return a.kind === 'dir' ? -1 : 1
+        return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+      })
+      return nodes
+    }
+
+    return {
+      name: path.basename(root),
+      path: '',
+      kind: 'dir',
+      children: await walk(root),
+    }
+  })
+
+  ipcMain.handle('graphy:create-file', async (_event, filePath) => {
+    const absolute = await resolveSafePath(filePath)
+    if (!fs.existsSync(absolute)) {
+      await fsp.writeFile(absolute, '', 'utf8')
+    }
+  })
+
+  ipcMain.handle('graphy:create-dir', async (_event, dirPath) => {
+    const absolute = await resolveSafePath(dirPath)
+    await fsp.mkdir(absolute, { recursive: true })
+  })
+
+  ipcMain.handle('graphy:move-file', async (_event, payload) => {
+    const { sourcePath, destDir } = payload ?? {}
+    const absSrc = await resolveSafePath(sourcePath)
+    const absDest = await resolveSafePath(destDir)
+    const stat = await fsp.stat(absDest)
+    if (!stat.isDirectory()) throw new Error('Destination is not a directory')
+    const name = path.basename(absSrc)
+    const target = path.join(absDest, name)
+    await fsp.rename(absSrc, target)
+  })
+
+  ipcMain.handle('graphy:delete-file', async (_event, filePath) => {
+    const absolute = await resolveSafePath(filePath)
+    const stat = await fsp.stat(absolute)
+    if (stat.isDirectory()) {
+      await fsp.rm(absolute, { recursive: true })
+    } else {
+      await fsp.unlink(absolute)
+    }
+  })
+
+  ipcMain.handle('graphy:rename-file', async (_event, payload) => {
+    const { oldPath, newName } = payload ?? {}
+    if (typeof newName !== 'string' || !newName.trim()) {
+      throw new Error('Invalid new name')
+    }
+    const absolute = await resolveSafePath(oldPath)
+    const newAbsolute = path.join(path.dirname(absolute), newName)
+    const newRel = path.relative(await fsp.realpath(currentFolder), newAbsolute)
+    if (newRel.startsWith('..') || path.isAbsolute(newRel)) {
+      throw new Error('New name escapes project root')
+    }
+    await fsp.rename(absolute, newAbsolute)
+    return { newPath: newRel }
+  })
+
+  ipcMain.handle('graphy:read-file', async (_event, filePath) => {
+    const absolute = await resolveSafePath(filePath)
+    return await fsp.readFile(absolute, 'utf8')
+  })
+
+  ipcMain.handle('graphy:write-file', async (_event, payload) => {
+    const { file, content } = payload ?? {}
+    if (typeof content !== 'string') throw new Error('Missing file content')
+    const absolute = await resolveSafePath(file)
+    await fsp.writeFile(absolute, content, 'utf8')
   })
 
   ipcMain.handle('function:read', async (_event, payload) => {

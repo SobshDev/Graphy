@@ -35,6 +35,13 @@ export interface WriteFunctionSourceResult {
   endLine: number
 }
 
+export interface FileNode {
+  name: string
+  path: string
+  kind: 'file' | 'dir'
+  children?: FileNode[]
+}
+
 export interface GraphyDesktop {
   platform: NodeJS.Platform
   getInitialState: () => Promise<InitialState>
@@ -51,6 +58,14 @@ export interface GraphyDesktop {
   writeFunctionSource: (
     payload: WriteFunctionSourcePayload,
   ) => Promise<WriteFunctionSourceResult>
+  getFileTree: (opts?: { showHidden?: boolean }) => Promise<FileNode | null>
+  readFile: (filePath: string) => Promise<string>
+  writeFile: (filePath: string, content: string) => Promise<void>
+  createFile: (filePath: string) => Promise<void>
+  createDir: (dirPath: string) => Promise<void>
+  moveFile: (sourcePath: string, destDir: string) => Promise<void>
+  deleteFile: (filePath: string) => Promise<void>
+  renameFile: (oldPath: string, newName: string) => Promise<{ newPath: string }>
 }
 
 declare global {

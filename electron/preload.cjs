@@ -19,6 +19,17 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),
   writeFunctionSource: (payload) =>
     ipcRenderer.invoke('function:write', payload),
+  getFileTree: (opts) => ipcRenderer.invoke('graphy:file-tree', opts),
+  createFile: (filePath) => ipcRenderer.invoke('graphy:create-file', filePath),
+  createDir: (dirPath) => ipcRenderer.invoke('graphy:create-dir', dirPath),
+  moveFile: (sourcePath, destDir) =>
+    ipcRenderer.invoke('graphy:move-file', { sourcePath, destDir }),
+  deleteFile: (filePath) => ipcRenderer.invoke('graphy:delete-file', filePath),
+  renameFile: (oldPath, newName) =>
+    ipcRenderer.invoke('graphy:rename-file', { oldPath, newName }),
+  readFile: (filePath) => ipcRenderer.invoke('graphy:read-file', filePath),
+  writeFile: (filePath, content) =>
+    ipcRenderer.invoke('graphy:write-file', { file: filePath, content }),
 })
 
 window.addEventListener('DOMContentLoaded', () => {

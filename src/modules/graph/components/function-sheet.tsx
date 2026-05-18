@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { openFile } from '@/modules/files/lib/open-file'
 import { Button } from '@/shared/ui/button'
 import {
   Sheet,
@@ -136,8 +137,18 @@ export function FunctionSheet({
           <SheetTitle className="truncate font-mono text-[13px]">
             {target?.displayName ?? 'Function'}
           </SheetTitle>
-          <SheetDescription className="truncate font-mono text-[11px]">
-            {target ? `${target.file}:${target.startLine}` : ''}
+          <SheetDescription asChild>
+            <button
+              type="button"
+              className="hover:text-foreground truncate text-left font-mono text-[11px] transition-colors"
+              onClick={() => {
+                if (!target) return
+                const name = target.file.split('/').pop() ?? target.file
+                openFile(target.file, name)
+              }}
+            >
+              {target ? `${target.file}:${target.startLine}` : ''}
+            </button>
           </SheetDescription>
         </SheetHeader>
 

@@ -4,9 +4,10 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { Sidebar } from '@/app/layout/sidebar'
 import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
-import { FileExplorer } from '@/modules/files'
+import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SourceControlPanel } from '@/modules/source-control'
+import { useActiveView } from '@/shared/lib/active-view'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -23,7 +24,7 @@ function App() {
               <div className="flex min-h-0 flex-1">
                 <FileExplorer />
                 <SourceControlPanel />
-                <Canvas />
+                <MainContent />
               </div>
             </div>
             <AiChatPanel />
@@ -32,4 +33,12 @@ function App() {
       </ReactFlowProvider>
     </TooltipProvider>
   )
+}
+
+function MainContent() {
+  const activeView = useActiveView()
+  const openFile = useOpenFile()
+
+  if (activeView === 'editor' && openFile) return <FileEditor />
+  return <Canvas />
 }
