@@ -41,6 +41,7 @@ function mapUsage(usage: Usage | null): AiUsage | undefined {
 export class CodexService implements AiService {
   private readonly codex: Codex
   private readonly defaultModel: string | undefined
+  private toolsWarned = false
 
   constructor(options: CodexServiceOptions) {
     this.codex = new Codex({
@@ -50,7 +51,24 @@ export class CodexService implements AiService {
     this.defaultModel = options.defaultModel
   }
 
+  /**
+   * The Codex SDK has no per-turn tool-declaration API: TurnOptions only
+   * accepts `outputSchema` and `signal`. Custom tools are configured
+   * out-of-band via MCP servers in the CLI config. To avoid breaking callers
+   * that pass `tools` for Claude, we silently ignore them here and warn once
+   * per service instance.
+   */
+  private warnUnsupportedTools(tools: AiChatOptions['tools']): void {
+    if (!tools || tools.length === 0) return
+    if (this.toolsWarned) return
+    this.toolsWarned = true
+    console.warn(
+      '[CodexService] tools[] is ignored: the Codex SDK has no per-turn tool-declaration API. Configure custom tools as MCP servers on the Codex CLI instead.',
+    )
+  }
+
   async chat(options: AiChatOptions): Promise<AiChatResult> {
+    this.warnUnsupportedTools(options.tools)
     const prompt = flattenToPrompt(options.messages)
     const model = options.model ?? this.defaultModel
     const thread = this.codex.startThread(model ? { model } : undefined)
@@ -64,6 +82,7 @@ export class CodexService implements AiService {
   }
 
   stream(options: AiChatOptions): AsyncIterable<AiStreamChunk> {
+    this.warnUnsupportedTools(options.tools)
     const codex = this.codex
     const defaultModel = this.defaultModel
     return {
