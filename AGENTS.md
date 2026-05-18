@@ -44,9 +44,9 @@ This project uses **[Bun](https://bun.sh)** as the package manager and runtime.
 | `bun run dev:electron`  | Start Electron pointing at the running web dev server. |
 | `bun run build`         | Build the web app with Vite.                           |
 | `bun run start:desktop` | Build the app and launch Electron.                     |
-| `bun run preview`       | Preview the production build locally.                  |
 | `bun run lint`          | Run ESLint.                                            |
 | `bun run format`        | Format with Prettier and auto-fix ESLint issues.       |
 | `bun run check`         | Check formatting with Prettier.                        |
+| `bun run tidy`          | Run `format` then `lint` — one-shot cleanup.           |
 
-**Never run dev commands** (`dev`, `dev:web`, `dev:electron`, `start:desktop`, `preview`) to launch the web server or the Electron app. The user runs these themselves.
+**Never run dev commands** (`dev`, `dev:web`, `dev:electron`, `start:desktop`) to launch the web server or the Electron app. The user runs these themselves.

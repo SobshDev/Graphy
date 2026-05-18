@@ -2,14 +2,7 @@ name: Release
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to release (e.g. v1.0.0)'
-        required: true
-        type: string
+    branches: [main]
 
 permissions:
   contents: write
@@ -31,6 +24,9 @@ jobs:
           - os: macos-latest
             platform: mac
             dist_script: dist:mac
+          - os: windows-latest
+            platform: win
+            dist_script: dist:win
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
@@ -57,11 +53,12 @@ jobs:
             release/*.AppImage
             release/*.deb
             release/*.dmg
+            release/*.exe
           if-no-files-found: error
           retention-days: 7
 
-  release:
-    name: Publish GitHub Release
+  release-nightly:
+    name: Publish Nightly Release
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -71,14 +68,25 @@ jobs:
           path: artifacts
           merge-multiple: true
 
-      - name: Create GitHub Release
+      - name: Delete previous nightly release and tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release delete nightly --yes --cleanup-tag --repo ${{ github.repository }} || true
+
+      - name: Create nightly release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
-          name: ${{ github.event.inputs.tag || github.ref_name }}
-          generate_release_notes: true
+          tag_name: nightly
+          name: Nightly
+          prerelease: true
+          target_commitish: ${{ github.sha }}
+          body: |
+            Rolling pre-release built from `${{ github.sha }}`.
+
+            Updated automatically on every push to `main`.
           fail_on_unmatched_files: true
           files: |
             artifacts/*.AppImage
             artifacts/*.deb
             artifacts/*.dmg
+            artifacts/*.exe
