@@ -1,0 +1,207 @@
+{
+  "version": "1.0",
+  "language": "typescript",
+  "root": "/Users/nivid/Desktop/Graphy/tests/fixtures",
+  "nodes": [
+    {
+      "id": "calls.ts::helperA",
+      "name": "helperA",
+      "type": "function",
+      "file": "calls.ts",
+      "line": 3,
+      "signature": "(x)"
+    },
+    {
+      "id": "calls.ts::helperB",
+      "name": "helperB",
+      "type": "function",
+      "file": "calls.ts",
+      "line": 7,
+      "signature": "(x)"
+    },
+    {
+      "id": "calls.ts::run",
+      "name": "run",
+      "type": "function",
+      "file": "calls.ts",
+      "line": 11,
+      "signature": "()"
+    },
+    {
+      "id": "calls.ts::useCalc",
+      "name": "useCalc",
+      "type": "function",
+      "file": "calls.ts",
+      "line": 25,
+      "signature": "()"
+    },
+    {
+      "id": "calls.ts::Calc",
+      "name": "Calc",
+      "type": "class",
+      "file": "calls.ts",
+      "line": 15,
+      "signature": ""
+    },
+    {
+      "id": "calls.ts::Calc.double",
+      "name": "double",
+      "type": "method",
+      "file": "calls.ts",
+      "line": 16,
+      "signature": "(n)"
+    },
+    {
+      "id": "calls.ts::Calc.triple",
+      "name": "triple",
+      "type": "method",
+      "file": "calls.ts",
+      "line": 20,
+      "signature": "(n)"
+    },
+    {
+      "id": "simple.ts::add",
+      "name": "add",
+      "type": "function",
+      "file": "simple.ts",
+      "line": 1,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "simple.ts::greet",
+      "name": "greet",
+      "type": "function",
+      "file": "simple.ts",
+      "line": 5,
+      "signature": "(name)"
+    },
+    {
+      "id": "simple.ts::privateHelper",
+      "name": "privateHelper",
+      "type": "function",
+      "file": "simple.ts",
+      "line": 9,
+      "signature": "(x)"
+    },
+    {
+      "id": "simple.ts::arrowFn",
+      "name": "arrowFn",
+      "type": "arrow",
+      "file": "simple.ts",
+      "line": 13,
+      "signature": "(n)"
+    },
+    {
+      "id": "simple.ts::GROSVIER",
+      "name": "GROSVIER",
+      "type": "arrow",
+      "file": "simple.ts",
+      "line": 15,
+      "signature": "(n)"
+    },
+    {
+      "id": "simplest.ts::sub",
+      "name": "sub",
+      "type": "function",
+      "file": "simplest.ts",
+      "line": 1,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "simplest.ts::mul",
+      "name": "mul",
+      "type": "function",
+      "file": "simplest.ts",
+      "line": 5,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "modulo.ts::modulo",
+      "name": "modulo",
+      "type": "function",
+      "file": "modulo.ts",
+      "line": 3,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "modulo.ts::sqrt",
+      "name": "sqrt",
+      "type": "function",
+      "file": "modulo.ts",
+      "line": 7,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "modulo.ts::test",
+      "name": "test",
+      "type": "function",
+      "file": "modulo.ts",
+      "line": 11,
+      "signature": "()"
+    },
+    {
+      "id": "nestest/hello.ts::test",
+      "name": "test",
+      "type": "function",
+      "file": "nestest/hello.ts",
+      "line": 1,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "nestest/hello.ts::addNumbers",
+      "name": "addNumbers",
+      "type": "arrow",
+      "file": "nestest/hello.ts",
+      "line": 5,
+      "signature": "(a, b)"
+    },
+    {
+      "id": "nestest/hello.ts::Calc",
+      "name": "Calc",
+      "type": "class",
+      "file": "nestest/hello.ts",
+      "line": 9,
+      "signature": ""
+    },
+    {
+      "id": "nestest/hello.ts::Calc.add",
+      "name": "add",
+      "type": "method",
+      "file": "nestest/hello.ts",
+      "line": 10,
+      "signature": "(a, b)"
+    }
+  ],
+  "edges": [
+    {
+      "source": "calls.ts::helperB",
+      "target": "calls.ts::helperA",
+      "type": "calls"
+    },
+    {
+      "source": "calls.ts::run",
+      "target": "calls.ts::helperB",
+      "type": "calls"
+    },
+    {
+      "source": "calls.ts::run",
+      "target": "simple.ts::add",
+      "type": "calls"
+    },
+    {
+      "source": "calls.ts::Calc.double",
+      "target": "calls.ts::Calc.triple",
+      "type": "calls"
+    },
+    {
+      "source": "calls.ts::useCalc",
+      "target": "calls.ts::Calc.double",
+      "type": "calls"
+    },
+    {
+      "source": "modulo.ts::test",
+      "target": "simple.ts::greet",
+      "type": "calls"
+    }
+  ]
+}

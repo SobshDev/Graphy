@@ -24,7 +24,8 @@
     "check": "prettier --check .",
     "dist": "bun --bun run build && electron-builder",
     "dist:linux": "bun --bun run build && electron-builder --linux",
-    "dist:mac": "bun --bun run build && electron-builder --mac"
+    "dist:mac": "bun --bun run build && electron-builder --mac",
+    "parser:dump": "bun run src/modules/parser/dump.ts"
   },
   "build": {
     "appId": "com.sobshdev.graphy",
