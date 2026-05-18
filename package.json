@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Graphy desktop application",
   "author": {
-    "name": "SobshDev",
+    "name": "ntgrm",
     "email": "contact@graphy.dev"
   },
   "private": true,
@@ -21,12 +21,13 @@
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
     "check": "prettier --check .",
-    "dist": "bun --bun run build && electron-builder",
+    "tidy": "bun --bun run format && bun --bun run lint",
     "dist:linux": "bun --bun run build && electron-builder --linux",
-    "dist:mac": "bun --bun run build && electron-builder --mac"
+    "dist:mac": "bun --bun run build && electron-builder --mac",
+    "dist:win": "bun --bun run build && electron-builder --win"
   },
   "build": {
-    "appId": "com.sobshdev.graphy",
+    "appId": "com.ntgrm.graphy",
     "productName": "Graphy",
     "files": [
       ".output/**/*",
@@ -57,6 +58,17 @@
         }
       ],
       "category": "public.app-category.utilities",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
       "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },

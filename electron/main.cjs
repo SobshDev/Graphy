@@ -4,6 +4,9 @@ const net = require('node:net')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 
+app.setName('Graphy')
+app.setAppUserModelId('com.ntgrm.graphy')
+
 let mainWindow
 let startedServerUrl
 
