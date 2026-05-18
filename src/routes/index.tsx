@@ -6,6 +6,7 @@ import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
 import { FileExplorer } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
+import { SourceControlPanel } from '@/modules/source-control'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -21,6 +22,7 @@ function App() {
               <TopBar />
               <div className="flex min-h-0 flex-1">
                 <FileExplorer />
+                <SourceControlPanel />
                 <Canvas />
               </div>
             </div>

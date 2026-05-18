@@ -9,7 +9,8 @@ import {
   Settings,
 } from 'lucide-react'
 
-import { setPanelOpen, togglePanel, usePanelOpen } from '@/modules/files'
+import { toggleActivePanel, useActivePanel } from '@/shared/lib/active-panel'
+import type { ActivePanel } from '@/shared/lib/active-panel'
 import { Button } from '@/shared/ui/button'
 import { Kbd, KbdGroup } from '@/shared/ui/kbd'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -20,12 +21,25 @@ type NavItem = {
   label: string
   shortcut?: string
   to?: string
+  panel?: Exclude<ActivePanel, null>
 }
 
 const navItems: Array<NavItem> = [
-  { id: 'files', icon: Folder, label: 'Files', shortcut: '⌘1', to: '/' },
+  {
+    id: 'files',
+    icon: Folder,
+    label: 'Files',
+    shortcut: '⌘1',
+    panel: 'files',
+  },
   { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
-  { id: 'git', icon: GitBranch, label: 'Source control', shortcut: '⌘⇧G' },
+  {
+    id: 'git',
+    icon: GitBranch,
+    label: 'Source control',
+    shortcut: '⌘⇧G',
+    panel: 'git',
+  },
   { id: 'graphs', icon: Network, label: 'Graphs', shortcut: '⌘⇧H' },
   {
     id: 'extensions',
@@ -38,26 +52,23 @@ const navItems: Array<NavItem> = [
 export function Sidebar() {
   const location = useLocation()
   const isSettings = location.pathname.startsWith('/settings')
-  const filesPanelOpen = usePanelOpen()
-  const activeId = isSettings ? null : 'files'
+  const activePanel = useActivePanel()
 
   return (
     <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
       <div className="app-no-drag flex flex-col items-center gap-2">
-        {navItems.map(({ id, icon: Icon, label, shortcut, to }) => {
-          const active =
-            id === 'files' ? !isSettings && filesPanelOpen : activeId === id
-          const handleClick =
-            id === 'files'
-              ? (e: React.MouseEvent) => {
-                  if (active) {
-                    e.preventDefault()
-                    togglePanel()
-                  } else {
-                    setPanelOpen(true)
-                  }
-                }
-              : undefined
+        {navItems.map(({ id, icon: Icon, label, shortcut, to, panel }) => {
+          const active = isSettings
+            ? false
+            : panel
+              ? activePanel === panel
+              : false
+          const handleClick = panel
+            ? (e: React.MouseEvent) => {
+                e.preventDefault()
+                toggleActivePanel(panel)
+              }
+            : undefined
           const button = (
             <Button
               variant="ghost"

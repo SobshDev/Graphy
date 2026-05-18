@@ -1,30 +1,17 @@
-import { useSyncExternalStore } from 'react'
-
-let open = true
-const listeners = new Set<() => void>()
-
-function subscribe(listener: () => void) {
-  listeners.add(listener)
-  return () => {
-    listeners.delete(listener)
-  }
-}
-
-function getSnapshot() {
-  return open
-}
+import {
+  setActivePanel,
+  toggleActivePanel,
+  useActivePanel,
+} from '@/shared/lib/active-panel'
 
 export function usePanelOpen() {
-  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
+  return useActivePanel() === 'files'
 }
 
 export function togglePanel() {
-  open = !open
-  for (const listener of listeners) listener()
+  toggleActivePanel('files')
 }
 
 export function setPanelOpen(next: boolean) {
-  if (open === next) return
-  open = next
-  for (const listener of listeners) listener()
+  setActivePanel(next ? 'files' : null)
 }
