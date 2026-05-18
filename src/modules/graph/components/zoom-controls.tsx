@@ -3,11 +3,7 @@ import { Maximize2, Minus, Plus } from 'lucide-react'
 
 import { Button } from '@/shared/ui/button'
 import { Separator } from '@/shared/ui/separator'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/shared/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 export function ZoomControls() {
   const { zoomIn, zoomOut, fitView } = useReactFlow()
