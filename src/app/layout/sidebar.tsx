@@ -1,13 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import {
-  Bell,
-  Folder,
-  GitBranch,
-  Network,
-  Puzzle,
-  Search,
-  Settings,
-} from 'lucide-react'
+import { Bell, Folder, GitBranch, Network, Search, Settings } from 'lucide-react'
 
 import { Button } from '@/shared/ui/button'
 import { Kbd, KbdGroup } from '@/shared/ui/kbd'
@@ -26,7 +18,6 @@ const navItems: Array<NavItem> = [
   { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
   { id: 'git', icon: GitBranch, label: 'Source control', shortcut: '⌘⇧G' },
   { id: 'graphs', icon: Network, label: 'Graphs', shortcut: '⌘⇧H' },
-  { id: 'extensions', icon: Puzzle, label: 'Extensions', shortcut: '⌘⇧X' },
 ]
 
 export function Sidebar() {
