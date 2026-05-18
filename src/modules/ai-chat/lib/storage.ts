@@ -4,12 +4,12 @@ import { AI_PROVIDERS, CHAT_MODELS, DEFAULT_CHAT_MODEL } from '../types'
 const STORAGE_KEY = 'graphy.ai-config'
 
 export interface StoredAiConfig {
-  activeModel: ChatModel
+  defaultModel: ChatModel
   keys: Partial<Record<AiProvider, string>>
 }
 
 export const INITIAL_AI_CONFIG: StoredAiConfig = {
-  activeModel: DEFAULT_CHAT_MODEL,
+  defaultModel: DEFAULT_CHAT_MODEL,
   keys: {},
 }
 
@@ -28,10 +28,16 @@ export function readAiConfig(): StoredAiConfig {
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return INITIAL_AI_CONFIG
 
-    const candidate = parsed as { activeModel?: unknown; keys?: unknown }
-    const activeModel = isChatModel(candidate.activeModel)
-      ? candidate.activeModel
-      : DEFAULT_CHAT_MODEL
+    const candidate = parsed as {
+      defaultModel?: unknown
+      activeModel?: unknown
+      keys?: unknown
+    }
+    const modelCandidate = isChatModel(candidate.defaultModel)
+      ? candidate.defaultModel
+      : isChatModel(candidate.activeModel)
+        ? candidate.activeModel
+        : DEFAULT_CHAT_MODEL
 
     const keys: Partial<Record<AiProvider, string>> = {}
     if (candidate.keys && typeof candidate.keys === 'object') {
@@ -43,7 +49,7 @@ export function readAiConfig(): StoredAiConfig {
       }
     }
 
-    return { activeModel, keys }
+    return { defaultModel: modelCandidate, keys }
   } catch {
     return INITIAL_AI_CONFIG
   }
