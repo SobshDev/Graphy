@@ -82,18 +82,19 @@ Artifacts land in `release/`.
 
 ## Scripts
 
-| Command                 | Description                                            |
-| ----------------------- | ------------------------------------------------------ |
-| `bun run dev`           | Start the web dev server and Electron concurrently.    |
-| `bun run dev:web`       | Start the Vite dev server on port 3000.                |
-| `bun run dev:electron`  | Start Electron pointing at the running web dev server. |
-| `bun run build`         | Build the web app with Vite.                           |
-| `bun run start:desktop` | Build the app and launch Electron.                     |
-| `bun run preview`       | Preview the production build locally.                  |
-| `bun run lint`          | Run ESLint.                                            |
-| `bun run format`        | Format with Prettier and auto-fix ESLint issues.       |
-| `bun run check`         | Check formatting with Prettier.                        |
-| `bun run dist`          | Build and package the desktop app.                     |
+| Command                 | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `bun run dev`           | Build the parser bundle (watch), start Vite, launch Electron.      |
+| `bun run dev:electron`  | Start Electron pointing at the running web dev server.             |
+| `bun run dev:parser`    | Watch and rebundle the parser CLI into `dist-electron/parser.cjs`. |
+| `bun run build`         | Build the parser bundle and the web app.                           |
+| `bun run build:parser`  | One-shot bundle of the parser CLI into `dist-electron/parser.cjs`. |
+| `bun run start:desktop` | Build the app and launch Electron.                                 |
+| `bun run preview`       | Preview the production build locally.                              |
+| `bun run lint`          | Run ESLint.                                                        |
+| `bun run format`        | Format with Prettier and auto-fix ESLint issues.                   |
+| `bun run check`         | Check formatting with Prettier.                                    |
+| `bun run dist`          | Build and package the desktop app.                                 |
 
 ## Project structure
 

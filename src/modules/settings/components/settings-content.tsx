@@ -1,10 +1,8 @@
 import { settingsSections } from '../data/sections'
 import type { SettingsSectionId } from '../types'
 import { SectionAbout } from './section-about'
-import { SectionAccount } from './section-account'
 import { SectionAi } from './section-ai'
 import { SectionAppearance } from './section-appearance'
-import { SectionGraph } from './section-graph'
 import { SectionKeybindings } from './section-keybindings'
 
 type SettingsContentProps = {
@@ -13,12 +11,8 @@ type SettingsContentProps = {
 
 function renderSection(active: SettingsSectionId) {
   switch (active) {
-    case 'account':
-      return <SectionAccount />
     case 'appearance':
       return <SectionAppearance />
-    case 'graph':
-      return <SectionGraph />
     case 'ai':
       return <SectionAi />
     case 'keybindings':

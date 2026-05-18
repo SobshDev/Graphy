@@ -11,7 +11,6 @@ import { ToolCallCard } from './tool-call-card'
 
 const proseClass = cn(
   'font-chat-sans text-[13.5px] leading-[1.6] text-chat-text',
-  'pl-[26px] ml-2 border-l border-chat-line',
   'flex flex-col gap-2.5 [overflow-wrap:anywhere]',
   '[&>*]:m-0',
   '[&_h1]:font-chat-sans [&_h1]:text-[18px] [&_h1]:font-semibold [&_h1]:leading-[1.3] [&_h1]:tracking-[-0.01em] [&_h1]:text-chat-text',
@@ -53,7 +52,7 @@ export function AiChatMessages() {
 
   if (messages.length === 0) {
     return (
-      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-4 py-[22px]">
+      <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto py-[22px] pl-4 pr-3">
         {hasKey ? (
           <>
             <h2 className="font-chat-sans m-0 text-[18px] font-medium leading-[1.3] tracking-[-0.01em] text-chat-text">
@@ -61,7 +60,7 @@ export function AiChatMessages() {
               anything about your graph.
             </h2>
             <p className="font-chat-sans m-0 text-[12.5px] leading-[1.55] text-chat-text-3">
-              Messages live for this session only.
+              Saved locally. Find past chats in the history menu.
             </p>
           </>
         ) : (
@@ -83,7 +82,7 @@ export function AiChatMessages() {
   return (
     <div
       ref={scrollRef}
-      className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto px-3.5 pb-3 pt-3.5"
+      className="flex min-h-0 flex-1 flex-col gap-[18px] overflow-y-auto pb-3 pl-4 pr-3 pt-3.5"
     >
       {messages.map((message) => (
         <MessageRow key={message.id} message={message} byline={byline} />
@@ -123,7 +122,7 @@ function MessageRow({
         </b>
       </div>
       {toolCalls.length > 0 && (
-        <div className="ml-2 flex flex-col gap-1.5 border-l border-chat-line pl-[26px]">
+        <div className="flex flex-col gap-1.5">
           {toolCalls.map((call) => (
             <ToolCallCard key={call.id} call={call} />
           ))}
@@ -132,8 +131,7 @@ function MessageRow({
       <div
         className={cn(
           proseClass,
-          isError &&
-            'text-chat-danger border-l-[rgba(255,104,104,0.4)] [white-space:pre-wrap]',
+          isError && 'text-chat-danger [white-space:pre-wrap]',
           isThinking && 'text-chat-text-3',
         )}
       >
