@@ -4,6 +4,14 @@
   "root": "/Users/nivid/Desktop/Graphy/tests/fixtures",
   "nodes": [
     {
+      "id": "example2.ts::TEST5555",
+      "name": "TEST5555",
+      "type": "function",
+      "file": "example2.ts",
+      "line": 3,
+      "signature": "()"
+    },
+    {
       "id": "calls.ts::helperA",
       "name": "helperA",
       "type": "function",
@@ -116,6 +124,30 @@
       "signature": "(a, b)"
     },
     {
+      "id": "example.ts::TEST2222",
+      "name": "TEST2222",
+      "type": "function",
+      "file": "example.ts",
+      "line": 3,
+      "signature": "()"
+    },
+    {
+      "id": "example.ts::TEST3333",
+      "name": "TEST3333",
+      "type": "function",
+      "file": "example.ts",
+      "line": 7,
+      "signature": "()"
+    },
+    {
+      "id": "example.ts::TEST4444",
+      "name": "TEST4444",
+      "type": "function",
+      "file": "example.ts",
+      "line": 11,
+      "signature": "()"
+    },
+    {
       "id": "modulo.ts::modulo",
       "name": "modulo",
       "type": "function",
@@ -174,6 +206,11 @@
   ],
   "edges": [
     {
+      "source": "example2.ts::TEST5555",
+      "target": "simple.ts::greet",
+      "type": "calls"
+    },
+    {
       "source": "calls.ts::helperB",
       "target": "calls.ts::helperA",
       "type": "calls"
@@ -196,6 +233,21 @@
     {
       "source": "calls.ts::useCalc",
       "target": "calls.ts::Calc.double",
+      "type": "calls"
+    },
+    {
+      "source": "example.ts::TEST2222",
+      "target": "simple.ts::greet",
+      "type": "calls"
+    },
+    {
+      "source": "example.ts::TEST3333",
+      "target": "simple.ts::greet",
+      "type": "calls"
+    },
+    {
+      "source": "example.ts::TEST4444",
+      "target": "simple.ts::greet",
       "type": "calls"
     },
     {

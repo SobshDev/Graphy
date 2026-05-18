@@ -11,6 +11,7 @@ export function buildDeclarationMap(
   const map = new Map<Node, string>()
 
   for (const fn of sourceFile.getFunctions()) {
+    if (fn.isOverload()) continue
     const name = fn.getName()
     if (!name) continue
     map.set(fn, makeNodeId(relativeFilePath, name))
@@ -33,6 +34,7 @@ export function buildDeclarationMap(
     map.set(cls, makeNodeId(relativeFilePath, className))
 
     for (const method of cls.getMethods()) {
+      if (method.isOverload()) continue
       const methodName = method.getName()
       map.set(
         method,

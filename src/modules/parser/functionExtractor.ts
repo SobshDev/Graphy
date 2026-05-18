@@ -11,6 +11,7 @@ export function extractFunctions(
 
   // classic function
   for (const fn of sourceFile.getFunctions()) {
+    if (fn.isOverload()) continue
     const name = fn.getName()
     if (!name) continue
 

@@ -22,6 +22,7 @@ export function extractClasses(
     })
 
     for (const method of cls.getMethods()) {
+      if (method.isOverload()) continue
       const methodName = method.getName()
       const qualifiedName = `${className}.${methodName}`
 
