@@ -61,14 +61,20 @@ function resolveSourceId(
   while (current) {
     if (
       Node.isFunctionDeclaration(current) ||
-      Node.isMethodDeclaration(current)
+      Node.isMethodDeclaration(current) ||
+      Node.isConstructorDeclaration(current) ||
+      Node.isGetAccessorDeclaration(current) ||
+      Node.isSetAccessorDeclaration(current)
     ) {
       return declarationMap.get(current)
     }
 
     if (Node.isArrowFunction(current) || Node.isFunctionExpression(current)) {
       const parent = current.getParent()
-      if (Node.isVariableDeclaration(parent)) {
+      if (
+        Node.isVariableDeclaration(parent) ||
+        Node.isPropertyDeclaration(parent)
+      ) {
         return declarationMap.get(parent)
       }
       return undefined

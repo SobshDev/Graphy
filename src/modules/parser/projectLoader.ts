@@ -3,6 +3,7 @@ import type { ProjectOptions, SourceFile } from 'ts-morph'
 
 const DEFAULT_COMPILER_OPTIONS: ProjectOptions['compilerOptions'] = {
   target: ScriptTarget.ES2022,
+  allowJs: true,
 }
 
 export interface LoaderOptions {
@@ -44,7 +45,10 @@ export class ProjectLoader {
     directory: string,
     options: LoaderOptions & { patterns?: readonly string[] } = {},
   ): ProjectLoader {
-    const { patterns = ['**/*.ts', '**/*.tsx'], ...loaderOptions } = options
+    const {
+      patterns = ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
+      ...loaderOptions
+    } = options
     const loader = new ProjectLoader(loaderOptions)
     loader.project.addSourceFilesAtPaths(
       patterns.map((p) => `${directory}/${p}`),

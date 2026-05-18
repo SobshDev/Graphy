@@ -23,7 +23,7 @@ runDump()
 const watcher = chokidar.watch(root, {
   ignoreInitial: true,
   ignored: (filePath, stats) =>
-    stats?.isFile() === true && !/\.(ts|tsx)$/.test(filePath),
+    stats?.isFile() === true && !/\.(tsx?|jsx?)$/.test(filePath),
   awaitWriteFinish: { stabilityThreshold: 100, pollInterval: 30 },
 })
 

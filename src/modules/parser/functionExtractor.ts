@@ -19,7 +19,7 @@ export function extractFunctions(
   // classic function
   for (const fn of sourceFile.getFunctions()) {
     if (fn.isOverload()) continue
-    const name = fn.getName()
+    const name = fn.getName() ?? (fn.isDefaultExport() ? 'default' : undefined)
     if (!name) continue
 
     collected.push({

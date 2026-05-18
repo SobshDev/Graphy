@@ -24,6 +24,8 @@ export function parseProject(root: string): Graph {
   const sourceFiles = project.addSourceFilesAtPaths([
     `${root}/**/*.ts`,
     `${root}/**/*.tsx`,
+    `${root}/**/*.js`,
+    `${root}/**/*.jsx`,
   ])
 
   // Pass 1 — single walk: collect nodes + the ts-morph-declaration → id map

@@ -5,7 +5,14 @@
 
 import type { Node as TsMorphNode } from 'ts-morph'
 
-export type NodeType = 'function' | 'method' | 'arrow' | 'class'
+export type NodeType =
+  | 'function'
+  | 'method'
+  | 'arrow'
+  | 'class'
+  | 'constructor'
+  | 'getter'
+  | 'setter'
 
 export type EdgeType = 'calls' | 'inherits' | 'imports'
 
