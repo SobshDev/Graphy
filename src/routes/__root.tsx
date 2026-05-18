@@ -9,10 +9,6 @@ export const Route = createRootRoute({
         charSet: 'utf-8',
       },
       {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1',
-      },
-      {
         title: 'Graphy',
       },
     ],
@@ -28,7 +24,7 @@ export const Route = createRootRoute({
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>

@@ -1,6 +1,6 @@
 import type { Graph } from './models.ts'
 
-export const SCHEMA_VERSION = '1.1'
+export const SCHEMA_VERSION = '1.2'
 
 export function serializeGraph(graph: Graph, pretty = true): string {
   return JSON.stringify(graph, null, pretty ? 2 : 0)

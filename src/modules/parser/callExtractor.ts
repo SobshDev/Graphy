@@ -13,10 +13,17 @@ export function extractCalls(
   for (const call of sourceFile.getDescendantsOfKind(
     SyntaxKind.CallExpression,
   )) {
-    const targetId = resolveTargetId(call, declarationMap)
-    if (!targetId) continue
-
-    const sourceId = resolveSourceId(call, declarationMap)
+    let targetId: string | undefined
+    let sourceId: string | undefined
+    try {
+      targetId = resolveTargetId(call, declarationMap)
+      if (!targetId) continue
+      sourceId = resolveSourceId(call, declarationMap)
+    } catch {
+      // ts-morph's type checker can throw on calls with incomplete type info
+      // (e.g. symbols declared in modules we haven't loaded). Skip those.
+      continue
+    }
     if (!sourceId) continue
 
     if (sourceId === targetId) continue

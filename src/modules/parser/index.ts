@@ -1,10 +1,11 @@
+import fs from 'node:fs'
 import path from 'node:path'
-import type { Node } from 'ts-morph'
+import { Project, ScriptTarget } from 'ts-morph'
+import type { Node, SourceFile } from 'ts-morph'
 
 import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
-import { loadProject } from './projectLoader'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
 
@@ -19,14 +20,39 @@ export { SCHEMA_VERSION, serializeGraph, validateGraph } from './core/schema'
 export { ClassInspector, inspectClasses } from './classQuery'
 export type { ClassInfo } from './classQuery'
 
-export function parseProject(root: string): Graph {
-  const project = loadProject(root)
-  const sourceFiles = project.addSourceFilesAtPaths([
+function loadSourceFiles(root: string): SourceFile[] {
+  const tsConfigPath = path.join(root, 'tsconfig.json')
+  if (fs.existsSync(tsConfigPath)) {
+    try {
+      const project = new Project({ tsConfigFilePath: tsConfigPath })
+      return project.getSourceFiles()
+    } catch {
+      // Fall through to glob if the project's tsconfig is unusable.
+    }
+  }
+
+  const project = new Project({
+    compilerOptions: {
+      target: ScriptTarget.ES2022,
+      rootDir: root,
+      allowJs: true,
+    },
+    skipAddingFilesFromTsConfig: true,
+  })
+  return project.addSourceFilesAtPaths([
     `${root}/**/*.ts`,
     `${root}/**/*.tsx`,
     `${root}/**/*.js`,
     `${root}/**/*.jsx`,
+    `!${root}/**/node_modules/**`,
+    `!${root}/**/dist/**`,
+    `!${root}/**/build/**`,
+    `!${root}/**/.output/**`,
   ])
+}
+
+export function parseProject(root: string): Graph {
+  const sourceFiles = loadSourceFiles(root)
 
   // Pass 1 — single walk: collect nodes + the ts-morph-declaration → id map
   const nodes: GraphNode[] = []

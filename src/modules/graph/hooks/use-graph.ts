@@ -1,66 +1,61 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import type { Graph } from '@/modules/parser'
-
-const MOCK_GRAPH_URL = '/sample-graph.json'
-const GRAPH_UPDATE_EVENT = 'graphy:graph-updated'
+import { getDesktop } from '@/shared/lib/desktop'
 
 export interface UseGraphResult {
   graph: Graph | null
+  folder: string | null
   loading: boolean
   error: Error | null
-  reload: () => void
 }
 
 export function useGraph(): UseGraphResult {
-  const [graph, setGraph] = useState<Graph | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<Error | null>(null)
-  const [tick, setTick] = useState(0)
-
-  const reload = useCallback(() => setTick((n) => n + 1), [])
+  const [state, setState] = useState<UseGraphResult>({
+    graph: null,
+    folder: null,
+    loading: false,
+    error: null,
+  })
 
   useEffect(() => {
-    let cancelled = false
-    setLoading(true)
-    setError(null)
+    const desktop = getDesktop()
+    if (!desktop) {
+      setState({
+        graph: null,
+        folder: null,
+        loading: false,
+        error: new Error('Graphy must be launched as a desktop app.'),
+      })
+      return
+    }
 
-    loadGraph()
-      .then((result) => {
-        if (!cancelled) setGraph(result)
+    let cancelled = false
+
+    desktop.getInitialState().then((initial) => {
+      if (cancelled) return
+      setState({
+        graph: initial.graph,
+        folder: initial.folder,
+        loading: initial.loading,
+        error: initial.error ? new Error(initial.error) : null,
       })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setError(err instanceof Error ? err : new Error(String(err)))
-        }
+    })
+
+    const unsubscribe = desktop.onGraph((payload) => {
+      setState({
+        graph: payload.graph,
+        folder: payload.folder,
+        loading: payload.loading,
+        error: payload.error ? new Error(payload.error) : null,
       })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
+    })
 
     return () => {
       cancelled = true
+      unsubscribe()
     }
-  }, [tick])
+  }, [])
 
-  useEffect(() => {
-    if (!import.meta.hot) return
-    const handler = () => reload()
-    import.meta.hot.on(GRAPH_UPDATE_EVENT, handler)
-    return () => {
-      import.meta.hot?.off(GRAPH_UPDATE_EVENT, handler)
-    }
-  }, [reload])
-
-  return { graph, loading, error, reload }
-}
-
-async function loadGraph(): Promise<Graph> {
-  const response = await fetch(`${MOCK_GRAPH_URL}?t=${Date.now()}`)
-  if (!response.ok) {
-    throw new Error(
-      `Failed to load graph (${response.status}). Run "bun run parser:dump" to generate it.`,
-    )
-  }
-  return (await response.json()) as Graph
+  return state
 }

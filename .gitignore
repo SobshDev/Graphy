@@ -13,4 +13,4 @@ __unconfig*
 todos.json
 .idea
 release/
-public/sample-graph.json
+dist-electron

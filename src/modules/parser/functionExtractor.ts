@@ -29,6 +29,7 @@ export function extractFunctions(
         type: 'function',
         file: relativeFilePath,
         line: fn.getStartLineNumber(),
+        endLine: fn.getEndLineNumber(),
         signature: buildSignature(fn.getParameters()),
         isAsync: fn.isAsync(),
         isExported: fn.isExported(),
@@ -70,15 +71,21 @@ function buildArrowOrFnExprNode(
   relativeFilePath: string,
 ): CollectedNode['graphNode'] {
   const name = variable.getName()
+  const statement = variable.getVariableStatement()
+  const startLine =
+    statement?.getStartLineNumber() ?? variable.getStartLineNumber()
+  const endLine =
+    statement?.getEndLineNumber() ?? initializer.getEndLineNumber()
   return {
     id: makeNodeId(relativeFilePath, name),
     name,
     type: Node.isArrowFunction(initializer) ? 'arrow' : 'function',
     file: relativeFilePath,
-    line: variable.getStartLineNumber(),
+    line: startLine,
+    endLine,
     signature: buildSignature(initializer.getParameters()),
     isAsync: initializer.isAsync(),
-    isExported: variable.getVariableStatement()?.isExported() ?? false,
+    isExported: statement?.isExported() ?? false,
     isStatic: false,
     bodyLines: spanLines(
       initializer.getStartLineNumber(),

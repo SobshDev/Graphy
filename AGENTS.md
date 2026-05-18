@@ -37,16 +37,19 @@ Do not install or use other icon libraries.
 
 This project uses **[Bun](https://bun.sh)** as the package manager and runtime.
 
-| Command                 | Description                                            |
-| ----------------------- | ------------------------------------------------------ |
-| `bun run dev`           | Start the web dev server and Electron concurrently.    |
-| `bun run dev:web`       | Start the Vite dev server on port 3000.                |
-| `bun run dev:electron`  | Start Electron pointing at the running web dev server. |
-| `bun run build`         | Build the web app with Vite.                           |
-| `bun run start:desktop` | Build the app and launch Electron.                     |
-| `bun run preview`       | Preview the production build locally.                  |
-| `bun run lint`          | Run ESLint.                                            |
-| `bun run format`        | Format with Prettier and auto-fix ESLint issues.       |
-| `bun run check`         | Check formatting with Prettier.                        |
+| Command                 | Description                                                        |
+| ----------------------- | ------------------------------------------------------------------ |
+| `bun run dev`           | Build the parser bundle (watch), start Vite, launch Electron.      |
+| `bun run dev:electron`  | Start Electron pointing at the running web dev server.             |
+| `bun run dev:parser`    | Watch and rebundle the parser CLI into `dist-electron/parser.cjs`. |
+| `bun run build`         | Build the parser bundle and the web app.                           |
+| `bun run build:parser`  | One-shot bundle of the parser CLI into `dist-electron/parser.cjs`. |
+| `bun run start:desktop` | Build the app and launch Electron.                                 |
+| `bun run lint`          | Run ESLint.                                                        |
+| `bun run format`        | Format with Prettier and auto-fix ESLint issues.                   |
+| `bun run check`         | Check formatting with Prettier.                                    |
+| `bun run tidy`          | Run `format` then `lint` — one-shot cleanup.                       |
 
-**Never run dev commands** (`dev`, `dev:web`, `dev:electron`, `start:desktop`, `preview`) to launch the web server or the Electron app. The user runs these themselves.
+**Never run dev commands** (`dev`, `dev:electron`, `start:desktop`) to launch the web server or the Electron app. The user runs these themselves.
+
+**Always run `bun run tidy` after any change** to keep formatting and linting consistent before handing work back to the user.

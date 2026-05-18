@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Graphy desktop application",
   "author": {
-    "name": "SobshDev",
+    "name": "ntgrm",
     "email": "contact@graphy.dev"
   },
   "private": true,
@@ -13,26 +13,27 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "concurrently -k -n parser,tanstack,electron -c yellow,cyan,magenta \"bun --bun run parser:watch\" \"vite dev --port 3000\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "dev:web": "concurrently -k -n parser,vite -c yellow,cyan \"bun --bun run parser:watch\" \"vite dev --port 3000\"",
+    "dev": "concurrently -k -n parser,tanstack,electron -c yellow,cyan,magenta \"bun --bun run dev:parser\" \"vite dev --port 3000\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
     "dev:electron": "wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .",
-    "build": "vite build",
+    "dev:parser": "bun run scripts/build-parser.ts --watch",
+    "build": "bun --bun run build:parser && vite build",
+    "build:parser": "bun run scripts/build-parser.ts",
     "start:desktop": "bun --bun run build && electron .",
-    "preview": "vite preview",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
     "check": "prettier --check .",
-    "dist": "bun --bun run build && electron-builder",
+    "tidy": "bun --bun run format && bun --bun run lint",
     "dist:linux": "bun --bun run build && electron-builder --linux",
     "dist:mac": "bun --bun run build && electron-builder --mac",
-    "parser:dump": "bun run src/modules/parser/dump.ts",
-    "parser:watch": "bun run src/modules/parser/watch.ts"
+    "dist:win": "bun --bun run build && electron-builder --win",
+    "parser:dump": "bun run src/modules/parser/dump.ts"
   },
   "build": {
-    "appId": "com.sobshdev.graphy",
+    "appId": "com.ntgrm.graphy",
     "productName": "Graphy",
     "files": [
       ".output/**/*",
+      "dist-electron/**/*",
       "electron/**/*",
       "package.json"
     ],
@@ -61,11 +62,29 @@
       ],
       "category": "public.app-category.utilities",
       "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
     }
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
     "@base-ui/react": "^1.4.1",
+    "@codemirror/autocomplete": "^6.20.2",
+    "@codemirror/commands": "^6.10.3",
+    "@codemirror/lang-javascript": "^6.2.5",
+    "@codemirror/language": "^6.12.3",
+    "@codemirror/state": "^6.6.0",
+    "@codemirror/theme-one-dark": "^6.1.3",
+    "@codemirror/view": "^6.43.0",
     "@fontsource-variable/geist": "^5.2.9",
     "@openai/codex-sdk": "^0.130.0",
     "@tabler/icons-react": "^3.44.0",
@@ -80,7 +99,9 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "codemirror": "^6.0.2",
     "date-fns": "^4.2.1",
+    "elkjs": "^0.11.1",
     "embla-carousel-react": "^8.6.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.16.0",
@@ -90,9 +111,12 @@
     "react": "^19.2.6",
     "react-day-picker": "^10.0.1",
     "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
     "react-resizable-panels": "^4.11.1",
     "recharts": "3.8.0",
+    "remark-gfm": "^4.0.1",
     "shadcn": "^4.7.0",
+    "simple-git": "^3.36.0",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.6.0",
     "tailwindcss": "^4.3.0",

@@ -26,6 +26,7 @@ export function extractClasses(
         type: 'class',
         file: relativeFilePath,
         line: cls.getStartLineNumber(),
+        endLine: cls.getEndLineNumber(),
         signature: '',
         isAsync: false,
         isExported: cls.isExported(),
@@ -45,16 +46,23 @@ export function extractClasses(
     if (!initializer || !Node.isClassExpression(initializer)) continue
 
     const name = variable.getName()
+    const statement = variable.getVariableStatement()
+    const startLine =
+      statement?.getStartLineNumber() ?? variable.getStartLineNumber()
+    const endLine =
+      statement?.getEndLineNumber() ?? initializer.getEndLineNumber()
+
     collected.push({
       graphNode: {
         id: makeNodeId(relativeFilePath, name),
         name,
         type: 'class',
         file: relativeFilePath,
-        line: variable.getStartLineNumber(),
+        line: startLine,
+        endLine,
         signature: '',
         isAsync: false,
-        isExported: variable.getVariableStatement()?.isExported() ?? false,
+        isExported: statement?.isExported() ?? false,
         isStatic: false,
         bodyLines: spanLines(
           initializer.getStartLineNumber(),
@@ -91,6 +99,7 @@ function extractClassBody(
         type: 'method',
         file: relativeFilePath,
         line: method.getStartLineNumber(),
+        endLine: method.getEndLineNumber(),
         signature: buildSignature(method.getParameters()),
         isAsync: method.isAsync(),
         isExported: false,
@@ -117,6 +126,7 @@ function extractClassBody(
         type: 'constructor',
         file: relativeFilePath,
         line: ctor.getStartLineNumber(),
+        endLine: ctor.getEndLineNumber(),
         signature: buildSignature(ctor.getParameters()),
         isAsync: false,
         isExported: false,
@@ -142,6 +152,7 @@ function extractClassBody(
         type: 'getter',
         file: relativeFilePath,
         line: getter.getStartLineNumber(),
+        endLine: getter.getEndLineNumber(),
         signature: '()',
         isAsync: false,
         isExported: false,
@@ -167,6 +178,7 @@ function extractClassBody(
         type: 'setter',
         file: relativeFilePath,
         line: setter.getStartLineNumber(),
+        endLine: setter.getEndLineNumber(),
         signature: buildSignature(setter.getParameters()),
         isAsync: false,
         isExported: false,
@@ -201,6 +213,7 @@ function extractClassBody(
         type: Node.isArrowFunction(initializer) ? 'arrow' : 'method',
         file: relativeFilePath,
         line: prop.getStartLineNumber(),
+        endLine: initializer.getEndLineNumber(),
         signature: buildSignature(initializer.getParameters()),
         isAsync: initializer.isAsync(),
         isExported: false,
