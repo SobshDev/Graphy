@@ -24,7 +24,10 @@ function emit(message: Outbound): Promise<void> {
 async function main(): Promise<void> {
   const rawArg = process.argv[2]
   if (!rawArg) {
-    await emit({ type: 'error', message: 'parser-cli: missing folder argument' })
+    await emit({
+      type: 'error',
+      message: 'parser-cli: missing folder argument',
+    })
     process.exit(2)
   }
 
