@@ -1,5 +1,5 @@
-import { Node   } from 'ts-morph'
-import type {ParameterDeclaration, SourceFile} from 'ts-morph';
+import { Node } from 'ts-morph'
+import type { ParameterDeclaration, SourceFile } from 'ts-morph'
 import type { GraphNode } from './core/models'
 import { makeNodeId } from './core/models'
 
