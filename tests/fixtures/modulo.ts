@@ -1,4 +1,4 @@
-import { greet } from "./simple"
+import { greet } from './simple'
 
 export function modulo(a: number, b: number): number {
   return a / b
@@ -9,5 +9,5 @@ export function sqrt(a: number, b: number): number {
 }
 
 function test() {
-    greet("hello");
+  greet('hello')
 }
