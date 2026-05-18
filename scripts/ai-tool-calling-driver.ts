@@ -173,7 +173,32 @@ async function claudeCap() {
   }
 }
 async function claudeStream() {
-  throw new Error('not yet implemented — Task 7')
+  const apiKey = requireEnv('ANTHROPIC_API_KEY')
+  const svc = new ClaudeService({ apiKey })
+  const tool = makeReadGraphTool()
+  const order: string[] = []
+  let textPieces = 0
+  for await (const chunk of svc.stream({
+    messages: [
+      {
+        role: 'system',
+        content: 'You answer questions about a code graph using tools.',
+      },
+      { role: 'user', content: 'What is the label of node-1?' },
+    ],
+    tools: [tool],
+  })) {
+    if (chunk.type === 'text') textPieces++
+    else order.push(chunk.type)
+  }
+  console.log('order:', order, 'textPieces:', textPieces)
+  if (order[0] !== 'tool_call')
+    throw new Error("expected first non-text event = 'tool_call'")
+  if (order[1] !== 'tool_result')
+    throw new Error("expected 'tool_result' after 'tool_call'")
+  if (order[order.length - 1] !== 'done')
+    throw new Error("expected last event = 'done'")
+  if (textPieces === 0) throw new Error('expected at least one text delta')
 }
 async function codexSingle() {
   throw new Error('not yet implemented — Task 10')

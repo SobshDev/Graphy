@@ -231,35 +231,101 @@ export class ClaudeService implements AiService {
   stream(options: AiChatOptions): AsyncIterable<AiStreamChunk> {
     const client = this.client
     const defaultModel = this.defaultModel
+    const toolMap = new Map(options.tools?.map((t) => [t.name, t]) ?? [])
+    const anthropicTools =
+      options.tools && options.tools.length > 0
+        ? toAnthropicTools(options.tools)
+        : undefined
+    const maxRounds = options.maxToolRounds ?? DEFAULT_MAX_TOOL_ROUNDS
+
     return {
-      async *[Symbol.asyncIterator]() {
+      async *[Symbol.asyncIterator](): AsyncGenerator<AiStreamChunk> {
         const { system, rest } = splitSystem(options.messages)
-        const stream = client.messages.stream(
+        const working: MessageParam[] = rest.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+        let totalUsage: AiUsage | undefined
+
+        for (let round = 0; round < maxRounds; round++) {
+          const roundStream = client.messages.stream(
+            {
+              model: options.model ?? defaultModel,
+              max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+              temperature: options.temperature,
+              system,
+              messages: working,
+              tools: anthropicTools,
+            },
+            { signal: options.signal },
+          )
+          try {
+            for await (const event of roundStream) {
+              if (
+                event.type === 'content_block_delta' &&
+                event.delta.type === 'text_delta'
+              ) {
+                yield { type: 'text', delta: event.delta.text }
+              }
+            }
+            const message = await roundStream.finalMessage()
+            totalUsage = addUsage(totalUsage, mapUsage(message.usage))
+
+            if (message.stop_reason !== 'tool_use') {
+              yield {
+                type: 'done',
+                finishReason: mapFinishReason(message.stop_reason),
+                usage: totalUsage,
+              }
+              return
+            }
+
+            working.push({ role: 'assistant', content: message.content })
+            const toolUses = message.content.filter(
+              (b): b is ToolUseBlock => b.type === 'tool_use',
+            )
+            const results: AiToolResult[] = []
+            for (const block of toolUses) {
+              const call: AiToolCall = {
+                id: block.id,
+                name: block.name,
+                args: block.input,
+              }
+              yield { type: 'tool_call', call }
+              const result = await runExecutor(
+                toolMap.get(block.name),
+                block,
+                options.signal,
+              )
+              results.push(result)
+              yield { type: 'tool_result', result }
+            }
+            working.push(toolResultsToUserMessage(results))
+          } finally {
+            roundStream.abort()
+          }
+        }
+
+        // Cap reached — one more forced turn.
+        const final = await client.messages.create(
           {
             model: options.model ?? defaultModel,
             max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
             temperature: options.temperature,
             system,
-            messages: rest.map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
+            messages: working,
+            tools: anthropicTools,
+            tool_choice: { type: 'none' },
           },
           { signal: options.signal },
         )
-
-        try {
-          for await (const event of stream) {
-            if (
-              event.type === 'content_block_delta' &&
-              event.delta.type === 'text_delta'
-            ) {
-              yield { delta: event.delta.text, done: false }
-            }
-          }
-          yield { delta: '', done: true }
-        } finally {
-          stream.abort()
+        totalUsage = addUsage(totalUsage, mapUsage(final.usage))
+        const text = extractText(final.content)
+        if (text) yield { type: 'text', delta: text }
+        yield {
+          type: 'done',
+          finishReason: 'max_tool_rounds',
+          usage: totalUsage,
         }
       },
     }
