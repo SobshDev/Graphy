@@ -7,6 +7,7 @@ import type { ChatMessage } from '../types'
 import { CHAT_MODEL_LABELS } from '../types'
 import { ClaudeLogo } from './claude-logo'
 import { Markdown } from './markdown'
+import { ToolCallCard } from './tool-call-card'
 
 const proseClass = cn(
   'font-chat-sans text-[13.5px] leading-[1.6] text-chat-text',
@@ -109,6 +110,7 @@ function MessageRow({
   const showCaret = message.pending && !message.error
   const isError = Boolean(message.error)
   const isThinking = message.pending && message.content.length === 0
+  const toolCalls = message.toolCalls ?? []
 
   return (
     <div className="flex flex-col gap-2">
@@ -120,6 +122,13 @@ function MessageRow({
           {byline}
         </b>
       </div>
+      {toolCalls.length > 0 && (
+        <div className="ml-2 flex flex-col gap-1.5 border-l border-chat-line pl-[26px]">
+          {toolCalls.map((call) => (
+            <ToolCallCard key={call.id} call={call} />
+          ))}
+        </div>
+      )}
       <div
         className={cn(
           proseClass,

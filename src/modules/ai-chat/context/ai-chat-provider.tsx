@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { AiMessage } from '@/modules/ai'
+import { createGraphTools } from '@/modules/ai'
+import { useGraph } from '@/modules/graph'
+import type { Graph } from '@/modules/parser'
 
 import {
   AiServiceUnavailableError,
@@ -16,6 +19,16 @@ import {
 } from '../types'
 import { AiChatContext } from './ai-chat-context'
 import type { AiChatContextValue } from './ai-chat-context'
+
+const SYSTEM_PROMPT = [
+  'You are an assistant embedded in Graphy, an IDE that renders TypeScript projects as a graph of functions, methods, arrow functions, and classes connected by "calls" edges.',
+  "Always prefer the provided tools over guessing. They query the live parsed graph of the user's project:",
+  '- `list_nodes` discovers what exists (optionally filtered by type / file / name).',
+  '- `get_node` fetches a single node by its id ("<file>::<qualified-name>").',
+  '- `inspect_class` returns a class with its methods, external dependencies, and aggregate counts.',
+  '- `find_callers` and `find_callees` walk the call graph.',
+  'When you reference code, cite real node ids, file paths, and line numbers from the tool results. If a tool returns nothing useful, say so plainly instead of inventing details.',
+].join('\n')
 
 interface AiChatProviderProps {
   children: React.ReactNode
@@ -46,6 +59,11 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
   const [isStreaming, setIsStreaming] = useState(false)
   const [tokenUsage, setTokenUsage] = useState<TokenUsage>(EMPTY_TOKEN_USAGE)
   const abortRef = useRef<AbortController | null>(null)
+  const { graph } = useGraph()
+  const graphRef = useRef<Graph | null>(graph)
+  useEffect(() => {
+    graphRef.current = graph
+  }, [graph])
 
   useEffect(() => {
     const stored = readAiConfig()
@@ -128,13 +146,20 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       void (async () => {
         try {
           const service = createAiService(provider, apiKey)
+          const tools = createGraphTools(graphRef.current)
+          const aiMessages: AiMessage[] = [
+            { role: 'system', content: SYSTEM_PROMPT },
+            ...toAiMessages(baseHistory),
+          ]
           const stream = service.stream({
-            messages: toAiMessages(baseHistory),
+            messages: aiMessages,
             model: CHAT_MODEL_API_ID[activeModel],
             signal: controller.signal,
+            tools,
           })
 
           let acc = ''
+          let finalToolCalls: ChatMessage['toolCalls']
           for await (const chunk of stream) {
             if (chunk.delta) {
               acc += chunk.delta
@@ -153,13 +178,21 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                   total: prev.total + usage.totalTokens,
                 }))
               }
+              finalToolCalls = chunk.result?.toolCalls
               break
             }
           }
 
           setMessages((prev) =>
             prev.map((m) =>
-              m.id === assistantId ? { ...m, content: acc, pending: false } : m,
+              m.id === assistantId
+                ? {
+                    ...m,
+                    content: acc,
+                    pending: false,
+                    toolCalls: finalToolCalls,
+                  }
+                : m,
             ),
           )
         } catch (err) {

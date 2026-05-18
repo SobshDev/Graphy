@@ -1,3 +1,5 @@
+import type { AiToolCall } from '@/modules/ai'
+
 export type AiProvider = 'claude' | 'codex'
 
 export const AI_PROVIDERS: ReadonlyArray<AiProvider> = ['claude', 'codex']
@@ -66,4 +68,5 @@ export interface ChatMessage {
   content: string
   pending?: boolean
   error?: string
+  toolCalls?: AiToolCall[]
 }
