@@ -19,31 +19,38 @@
 ### Task 1: Add the `@modelcontextprotocol/sdk` dependency
 
 **Files:**
+
 - Modify: `package.json`
 - Regenerate: `bun.lock`
 
 - [ ] **Step 1: Add the dependency**
 
 Run:
+
 ```bash
 bun add @modelcontextprotocol/sdk@^1.24.0
 ```
+
 Expected: `package.json` `dependencies` gains `"@modelcontextprotocol/sdk": "^1.24.0"`; `bun.lock` regenerated.
 
 - [ ] **Step 2: Verify install resolved**
 
 Run:
+
 ```bash
 bun pm ls @modelcontextprotocol/sdk
 ```
+
 Expected: one entry, `@modelcontextprotocol/sdk@1.24.x` (or newer 1.x).
 
 - [ ] **Step 3: Type-check baseline**
 
 Run:
+
 ```bash
 bunx tsc --noEmit
 ```
+
 Expected: PASS (no new errors introduced by the dep).
 
 - [ ] **Step 4: Commit**
@@ -60,6 +67,7 @@ git commit -m "chore(ai): add @modelcontextprotocol/sdk for Codex tool bridge"
 This task only adds/modifies types. No service code changes yet — the compiler will flag the providers; that's expected and is fixed by later tasks.
 
 **Files:**
+
 - Modify: `src/modules/ai/ai.interface.ts`
 
 - [ ] **Step 1: Replace the contents of `src/modules/ai/ai.interface.ts`**
@@ -158,9 +166,11 @@ export const DEFAULT_MAX_TOOL_ROUNDS = 25
 - [ ] **Step 2: Type-check (expected to fail in service files only)**
 
 Run:
+
 ```bash
 bunx tsc --noEmit
 ```
+
 Expected: errors **only** in `claude.service.ts` and `codex.service.ts` about the now-tagged-union `AiStreamChunk` (existing `yield { delta, done }` doesn't match). No errors in `ai.interface.ts` itself.
 
 If errors appear elsewhere, stop and investigate before proceeding.
@@ -168,9 +178,11 @@ If errors appear elsewhere, stop and investigate before proceeding.
 - [ ] **Step 3: Lint the interface file**
 
 Run:
+
 ```bash
 bun run lint -- src/modules/ai/ai.interface.ts
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -187,6 +199,7 @@ git commit -m "feat(ai): add tool calling types to AiService interface"
 The driver is a Node ESM script that exercises tool calling end-to-end. We create it now so each subsequent task can append a milestone case. The agent never runs it.
 
 **Files:**
+
 - Create: `scripts/ai-tool-calling-driver.ts`
 
 - [ ] **Step 1: Create the driver skeleton**
@@ -321,17 +334,21 @@ main().catch((e) => {
 - [ ] **Step 2: Type-check the driver**
 
 Run:
+
 ```bash
 bunx tsc --noEmit
 ```
+
 Expected: PASS (the milestone bodies just throw; types resolve via the interface).
 
 - [ ] **Step 3: Lint the driver**
 
 Run:
+
 ```bash
 bun run lint -- scripts/ai-tool-calling-driver.ts
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -348,6 +365,7 @@ git commit -m "chore(ai): add manual driver skeleton for tool calling"
 Implement the loop only for the case where the model calls tools once and then answers. Multi-round and edge cases come in Task 5–6.
 
 **Files:**
+
 - Modify: `src/modules/ai/claude.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -356,6 +374,7 @@ Implement the loop only for the case where the model calls tools once and then a
 In `src/modules/ai/claude.service.ts`:
 
 Update imports:
+
 ```ts
 import Anthropic from '@anthropic-ai/sdk'
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema'
@@ -384,6 +403,7 @@ import { splitSystem } from './messages.util'
 ```
 
 Add helpers above the class:
+
 ```ts
 function toAnthropicTools(tools: AiToolDefinition[]): Tool[] {
   return tools.map((t) => ({
@@ -433,9 +453,7 @@ async function runExecutor(
   }
 }
 
-function toolResultsToUserMessage(
-  results: AiToolResult[],
-): MessageParam {
+function toolResultsToUserMessage(results: AiToolResult[]): MessageParam {
   const blocks: ToolResultBlockParam[] = results.map((r) => ({
     type: 'tool_result',
     tool_use_id: r.id,
@@ -456,6 +474,7 @@ function addUsage(a: AiUsage | undefined, b: AiUsage): AiUsage {
 ```
 
 Replace the existing `chat` method:
+
 ```ts
 async chat(options: AiChatOptions): Promise<AiChatResult> {
   const { system, rest } = splitSystem(options.messages)
@@ -565,9 +584,11 @@ async function claudeSingle() {
 - [ ] **Step 3: Type-check and lint**
 
 Run:
+
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: type errors persist only in `codex.service.ts` (the `stream` chunk shape). `claude.service.ts` and the driver should be clean.
 
 If `claude.service.ts` has new errors, stop and reconcile against the Anthropic SDK's `MessageParam` / `ContentBlock` types before continuing.
@@ -595,6 +616,7 @@ Do not proceed to Task 5 until the user confirms.
 The loop already supports multi-round (Task 4's `for` iterates), but we haven't exercised it. This task adds milestone cases for chained calls and executor failure recovery.
 
 **Files:**
+
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
 - [ ] **Step 1: Add a graph-walking milestone**
@@ -629,7 +651,9 @@ async function claudeMulti() {
     )
   }
   if (!result.content.toLowerCase().includes('tokenize')) {
-    throw new Error(`expected final answer to mention 'tokenize', got: ${result.content}`)
+    throw new Error(
+      `expected final answer to mention 'tokenize', got: ${result.content}`,
+    )
   }
 }
 ```
@@ -644,22 +668,23 @@ async function claudeError() {
   const svc = new ClaudeService({ apiKey })
 
   let calls = 0
-  const flakyTool: AiToolDefinition<{ id: string }, { ok: true; id: string }> = {
-    name: 'read_graph_node',
-    description:
-      'Read one graph node by id. Returns ok:true on success. Fails the first call.',
-    inputSchema: {
-      type: 'object',
-      properties: { id: { type: 'string' } },
-      required: ['id'],
-      additionalProperties: false,
-    },
-    execute: ({ id }) => {
-      calls += 1
-      if (calls === 1) throw new Error('transient network failure')
-      return { ok: true, id }
-    },
-  }
+  const flakyTool: AiToolDefinition<{ id: string }, { ok: true; id: string }> =
+    {
+      name: 'read_graph_node',
+      description:
+        'Read one graph node by id. Returns ok:true on success. Fails the first call.',
+      inputSchema: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+        additionalProperties: false,
+      },
+      execute: ({ id }) => {
+        calls += 1
+        if (calls === 1) throw new Error('transient network failure')
+        return { ok: true, id }
+      },
+    }
 
   const result = await svc.chat({
     messages: [
@@ -675,18 +700,23 @@ async function claudeError() {
   console.log('calls observed:', calls)
   console.log('toolCalls:', JSON.stringify(result.toolCalls, null, 2))
   const tc = result.toolCalls ?? []
-  if (tc.length < 2) throw new Error('expected at least 2 calls (one failure, one retry)')
-  if (!tc[0].result.isError) throw new Error('expected first call to be flagged as error')
-  if (tc[tc.length - 1].result.isError) throw new Error('expected last call to succeed')
+  if (tc.length < 2)
+    throw new Error('expected at least 2 calls (one failure, one retry)')
+  if (!tc[0].result.isError)
+    throw new Error('expected first call to be flagged as error')
+  if (tc[tc.length - 1].result.isError)
+    throw new Error('expected last call to succeed')
 }
 ```
 
 - [ ] **Step 2: Type-check and lint**
 
 Run:
+
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: PASS for claude.service.ts and the driver. Codex errors remain.
 
 - [ ] **Step 3: Commit**
@@ -712,6 +742,7 @@ Do not proceed to Task 6 until the user confirms both.
 When the model is still asking for tools at round `maxToolRounds`, issue one more turn with `tool_choice: none` to force a final answer, and return `finishReason: 'max_tool_rounds'`.
 
 **Files:**
+
 - Modify: `src/modules/ai/claude.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -799,6 +830,7 @@ async function claudeCap() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: PASS for claude.service.ts and driver.
 
 - [ ] **Step 4: Commit**
@@ -822,6 +854,7 @@ Tell the user:
 Reshape `stream()` to emit text deltas plus `tool_call` / `tool_result` events between rounds.
 
 **Files:**
+
 - Modify: `src/modules/ai/claude.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -955,9 +988,12 @@ async function claudeStream() {
     else order.push(chunk.type)
   }
   console.log('order:', order, 'textPieces:', textPieces)
-  if (order[0] !== 'tool_call') throw new Error("expected first non-text event = 'tool_call'")
-  if (order[1] !== 'tool_result') throw new Error("expected 'tool_result' after 'tool_call'")
-  if (order[order.length - 1] !== 'done') throw new Error("expected last event = 'done'")
+  if (order[0] !== 'tool_call')
+    throw new Error("expected first non-text event = 'tool_call'")
+  if (order[1] !== 'tool_result')
+    throw new Error("expected 'tool_result' after 'tool_call'")
+  if (order[order.length - 1] !== 'done')
+    throw new Error("expected last event = 'done'")
   if (textPieces === 0) throw new Error('expected at least one text delta')
 }
 ```
@@ -967,6 +1003,7 @@ async function claudeStream() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: claude.service.ts and driver clean. Codex errors remain.
 
 - [ ] **Step 4: Commit**
@@ -990,6 +1027,7 @@ Tell the user:
 This file is **provider-agnostic** — it accepts `AiToolDefinition[]` and exposes them on a Streamable-HTTP MCP server bound to `127.0.0.1:0`.
 
 **Files:**
+
 - Create: `src/modules/ai/codex-mcp.server.ts`
 
 - [ ] **Step 1: Write the server module**
@@ -1002,11 +1040,7 @@ import { randomUUID } from 'node:crypto'
 import { AddressInfo } from 'node:net'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
-import type {
-  AiToolCall,
-  AiToolDefinition,
-  AiToolResult,
-} from './ai.interface'
+import type { AiToolCall, AiToolDefinition, AiToolResult } from './ai.interface'
 
 export interface GraphyMcpServer {
   /** Base URL the MCP client connects to (e.g. "http://127.0.0.1:54321/mcp"). */
@@ -1126,6 +1160,7 @@ export async function createGraphyMcpServer(
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: this file clean. Codex errors remain (we'll wire it up in Task 10).
 
 - [ ] **Step 3: Commit**
@@ -1146,11 +1181,13 @@ Before wiring CodexService, **confirm** that the Codex CLI v0.130 accepts a Stre
 - [ ] **Step 1: Locate Codex CLI version and docs**
 
 Run:
+
 ```bash
 bun pm ls @openai/codex
 bunx codex --version 2>/dev/null || node node_modules/@openai/codex/bin/codex.js --version
 bunx codex --help 2>/dev/null | grep -i -E 'mcp|config' | head -20 || true
 ```
+
 Record the version and any MCP-related help text.
 
 - [ ] **Step 2: Inspect the SDK's flattened config shape**
@@ -1183,6 +1220,7 @@ echo "ping" | bunx codex exec --skip-git-repo-check --full-auto \
 ```
 
 Replace `PORT` with the bound port. If Codex prints an error mentioning unrecognized config OR `mcp_servers.graphy` expects different keys, iterate on:
+
 - `mcp_servers.graphy.transport=streamable_http` + `mcp_servers.graphy.url=...`
 - `mcp_servers.graphy.type=streamable_http` + `mcp_servers.graphy.url=...`
 - `mcp_servers.graphy.http.url=...`
@@ -1193,6 +1231,7 @@ Replace `PORT` with the bound port. If Codex prints an error mentioning unrecogn
 bunx codex --help 2>/dev/null | grep -iE 'max[-_]tool|max[-_]calls|tool[-_]cap' | head
 grep -ri --include='*.js' 'max_tool_calls\|max_tool_rounds\|tool_call_limit' node_modules/@openai/codex 2>/dev/null | head
 ```
+
 If a key exists, record its name. If not, plan to leave `maxToolRounds` documented as "best-effort on Codex; relies on Codex's own safeguards and AbortSignal" in `CodexService` JSDoc.
 
 - [ ] **Step 5: Record the finding**
@@ -1219,6 +1258,7 @@ Tell the user the verified config shape (e.g. `mcp_servers.graphy.url=http://...
 Use the config key resolved in Task 9. The example below assumes `mcp_servers.<name>.url=<url>` — adjust if Task 9 found something different.
 
 **Files:**
+
 - Modify: `src/modules/ai/codex.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -1246,10 +1286,7 @@ import type {
   AiUsage,
 } from './ai.interface'
 import { flattenToPrompt } from './messages.util'
-import {
-  createGraphyMcpServer,
-  type GraphyMcpServer,
-} from './codex-mcp.server'
+import { createGraphyMcpServer, type GraphyMcpServer } from './codex-mcp.server'
 
 export interface CodexServiceOptions {
   apiKey: string
@@ -1313,7 +1350,10 @@ export class CodexService implements AiService {
     this.defaultSandboxMode = options.defaultSandboxMode ?? 'read-only'
   }
 
-  private buildThreadOptions(model: string | undefined, hasTools: boolean): ThreadOptions {
+  private buildThreadOptions(
+    model: string | undefined,
+    hasTools: boolean,
+  ): ThreadOptions {
     const opts: ThreadOptions = {}
     if (model) opts.model = model
     if (hasTools) {
@@ -1354,9 +1394,7 @@ export class CodexService implements AiService {
       let toolCalls = accumulated
       if (toolCalls.length === 0) {
         toolCalls = turn.items
-          .filter(
-            (i): i is McpToolCallItem => i.type === 'mcp_tool_call',
-          )
+          .filter((i): i is McpToolCallItem => i.type === 'mcp_tool_call')
           .map(callsFromMcpItem)
           .filter(
             (p): p is { call: AiToolCall; result: AiToolResult } => p !== null,
@@ -1440,6 +1478,7 @@ async function codexSingle() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: all `src/modules/ai/*` files clean. Driver clean.
 
 - [ ] **Step 4: Commit**
@@ -1461,6 +1500,7 @@ Tell the user:
 ### Task 11: CodexService — `stream` with tool events
 
 **Files:**
+
 - Modify: `src/modules/ai/codex.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -1565,8 +1605,10 @@ async function codexStream() {
   }
   console.log('order:', order, 'textPieces:', textPieces)
   if (!order.includes('tool_call')) throw new Error('no tool_call event seen')
-  if (!order.includes('tool_result')) throw new Error('no tool_result event seen')
-  if (order[order.length - 1] !== 'done') throw new Error("expected last event = 'done'")
+  if (!order.includes('tool_result'))
+    throw new Error('no tool_result event seen')
+  if (order[order.length - 1] !== 'done')
+    throw new Error("expected last event = 'done'")
   if (textPieces === 0) throw new Error('expected at least one text item')
 }
 ```
@@ -1576,6 +1618,7 @@ async function codexStream() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1596,6 +1639,7 @@ Tell the user to run `codex-stream` and confirm `tool_call`, `tool_result`, and 
 Validate that when tools are present, Codex defaults to `approvalPolicy: 'never'` and `sandboxMode: 'read-only'` — so the agent doesn't reach for the built-in shell/file-edit tools.
 
 **Files:**
+
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
 - [ ] **Step 1: Add the `codex-sandbox` milestone**
@@ -1625,8 +1669,10 @@ async function codexSandbox() {
   })
   console.log('content:', result.content)
   // It should NOT contain CommandExecution evidence; instead it should describe labels.
-  if (!result.content.toLowerCase().includes('parseinput') &&
-      !result.content.toLowerCase().includes('main')) {
+  if (
+    !result.content.toLowerCase().includes('parseinput') &&
+    !result.content.toLowerCase().includes('main')
+  ) {
     throw new Error(`expected labels in answer, got: ${result.content}`)
   }
 }
@@ -1637,6 +1683,7 @@ async function codexSandbox() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 3: Commit**
@@ -1657,6 +1704,7 @@ Tell the user to run `codex-sandbox` and check the printed output. The final ans
 ClaudeService's `generateObject` doesn't currently check for tools either. Mirror the Codex check.
 
 **Files:**
+
 - Modify: `src/modules/ai/claude.service.ts`
 - Modify: `scripts/ai-tool-calling-driver.ts`
 
@@ -1713,7 +1761,10 @@ async function rejectToolsWithSchema() {
       await fn()
     } catch (err) {
       threw = true
-      if (!(err instanceof Error) || !err.message.includes('tools and schema cannot be combined')) {
+      if (
+        !(err instanceof Error) ||
+        !err.message.includes('tools and schema cannot be combined')
+      ) {
         throw new Error(`${name}: wrong error: ${err}`)
       }
     }
@@ -1728,6 +1779,7 @@ async function rejectToolsWithSchema() {
 ```bash
 bunx tsc --noEmit && bun run lint
 ```
+
 Expected: PASS.
 
 - [ ] **Step 4: Commit**
@@ -1749,6 +1801,7 @@ This milestone needs at least one env key (it short-circuits before any network 
 ### Task 14: Update barrel exports + final formatting
 
 **Files:**
+
 - Modify: `src/modules/ai/index.ts`
 
 - [ ] **Step 1: Export the MCP server module**
@@ -1768,6 +1821,7 @@ export * from './codex-mcp.server'
 ```bash
 bun run format && bun run check && bunx tsc --noEmit
 ```
+
 Expected: all PASS.
 
 - [ ] **Step 3: Commit**
@@ -1788,6 +1842,7 @@ git commit -m "feat(ai): expose GraphyMcpServer from module barrel"
 ```bash
 git status
 ```
+
 Expected: `nothing to commit, working tree clean`.
 
 - [ ] **Step 2: Confirm branch log**
@@ -1795,6 +1850,7 @@ Expected: `nothing to commit, working tree clean`.
 ```bash
 git log --oneline main..HEAD
 ```
+
 Expected: roughly 14 commits stacked on the spec, in the order of the tasks above.
 
 - [ ] **Step 3: 🚦 Final milestone: `all`**

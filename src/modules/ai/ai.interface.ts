@@ -34,7 +34,9 @@ export interface AiChatOptions {
   temperature?: number
   maxTokens?: number
   signal?: AbortSignal
-  tools?: AiToolDefinition[]
+  // AiToolDefinition is contravariant on TArgs via execute(); widening to
+  // <any, any> here lets the array accept heterogeneous typed tool sets.
+  tools?: Array<AiToolDefinition<any, any>>
   maxToolRounds?: number
 }
 

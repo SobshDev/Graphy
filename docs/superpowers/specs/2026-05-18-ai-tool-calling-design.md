@@ -79,7 +79,11 @@ export type AiStreamChunk =
   | { type: 'text'; delta: string }
   | { type: 'tool_call'; call: AiToolCall }
   | { type: 'tool_result'; result: AiToolResult }
-  | { type: 'done'; finishReason?: AiChatResult['finishReason']; usage?: AiUsage }
+  | {
+      type: 'done'
+      finishReason?: AiChatResult['finishReason']
+      usage?: AiUsage
+    }
 ```
 
 `AiStreamChunk` is a **breaking change** to the existing `{ delta, done }` shape. Callers must be updated. The current codebase has no consumers of `stream()` outside the AI module itself, so the blast radius is limited.
@@ -193,15 +197,15 @@ Unchanged. Same "tools + schema → throw" rule.
 
 ## Error handling summary
 
-| Case | Behavior |
-|------|----------|
-| Executor throws | Caught; surfaced to model as `tool_result { isError: true, content: error.message }`. Loop continues. |
-| Model calls an unknown tool | Same as above with `content: 'unknown tool: <name>'`. |
-| `tools` + `schema` on same call | Throw `Error('tools and schema cannot be combined')` before any provider call. |
-| `maxToolRounds` hit (Claude) | One final turn with `tool_choice: none`; `finishReason: 'max_tool_rounds'`. |
-| `maxToolRounds` hit (Codex) | Best-effort — see Open Questions. |
-| AbortSignal fires | In-flight provider call aborted; in-flight executor receives `ctx.signal` (Claude only — see Open Questions for Codex); MCP server closed in `finally`. |
-| MCP server port bind fails | Throw immediately from `chat`/`stream` before invoking Codex. |
+| Case                            | Behavior                                                                                                                                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Executor throws                 | Caught; surfaced to model as `tool_result { isError: true, content: error.message }`. Loop continues.                                                   |
+| Model calls an unknown tool     | Same as above with `content: 'unknown tool: <name>'`.                                                                                                   |
+| `tools` + `schema` on same call | Throw `Error('tools and schema cannot be combined')` before any provider call.                                                                          |
+| `maxToolRounds` hit (Claude)    | One final turn with `tool_choice: none`; `finishReason: 'max_tool_rounds'`.                                                                             |
+| `maxToolRounds` hit (Codex)     | Best-effort — see Open Questions.                                                                                                                       |
+| AbortSignal fires               | In-flight provider call aborted; in-flight executor receives `ctx.signal` (Claude only — see Open Questions for Codex); MCP server closed in `finally`. |
+| MCP server port bind fails      | Throw immediately from `chat`/`stream` before invoking Codex.                                                                                           |
 
 ## Dependencies
 

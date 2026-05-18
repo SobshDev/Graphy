@@ -12,6 +12,7 @@
  *     reject-tools-with-schema, all
  */
 import type { AiToolDefinition } from '../src/modules/ai/index'
+import { ClaudeService } from '../src/modules/ai/index'
 
 const MILESTONES = {
   'claude-single': claudeSingle,
@@ -26,7 +27,33 @@ const MILESTONES = {
 }
 
 async function claudeSingle() {
-  throw new Error('not yet implemented — Task 4 fills this in')
+  const apiKey = requireEnv('ANTHROPIC_API_KEY')
+  const svc = new ClaudeService({ apiKey })
+  const tool = makeReadGraphTool()
+  const result = await svc.chat({
+    messages: [
+      {
+        role: 'system',
+        content: 'You answer questions about a code graph using tools.',
+      },
+      { role: 'user', content: 'What is the label of node-1?' },
+    ],
+    tools: [tool],
+  })
+  console.log('content:', result.content)
+  console.log('finishReason:', result.finishReason)
+  console.log('toolCalls:', JSON.stringify(result.toolCalls, null, 2))
+  if (!result.toolCalls || result.toolCalls.length === 0) {
+    throw new Error('expected at least one tool call')
+  }
+  if (result.toolCalls[0].call.name !== 'read_graph_node') {
+    throw new Error(`unexpected tool: ${result.toolCalls[0].call.name}`)
+  }
+  if (!result.content.toLowerCase().includes('main')) {
+    throw new Error(
+      `expected the answer to mention 'main' (node-1's label), got: ${result.content}`,
+    )
+  }
 }
 async function claudeMulti() {
   throw new Error('not yet implemented — Task 5')
@@ -56,9 +83,7 @@ async function rejectToolsWithSchema() {
 async function main() {
   const arg = process.argv[2] ?? 'all'
   const targets =
-    arg === 'all'
-      ? Object.entries(MILESTONES)
-      : validateMilestone(arg)
+    arg === 'all' ? Object.entries(MILESTONES) : validateMilestone(arg)
   for (const [name, fn] of targets) {
     console.log(`\n=== ${name} ===`)
     try {
