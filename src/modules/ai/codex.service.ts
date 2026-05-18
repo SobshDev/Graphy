@@ -52,9 +52,8 @@ export class CodexService implements AiService {
 
   async chat(options: AiChatOptions): Promise<AiChatResult> {
     const prompt = flattenToPrompt(options.messages)
-    const thread = this.codex.startThread(
-      this.defaultModel ? { model: options.model ?? this.defaultModel } : undefined,
-    )
+    const model = options.model ?? this.defaultModel
+    const thread = this.codex.startThread(model ? { model } : undefined)
     const turn = await thread.run(prompt, { signal: options.signal })
     return {
       content: turn.finalResponse,
@@ -70,9 +69,8 @@ export class CodexService implements AiService {
     return {
       async *[Symbol.asyncIterator]() {
         const prompt = flattenToPrompt(options.messages)
-        const thread = codex.startThread(
-          defaultModel ? { model: options.model ?? defaultModel } : undefined,
-        )
+        const model = options.model ?? defaultModel
+        const thread = codex.startThread(model ? { model } : undefined)
         const { events } = await thread.runStreamed(prompt, { signal: options.signal })
 
         for await (const event of events) {
@@ -95,9 +93,8 @@ export class CodexService implements AiService {
     options: AiStructuredOptions<T>,
   ): Promise<AiStructuredResult<T>> {
     const prompt = flattenToPrompt(options.messages)
-    const thread = this.codex.startThread(
-      this.defaultModel ? { model: options.model ?? this.defaultModel } : undefined,
-    )
+    const model = options.model ?? this.defaultModel
+    const thread = this.codex.startThread(model ? { model } : undefined)
     const turn = await thread.run(prompt, {
       outputSchema: options.schema,
       signal: options.signal,
