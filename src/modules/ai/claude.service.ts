@@ -2,7 +2,6 @@ import Anthropic from '@anthropic-ai/sdk'
 import { jsonSchemaOutputFormat } from '@anthropic-ai/sdk/helpers/json-schema'
 import type {
   ContentBlock,
-  RawMessageStreamEvent,
   StopReason,
 } from '@anthropic-ai/sdk/resources/messages/messages'
 import type {
@@ -73,7 +72,7 @@ export class ClaudeService implements AiService {
         temperature: options.temperature,
         system,
         messages: rest.map((m) => ({
-          role: m.role as 'user' | 'assistant',
+          role: m.role,
           content: m.content,
         })),
       },
@@ -101,7 +100,7 @@ export class ClaudeService implements AiService {
             temperature: options.temperature,
             system,
             messages: rest.map((m) => ({
-              role: m.role as 'user' | 'assistant',
+              role: m.role,
               content: m.content,
             })),
           },
@@ -109,7 +108,7 @@ export class ClaudeService implements AiService {
         )
 
         try {
-          for await (const event of stream as AsyncIterable<RawMessageStreamEvent>) {
+          for await (const event of stream) {
             if (
               event.type === 'content_block_delta' &&
               event.delta.type === 'text_delta'
@@ -136,7 +135,7 @@ export class ClaudeService implements AiService {
         temperature: options.temperature,
         system,
         messages: rest.map((m) => ({
-          role: m.role as 'user' | 'assistant',
+          role: m.role,
           content: m.content,
         })),
         output_config: {

@@ -2,17 +2,17 @@ import type { AiMessage } from './ai.interface'
 
 export interface SplitMessages {
   system: string | undefined
-  rest: AiMessage[]
+  rest: Array<AiMessage & { role: 'user' | 'assistant' }>
 }
 
 export function splitSystem(messages: AiMessage[]): SplitMessages {
   const systemParts: string[] = []
-  const rest: AiMessage[] = []
+  const rest: Array<AiMessage & { role: 'user' | 'assistant' }> = []
   for (const message of messages) {
     if (message.role === 'system') {
       systemParts.push(message.content)
     } else {
-      rest.push(message)
+      rest.push(message as AiMessage & { role: 'user' | 'assistant' })
     }
   }
   return {
