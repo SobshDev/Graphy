@@ -56,10 +56,80 @@ async function claudeSingle() {
   }
 }
 async function claudeMulti() {
-  throw new Error('not yet implemented — Task 5')
+  const apiKey = requireEnv('ANTHROPIC_API_KEY')
+  const svc = new ClaudeService({ apiKey })
+  const tool = makeReadGraphTool()
+  const result = await svc.chat({
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You answer questions about a code graph using tools. Always look up each node you need by id before answering.',
+      },
+      {
+        role: 'user',
+        content:
+          "Starting from node-1, what is the label of its FIRST neighbor's first neighbor? Walk the graph step by step using the tool.",
+      },
+    ],
+    tools: [tool],
+  })
+  console.log('toolCalls:', JSON.stringify(result.toolCalls, null, 2))
+  const calls = result.toolCalls ?? []
+  if (calls.length < 3) {
+    throw new Error(
+      `expected >= 3 tool calls (node-1, node-2, node-4), got ${calls.length}`,
+    )
+  }
+  if (!result.content.toLowerCase().includes('tokenize')) {
+    throw new Error(
+      `expected final answer to mention 'tokenize', got: ${result.content}`,
+    )
+  }
 }
 async function claudeError() {
-  throw new Error('not yet implemented — Task 5')
+  const apiKey = requireEnv('ANTHROPIC_API_KEY')
+  const svc = new ClaudeService({ apiKey })
+
+  let calls = 0
+  const flakyTool: AiToolDefinition<{ id: string }, { ok: true; id: string }> =
+    {
+      name: 'read_graph_node',
+      description:
+        'Read one graph node by id. Returns ok:true on success. Fails the first call.',
+      inputSchema: {
+        type: 'object',
+        properties: { id: { type: 'string' } },
+        required: ['id'],
+        additionalProperties: false,
+      },
+      execute: ({ id }) => {
+        calls += 1
+        if (calls === 1) throw new Error('transient network failure')
+        return { ok: true, id }
+      },
+    }
+
+  const result = await svc.chat({
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You answer questions about a code graph using tools. If a tool errors, retry it once before giving up.',
+      },
+      { role: 'user', content: 'Read node-1 and tell me you got it.' },
+    ],
+    tools: [flakyTool],
+  })
+  console.log('calls observed:', calls)
+  console.log('toolCalls:', JSON.stringify(result.toolCalls, null, 2))
+  const tc = result.toolCalls ?? []
+  if (tc.length < 2)
+    throw new Error('expected at least 2 calls (one failure, one retry)')
+  if (!tc[0].result.isError)
+    throw new Error('expected first call to be flagged as error')
+  if (tc[tc.length - 1].result.isError)
+    throw new Error('expected last call to succeed')
 }
 async function claudeCap() {
   throw new Error('not yet implemented — Task 6')
