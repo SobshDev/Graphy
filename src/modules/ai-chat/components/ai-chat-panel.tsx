@@ -23,8 +23,8 @@ export function AiChatPanel() {
   const count = messages.length
 
   return (
-    <aside className="graphy-chat bg-chat-bg text-chat-text font-chat-mono flex h-full w-[400px] shrink-0 flex-col border-l border-l-chat-line text-[14px] antialiased">
-      <header className="flex min-h-[46px] items-center gap-2 border-b border-chat-line px-3 py-2.5">
+    <aside className="graphy-chat bg-chat-bg text-chat-text font-chat-mono flex h-full w-[400px] shrink-0 flex-col border-l border-sidebar-border text-[14px] antialiased">
+      <header className="flex h-12 shrink-0 items-center gap-2 border-b border-sidebar-border px-3 py-2.5">
         <span className="inline-flex">
           <ClaudeLogo size={16} />
         </span>
