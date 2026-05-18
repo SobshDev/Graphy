@@ -7,6 +7,7 @@ import '../chat.css'
 
 import { useAiChat } from '../hooks/use-ai-chat'
 import { AiChatComposer } from './ai-chat-composer'
+import { AiChatHistoryMenu } from './ai-chat-history-menu'
 import { AiChatMessages } from './ai-chat-messages'
 import { ClaudeLogo } from './claude-logo'
 
@@ -29,7 +30,14 @@ const headerButtonClass =
   'inline-flex size-7 items-center justify-center rounded-md text-chat-text-2 transition-colors hover:bg-chat-hover hover:text-chat-text disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-chat-text-2'
 
 export function AiChatPanel() {
-  const { isOpen, closeChat, clearMessages, messages, tokenUsage } = useAiChat()
+  const {
+    isOpen,
+    closeChat,
+    createConversation,
+    activeConversation,
+    messages,
+    tokenUsage,
+  } = useAiChat()
   const [panelWidth, setPanelWidth] = useState(CHAT_PANEL_DEFAULT_WIDTH)
   const [isResizing, setIsResizing] = useState(false)
   const resizeRef = useRef<{ startX: number; startWidth: number } | null>(null)
@@ -116,6 +124,8 @@ export function AiChatPanel() {
   if (!isOpen) return null
 
   const count = messages.length
+  const title = activeConversation?.title?.trim()
+  const displayTitle = title && title.length > 0 ? title : 'new chat'
 
   return (
     <aside
@@ -139,7 +149,9 @@ export function AiChatPanel() {
           <ClaudeLogo size={16} />
         </span>
         <div className="flex min-w-0 flex-1 items-center gap-2 text-[12.5px]">
-          <span className="truncate font-medium">chat</span>
+          <span className="truncate font-medium" title={displayTitle}>
+            {displayTitle}
+          </span>
           {count > 0 && (
             <span className="shrink-0 text-[11.5px] text-chat-text-3">
               · {count} {count === 1 ? 'msg' : 'msgs'}
@@ -154,13 +166,14 @@ export function AiChatPanel() {
             </span>
           )}
         </div>
+        <AiChatHistoryMenu />
         <button
           type="button"
           className={headerButtonClass}
           title="New chat"
           aria-label="New chat"
-          onClick={clearMessages}
-          disabled={messages.length === 0}
+          onClick={createConversation}
+          disabled={count === 0}
         >
           <Plus size={14} strokeWidth={1.7} />
         </button>

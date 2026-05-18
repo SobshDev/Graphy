@@ -15,6 +15,7 @@ export interface GraphNode {
   type: NodeType
   file: string
   line: number
+  endLine: number
   signature: string
   isAsync: boolean
   isExported: boolean

@@ -70,3 +70,13 @@ export interface ChatMessage {
   error?: string
   toolCalls?: AiToolCall[]
 }
+
+export interface Conversation {
+  id: string
+  title: string | null
+  createdAt: number
+  updatedAt: number
+  model: ChatModel
+  messages: ChatMessage[]
+  tokenUsage: TokenUsage
+}
