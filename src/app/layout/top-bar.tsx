@@ -10,7 +10,7 @@ export function TopBar() {
   const edgeCount = useStore((s) => s.edges.length)
 
   return (
-    <header className="bg-sidebar border-sidebar-border app-drag titlebar-inset flex h-12 shrink-0 items-center justify-between border-b pl-5 pr-3">
+    <header className="bg-sidebar border-sidebar-border app-drag titlebar-inset flex h-12 shrink-0 items-center justify-between border-b pl-5 pr-6">
       <div className="flex items-center gap-2 font-mono text-[12px]">
         <span className="text-muted-foreground/60">~/projects</span>
         <ChevronRight

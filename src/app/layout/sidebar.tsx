@@ -84,7 +84,7 @@ export function Sidebar() {
               size="icon-lg"
               className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
             >
-              <Bell className="size-4.5" strokeWidth={1.6} />
+              <Bell className="size-5" strokeWidth={1.6} />
             </Button>
           </TooltipTrigger>
           <TooltipContent side="right">Notifications</TooltipContent>
@@ -105,7 +105,7 @@ export function Sidebar() {
                 {isSettings && (
                   <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
                 )}
-                <Settings className="size-4.5" strokeWidth={1.6} />
+                <Settings className="size-5" strokeWidth={1.6} />
               </Button>
             </Link>
           </TooltipTrigger>

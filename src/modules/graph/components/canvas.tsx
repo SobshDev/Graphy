@@ -2,8 +2,10 @@ import { GitBranch } from 'lucide-react'
 
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
+import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
 
 export function Canvas() {
+  const branch = useCurrentBranch()
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
       <GraphCanvas />
@@ -19,10 +21,10 @@ export function Canvas() {
         </span>
       </div>
 
-      <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-4 flex h-8 items-center gap-3 font-mono text-[11px]">
+      <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-6 flex h-8 items-center gap-3 font-mono text-[11px]">
         <span className="inline-flex items-center gap-1.5">
           <GitBranch className="size-3" strokeWidth={1.8} />
-          main
+          {branch ?? '—'}
         </span>
         <span>·</span>
         <span>typescript</span>
