@@ -234,6 +234,10 @@ body {
   padding-left: 2.5rem;
 }
 
+[data-electron='darwin'] .titlebar-spacer {
+  padding-top: 3rem;
+}
+
 @keyframes live-blink {
   0%,
   100% {
