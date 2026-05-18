@@ -29,8 +29,8 @@ const navItems: Array<NavItem> = [
 
 export function Sidebar() {
   return (
-    <aside className="bg-sidebar border-sidebar-border flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
-      <div className="flex flex-col items-center gap-1">
+    <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
+      <div className="app-no-drag flex flex-col items-center gap-1">
         {navItems.map(({ icon: Icon, label, shortcut, active }) => (
           <Tooltip key={label}>
             <TooltipTrigger asChild>
@@ -63,7 +63,7 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="flex flex-col items-center gap-1">
+      <div className="app-no-drag flex flex-col items-center gap-1">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

@@ -14,14 +14,18 @@ async function createWindow() {
   const startUrl =
     process.env.ELECTRON_START_URL || (await startBundledServer())
 
+  const isMac = process.platform === 'darwin'
+
   mainWindow = new BrowserWindow({
     width: 1180,
     height: 780,
     minWidth: 960,
     minHeight: 620,
     title: 'Graphy',
-    backgroundColor: '#e7f3ec',
+    backgroundColor: '#0a0a0a',
     show: false,
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac ? { x: 16, y: 16 } : undefined,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
