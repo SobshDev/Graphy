@@ -1,19 +1,24 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { Graph } from '@/modules/parser'
 
 const MOCK_GRAPH_URL = '/sample-graph.json'
+const GRAPH_UPDATE_EVENT = 'graphy:graph-updated'
 
 export interface UseGraphResult {
   graph: Graph | null
   loading: boolean
   error: Error | null
+  reload: () => void
 }
 
 export function useGraph(root: string | null): UseGraphResult {
   const [graph, setGraph] = useState<Graph | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [tick, setTick] = useState(0)
+
+  const reload = useCallback(() => setTick((n) => n + 1), [])
 
   useEffect(() => {
     let cancelled = false
@@ -36,9 +41,18 @@ export function useGraph(root: string | null): UseGraphResult {
     return () => {
       cancelled = true
     }
-  }, [root])
+  }, [root, tick])
 
-  return { graph, loading, error }
+  useEffect(() => {
+    if (!import.meta.hot) return
+    const handler = () => reload()
+    import.meta.hot.on(GRAPH_UPDATE_EVENT, handler)
+    return () => {
+      import.meta.hot?.off(GRAPH_UPDATE_EVENT, handler)
+    }
+  }, [reload])
+
+  return { graph, loading, error, reload }
 }
 
 async function loadGraph(root: string | null): Promise<Graph> {
@@ -46,7 +60,7 @@ async function loadGraph(root: string | null): Promise<Graph> {
     return window.graphyDesktop.parseProject(root)
   }
 
-  const response = await fetch(MOCK_GRAPH_URL)
+  const response = await fetch(`${MOCK_GRAPH_URL}?t=${Date.now()}`)
   if (!response.ok) {
     throw new Error(
       `Failed to load mock graph (${response.status}). Run "bun run parser:dump" to generate it.`,
