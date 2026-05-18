@@ -58,11 +58,7 @@ export function Sidebar() {
     <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
       <div className="app-no-drag flex flex-col items-center gap-2">
         {navItems.map(({ id, icon: Icon, label, shortcut, to, panel }) => {
-          const active = isSettings
-            ? false
-            : panel
-              ? activePanel === panel
-              : false
+          const active = !isSettings && panel != null && activePanel === panel
           const handleClick = panel
             ? (e: React.MouseEvent) => {
                 e.preventDefault()

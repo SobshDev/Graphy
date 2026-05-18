@@ -6,7 +6,9 @@ import { avatarColor, initials } from '../lib/avatar-color'
 import { formatFullDate, relativeTime } from '../lib/relative-time'
 import type { GitCommit } from '../services/git-history'
 
-function parseRefs(refs: string): Array<{ label: string; kind: string }> {
+type RefKind = 'head' | 'branch' | 'remote' | 'tag'
+
+function parseRefs(refs: string): Array<{ label: string; kind: RefKind }> {
   if (!refs) return []
   return refs
     .split(',')
@@ -25,7 +27,7 @@ function parseRefs(refs: string): Array<{ label: string; kind: string }> {
     })
 }
 
-const REF_STYLES: Record<string, string> = {
+const REF_STYLES: Record<RefKind, string> = {
   head: 'bg-primary/15 text-primary border-primary/30',
   branch: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30',
   remote: 'bg-sky-500/15 text-sky-400 border-sky-500/30',
@@ -38,8 +40,9 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
   const color = avatarColor(commit.email || commit.author)
 
   return (
-    <div
-      className="hover:bg-sidebar-accent/60 group cursor-pointer border-l-2 border-transparent px-3 py-2 transition-colors hover:border-l-primary/40"
+    <button
+      type="button"
+      className="hover:bg-sidebar-accent/60 hover:border-l-primary/40 group block w-full border-l-2 border-transparent px-3 py-2 text-left transition-colors"
       onClick={() => setExpanded((v) => !v)}
     >
       <div className="flex items-start gap-2">
@@ -67,9 +70,7 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
               {refs.map((ref) => (
                 <span
                   key={ref.label + ref.kind}
-                  className={`rounded border px-1 py-px text-[9.5px] font-medium leading-none ${
-                    REF_STYLES[ref.kind] ?? REF_STYLES.branch
-                  }`}
+                  className={`rounded border px-1 py-px text-[9.5px] font-medium leading-none ${REF_STYLES[ref.kind]}`}
                 >
                   {ref.label}
                 </span>
@@ -101,6 +102,6 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
           {commit.shortHash}
         </span>
       </div>
-    </div>
+    </button>
   )
 }

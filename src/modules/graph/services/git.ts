@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 
+import { openRepo } from '@/shared/lib/git'
+
 export const getCurrentBranch = createServerFn({ method: 'GET' }).handler(
   async () => {
-    const { simpleGit } = await import('simple-git')
-    const path = await import('node:path')
     try {
-      const git = simpleGit(path.join(process.cwd(), 'tests/fixtures'))
+      const git = await openRepo()
       const branch = await git.revparse(['--abbrev-ref', 'HEAD'])
       return branch.trim() || null
     } catch {

@@ -1,5 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 
+import { openRepo } from '@/shared/lib/git'
+
 export type GitCommit = {
   hash: string
   shortHash: string
@@ -21,10 +23,8 @@ export type GitHistory = {
 
 export const getGitHistory = createServerFn({ method: 'GET' }).handler(
   async (): Promise<GitHistory> => {
-    const { simpleGit } = await import('simple-git')
-    const path = await import('node:path')
     try {
-      const git = simpleGit(path.join(process.cwd(), 'tests/fixtures'))
+      const git = await openRepo()
       const status = await git.status()
       const log = await git.log({ maxCount: 200 })
       const commits: Array<GitCommit> = log.all.map((c) => ({
