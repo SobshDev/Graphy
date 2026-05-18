@@ -7,7 +7,13 @@ import {
   createAiService,
 } from '../lib/get-ai-service'
 import { readAiConfig, writeAiConfig } from '../lib/storage'
-import type { AiProvider, ChatMessage } from '../types'
+import type { AiProvider, ChatMessage, ChatModel, TokenUsage } from '../types'
+import {
+  CHAT_MODEL_API_ID,
+  CHAT_MODEL_PROVIDER,
+  DEFAULT_CHAT_MODEL,
+  EMPTY_TOKEN_USAGE,
+} from '../types'
 import { AiChatContext } from './ai-chat-context'
 import type { AiChatContextValue } from './ai-chat-context'
 
@@ -32,24 +38,24 @@ function toAiMessages(messages: ChatMessage[]): AiMessage[] {
 }
 
 export function AiChatProvider({ children }: AiChatProviderProps) {
-  const [activeProvider, setActiveProviderState] = useState<AiProvider | null>(
-    null,
-  )
+  const [activeModel, setActiveModelState] =
+    useState<ChatModel>(DEFAULT_CHAT_MODEL)
   const [keys, setKeys] = useState<Partial<Record<AiProvider, string>>>({})
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [isStreaming, setIsStreaming] = useState(false)
+  const [tokenUsage, setTokenUsage] = useState<TokenUsage>(EMPTY_TOKEN_USAGE)
   const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     const stored = readAiConfig()
-    setActiveProviderState(stored.activeProvider)
+    setActiveModelState(stored.activeModel)
     setKeys(stored.keys)
   }, [])
 
   const persist = useCallback(
     (next: {
-      activeProvider: AiProvider | null
+      activeModel: ChatModel
       keys: Partial<Record<AiProvider, string>>
     }) => {
       writeAiConfig(next)
@@ -57,10 +63,10 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     [],
   )
 
-  const setActiveProvider = useCallback(
-    (provider: AiProvider) => {
-      setActiveProviderState(provider)
-      persist({ activeProvider: provider, keys })
+  const setActiveModel = useCallback(
+    (model: ChatModel) => {
+      setActiveModelState(model)
+      persist({ activeModel: model, keys })
     },
     [keys, persist],
   )
@@ -69,9 +75,9 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     (provider: AiProvider, key: string) => {
       const nextKeys = { ...keys, [provider]: key }
       setKeys(nextKeys)
-      persist({ activeProvider, keys: nextKeys })
+      persist({ activeModel, keys: nextKeys })
     },
-    [activeProvider, keys, persist],
+    [activeModel, keys, persist],
   )
 
   const openChat = useCallback(() => setIsOpen(true), [])
@@ -86,14 +92,17 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
   const clearMessages = useCallback(() => {
     cancelStream()
     setMessages([])
+    setTokenUsage(EMPTY_TOKEN_USAGE)
   }, [cancelStream])
+
+  const activeProvider = CHAT_MODEL_PROVIDER[activeModel]
 
   const sendMessage = useCallback(
     (content: string) => {
       const trimmed = content.trim()
       if (!trimmed || isStreaming) return
-      if (!activeProvider) return
-      const apiKey = keys[activeProvider]
+      const provider = CHAT_MODEL_PROVIDER[activeModel]
+      const apiKey = keys[provider]
       if (!apiKey) return
 
       const userMessage: ChatMessage = {
@@ -118,9 +127,10 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
 
       void (async () => {
         try {
-          const service = createAiService(activeProvider, apiKey)
+          const service = createAiService(provider, apiKey)
           const stream = service.stream({
             messages: toAiMessages(baseHistory),
+            model: CHAT_MODEL_API_ID[activeModel],
             signal: controller.signal,
           })
 
@@ -134,7 +144,17 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                 ),
               )
             }
-            if (chunk.done) break
+            if (chunk.done) {
+              const usage = chunk.result?.usage
+              if (usage) {
+                setTokenUsage((prev) => ({
+                  prompt: prev.prompt + usage.promptTokens,
+                  completion: prev.completion + usage.completionTokens,
+                  total: prev.total + usage.totalTokens,
+                }))
+              }
+              break
+            }
           }
 
           setMessages((prev) =>
@@ -169,17 +189,19 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
         }
       })()
     },
-    [activeProvider, isStreaming, keys, messages],
+    [activeModel, isStreaming, keys, messages],
   )
 
   const value = useMemo<AiChatContextValue>(
     () => ({
+      activeModel,
       activeProvider,
       keys,
       isOpen,
       messages,
       isStreaming,
-      setActiveProvider,
+      tokenUsage,
+      setActiveModel,
       setKey,
       openChat,
       closeChat,
@@ -189,12 +211,14 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       clearMessages,
     }),
     [
+      activeModel,
       activeProvider,
       keys,
       isOpen,
       messages,
       isStreaming,
-      setActiveProvider,
+      tokenUsage,
+      setActiveModel,
       setKey,
       openChat,
       closeChat,

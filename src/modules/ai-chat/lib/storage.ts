@@ -1,22 +1,22 @@
-import type { AiProvider } from '../types'
-import { AI_PROVIDERS } from '../types'
+import type { AiProvider, ChatModel } from '../types'
+import { AI_PROVIDERS, CHAT_MODELS, DEFAULT_CHAT_MODEL } from '../types'
 
 const STORAGE_KEY = 'graphy.ai-config'
 
 export interface StoredAiConfig {
-  activeProvider: AiProvider | null
+  activeModel: ChatModel
   keys: Partial<Record<AiProvider, string>>
 }
 
 export const INITIAL_AI_CONFIG: StoredAiConfig = {
-  activeProvider: null,
+  activeModel: DEFAULT_CHAT_MODEL,
   keys: {},
 }
 
-function isAiProvider(value: unknown): value is AiProvider {
+function isChatModel(value: unknown): value is ChatModel {
   return (
     typeof value === 'string' &&
-    (AI_PROVIDERS as ReadonlyArray<string>).includes(value)
+    (CHAT_MODELS as ReadonlyArray<string>).includes(value)
   )
 }
 
@@ -28,10 +28,10 @@ export function readAiConfig(): StoredAiConfig {
     const parsed: unknown = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return INITIAL_AI_CONFIG
 
-    const candidate = parsed as { activeProvider?: unknown; keys?: unknown }
-    const activeProvider = isAiProvider(candidate.activeProvider)
-      ? candidate.activeProvider
-      : null
+    const candidate = parsed as { activeModel?: unknown; keys?: unknown }
+    const activeModel = isChatModel(candidate.activeModel)
+      ? candidate.activeModel
+      : DEFAULT_CHAT_MODEL
 
     const keys: Partial<Record<AiProvider, string>> = {}
     if (candidate.keys && typeof candidate.keys === 'object') {
@@ -43,7 +43,7 @@ export function readAiConfig(): StoredAiConfig {
       }
     }
 
-    return { activeProvider, keys }
+    return { activeModel, keys }
   } catch {
     return INITIAL_AI_CONFIG
   }

@@ -1,14 +1,16 @@
 import { createContext } from 'react'
 
-import type { AiProvider, ChatMessage } from '../types'
+import type { AiProvider, ChatMessage, ChatModel, TokenUsage } from '../types'
 
 export interface AiChatContextValue {
-  activeProvider: AiProvider | null
+  activeModel: ChatModel
+  activeProvider: AiProvider
   keys: Partial<Record<AiProvider, string>>
   isOpen: boolean
   messages: ChatMessage[]
   isStreaming: boolean
-  setActiveProvider: (provider: AiProvider) => void
+  tokenUsage: TokenUsage
+  setActiveModel: (model: ChatModel) => void
   setKey: (provider: AiProvider, key: string) => void
   openChat: () => void
   closeChat: () => void
