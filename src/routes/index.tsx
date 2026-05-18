@@ -1,14 +1,25 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { ReactFlowProvider } from '@xyflow/react'
+
+import { Canvas } from '@/modules/graph/components/canvas'
+import { Sidebar } from '@/app/layout/sidebar'
+import { TopBar } from '@/app/layout/top-bar'
+import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
   return (
-    <main className="min-h-screen place-content-center bg-neutral-950 px-6 text-center text-white">
-      <h1 className="text-5xl font-bold tracking-tight">Hello world.</h1>
-      <p className="mt-4 text-lg text-neutral-400">
-        Graphy tourne dans Electron. Tranquille.
-      </p>
-    </main>
+    <TooltipProvider delayDuration={200}>
+      <ReactFlowProvider>
+        <main className="bg-canvas text-foreground flex h-screen w-screen overflow-hidden">
+          <Sidebar />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <TopBar />
+            <Canvas />
+          </div>
+        </main>
+      </ReactFlowProvider>
+    </TooltipProvider>
   )
 }

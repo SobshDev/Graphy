@@ -4,9 +4,32 @@
 
 **Graphy** is an IDE that visualizes code as a graph — functions, modules, and other constructs are represented as blocks connected by edges instead of being shown as plain text files. It is built as a desktop application using **[TanStack Start](https://tanstack.com/start)** for the web layer and **[Electron](https://www.electronjs.org/)** as the desktop shell.
 
+## Component Files
+
+Always split components into distinct files — one component per file. Do not co-locate multiple React components inside a single route or module file.
+
+## File Tree Architecture
+
+The codebase uses a feature-based layout. Top-level folders under `src/`:
+
+| Folder         | Purpose                                                                                                              |
+| -------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `src/app/`     | App shell: providers, global layout (`sidebar`, `top-bar`), `styles.css`. The chrome around the modules.             |
+| `src/modules/` | Self-contained feature modules (e.g. `graph/`, `ai/`). Each owns its components, hooks, state, services, and types.  |
+| `src/shared/`  | Cross-cutting primitives: `ui/` (shadcn), `hooks/`, `lib/`. No app- or feature-specific code.                        |
+| `src/routes/`  | TanStack file-based routes. Must stay at `src/routes`. Route files should be thin and compose module/app components. |
+
+### Rules
+
+- **Import direction is one-way**: `routes → app → modules → shared`. Never import upward (e.g. `shared` must not import from `modules`).
+- **Modules don't import from each other directly.** If two modules need to share something, lift it into `shared/` or expose it via the source module's `index.ts` barrel.
+- **A module's `index.ts` is its public API.** Internal files stay internal — outsiders import `@/modules/graph`, not `@/modules/graph/components/code-node`.
+- **`src/shared/ui/` is reserved for shadcn primitives.** The shadcn CLI is configured to write there; do not put hand-written feature components in it.
+- **New features become new modules.** Create `src/modules/<feature>/` rather than adding to `app/` or `shared/`.
+
 ## Icons
 
-This project uses **[Tabler Icons](https://tabler.io/icons)** via `@tabler/icons-react`.
+This project uses **[Lucide Icons](https://lucide.dev)** for all icons in the app.
 
 Do not install or use other icon libraries.
 
