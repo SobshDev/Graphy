@@ -32,6 +32,7 @@ export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
       signature: node.signature,
       file: node.file,
       line: node.line,
+      endLine: node.endLine,
       isAsync: node.isAsync,
       isExported: node.isExported,
       isStatic: node.isStatic,

@@ -16,6 +16,9 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   clearRecents: () => ipcRenderer.invoke('graphy:clear-recents'),
   onProject: (handler) => subscribe('project:set', handler),
   onGraph: (handler) => subscribe('graph:set', handler),
+  readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),
+  writeFunctionSource: (payload) =>
+    ipcRenderer.invoke('function:write', payload),
 })
 
 window.addEventListener('DOMContentLoaded', () => {

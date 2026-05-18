@@ -7,10 +7,12 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
+import { FunctionSheet } from '@/modules/graph/components/function-sheet'
+import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
@@ -26,6 +28,25 @@ export function GraphCanvas() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
+  const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
+    null,
+  )
+
+  const handleNodeClick = useCallback(
+    (_event: unknown, node: Node<CodeNodeData>) => {
+      setSheetTarget({
+        displayName: node.data.displayName,
+        file: node.data.file,
+        startLine: node.data.line,
+        endLine: node.data.endLine,
+      })
+    },
+    [],
+  )
+
+  const handleSheetOpenChange = useCallback((open: boolean) => {
+    if (!open) setSheetTarget(null)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -96,23 +117,31 @@ export function GraphCanvas() {
   }
 
   return (
-    <ReactFlow
-      nodes={nodes}
-      edges={edges}
-      onNodesChange={onNodesChange}
-      onEdgesChange={onEdgesChange}
-      nodeTypes={nodeTypes}
-      fitView
-      fitViewOptions={{ padding: 0.25 }}
-      proOptions={{ hideAttribution: true }}
-      defaultEdgeOptions={{
-        type: 'default',
-        pathOptions: { curvature: 0.55 },
-      }}
-      minZoom={0.2}
-      maxZoom={2.5}
-    >
-      <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
-    </ReactFlow>
+    <>
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
+        onNodeClick={handleNodeClick}
+        nodeTypes={nodeTypes}
+        fitView
+        fitViewOptions={{ padding: 0.25 }}
+        proOptions={{ hideAttribution: true }}
+        defaultEdgeOptions={{
+          type: 'default',
+          pathOptions: { curvature: 0.55 },
+        }}
+        minZoom={0.2}
+        maxZoom={2.5}
+      >
+        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+      </ReactFlow>
+      <FunctionSheet
+        root={graph?.root ?? null}
+        target={sheetTarget}
+        onOpenChange={handleSheetOpenChange}
+      />
+    </>
   )
 }

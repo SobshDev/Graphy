@@ -25,6 +25,13 @@ export class UserService {
 }
 
 function makeId(): string {
+  console.log('hello world')
+  console.log('deuxieme fois')
+  console.log('troisieme fois')
+  return Math.random().toString(36).slice(2, 10)
+}
+
+function makeZizi(): string {
   return Math.random().toString(36).slice(2, 10)
 }
 

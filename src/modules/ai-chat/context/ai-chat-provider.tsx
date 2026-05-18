@@ -33,6 +33,7 @@ const SYSTEM_PROMPT = [
   '- `inspect_class` returns a class with its methods, external dependencies, and aggregate counts.',
   '- `find_callers` and `find_callees` walk the call graph.',
   'When you reference code, cite real node ids, file paths, and line numbers from the tool results. If a tool returns nothing useful, say so plainly instead of inventing details.',
+  'Do not use emojis in any response.',
 ].join('\n')
 
 interface AiChatProviderProps {
