@@ -229,6 +229,33 @@ The driver script and manual checklist will be created as part of the implementa
 2. **Codex per-turn tool-call cap.** Confirm whether the Codex CLI exposes a config key for capping internal MCP tool calls per turn. If yes, forward `maxToolRounds`. If no, document the limitation in the service's JSDoc.
 3. **AbortSignal forwarding into MCP handlers.** The MCP SDK's tool handler signature may not accept an AbortSignal directly. Investigate whether we can plumb the caller's signal into running executors on the Codex path, or document that on Codex, executors only see `signal: undefined` and the only escape is the model returning.
 
+### Resolutions (2026-05-18)
+
+**Q1 — Codex MCP-over-HTTP config key.** Resolved. Codex CLI v0.130.0 natively supports Streamable-HTTP MCP servers. The CLI persists them as:
+
+```toml
+[mcp_servers.<name>]
+url = "<URL>"
+```
+
+The corresponding `--config` override is `mcp_servers.<name>.url="<URL>"`. Verified by `codex mcp add probe --url http://127.0.0.1:1234/mcp` (writes the TOML above) and roundtripped through `codex --config 'mcp_servers.probe.url="http://127.0.0.1:1234/mcp"' mcp list`, which reported the server as enabled. No transport key is required — supplying `url` is the signal for Streamable-HTTP. `CodexService` therefore passes:
+
+```ts
+config: {
+  mcp_servers: {
+    graphy: {
+      url: server.url
+    }
+  }
+}
+```
+
+to the `Codex` constructor; the SDK flattens this into `--config mcp_servers.graphy.url="..."`. The stdio fallback path described in Q1 is not needed.
+
+**Q2 — Codex per-turn tool-call cap.** Resolved. Codex CLI v0.130.0 has no config key for capping MCP tool calls per turn (no `max_tool_calls`/`tool_call_limit`/equivalent in `--help` or in the binary's embedded config keys). `CodexService` will document `maxToolRounds` as **best-effort on Codex**: the caller's only escape hatches are `AbortSignal` and Codex's own internal safeguards.
+
+**Q3 — AbortSignal forwarding into MCP handlers.** Deferred. On the Codex path, the MCP `CallToolRequestSchema` handler in `codex-mcp.server.ts` calls `execute(args, { signal: undefined })`. Documented in `CodexService` JSDoc; not a blocker for the initial release.
+
 ## Branch & commit plan
 
 - Branch: `feat/ai-tool-calling` off `main`.
