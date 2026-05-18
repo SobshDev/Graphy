@@ -1,5 +1,5 @@
 import { Codex } from '@openai/codex-sdk'
-import type { ItemCompletedEvent, Usage } from '@openai/codex-sdk'
+import type { Usage } from '@openai/codex-sdk'
 import type {
   AiChatOptions,
   AiChatResult,
@@ -75,9 +75,8 @@ export class CodexService implements AiService {
 
         for await (const event of events) {
           if (event.type === 'item.completed') {
-            const completed = event as ItemCompletedEvent
-            if (completed.item.type === 'agent_message') {
-              yield { delta: completed.item.text, done: false }
+            if (event.item.type === 'agent_message') {
+              yield { delta: event.item.text, done: false }
             }
           }
           if (event.type === 'turn.completed') {
