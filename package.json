@@ -15,7 +15,45 @@
     "preview": "vite preview",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
-    "check": "prettier --check ."
+    "check": "prettier --check .",
+    "dist": "bun --bun run build && electron-builder",
+    "dist:linux": "bun --bun run build && electron-builder --linux",
+    "dist:mac": "bun --bun run build && electron-builder --mac"
+  },
+  "build": {
+    "appId": "com.sobshdev.graphy",
+    "productName": "Graphy",
+    "files": [
+      ".output/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "asar": true,
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.utilities",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    }
   },
   "dependencies": {
     "@tabler/icons-react": "^3.44.0",
@@ -42,10 +80,13 @@
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^42.1.0",
-    "eslint": "^10.4.0",
-    "prettier": "^3.8.3",
-    "typescript": "^6.0.3",
-    "vite": "^8.0.13",
+    "electron-builder": "^25.1.8",
+    "eslint": "^9.20.0",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.0",
+    "vitest": "^4.1.5",
     "wait-on": "^9.0.10"
   },
   "pnpm": {
