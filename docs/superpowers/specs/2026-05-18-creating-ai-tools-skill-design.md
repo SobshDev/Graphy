@@ -49,6 +49,7 @@ Every tool conforms to it. Nothing else.
 ### 2. Conventions
 
 **File & symbol naming**
+
 - File path: `src/modules/ai/tools/<category>/<kebab-verb>.tool.ts`
   (e.g. `find-callees.tool.ts`).
 - Exported factory: `create<PascalName>Tool(<deps>): AiTool`.
@@ -58,6 +59,7 @@ Every tool conforms to it. Nothing else.
   `create<Category>Tools(<shared deps>): AiTool[]` factory.
 
 **Tool shape**
+
 - `description`: one or two sentences. Lead with what the tool returns; add a
   "Use this to answer …" hint so the model picks the right tool.
 - `inputSchema`: JSON Schema with `type: 'object'`, explicit `properties`,
@@ -71,6 +73,7 @@ Every tool conforms to it. Nothing else.
   pattern.
 
 **Dependency injection**
+
 - Tools receive dependencies (e.g. `Graph`, `ClassInspector`) as factory
   arguments. They do not import singletons or read state at module load.
 - Per-call setup that is expensive (e.g. building a `Map`) goes in the
