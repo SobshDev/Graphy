@@ -157,7 +157,7 @@ export class ClaudeService implements AiService {
     const toolCalls: Array<{ call: AiToolCall; result: AiToolResult }> = []
     let totalUsage: AiUsage | undefined
 
-    for (let round = 0; round <= maxRounds; round++) {
+    for (let round = 0; round < maxRounds; round++) {
       const message = await this.client.messages.create(
         {
           model: options.model ?? this.defaultModel,
@@ -205,8 +205,27 @@ export class ClaudeService implements AiService {
       working.push(toolResultsToUserMessage(results))
     }
 
-    // Cap reached — Task 6 will fill this in with a forced final turn.
-    throw new Error('maxToolRounds exceeded — implemented in Task 6')
+    // Cap reached — force a final natural-language answer.
+    const finalMessage = await this.client.messages.create(
+      {
+        model: options.model ?? this.defaultModel,
+        max_tokens: options.maxTokens ?? DEFAULT_MAX_TOKENS,
+        temperature: options.temperature,
+        system,
+        messages: working,
+        tools: anthropicTools,
+        tool_choice: { type: 'none' },
+      },
+      { signal: options.signal },
+    )
+    totalUsage = addUsage(totalUsage, mapUsage(finalMessage.usage))
+    return {
+      content: extractText(finalMessage.content),
+      model: finalMessage.model,
+      finishReason: 'max_tool_rounds',
+      usage: totalUsage,
+      toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+    }
   }
 
   stream(options: AiChatOptions): AsyncIterable<AiStreamChunk> {

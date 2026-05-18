@@ -132,7 +132,45 @@ async function claudeError() {
     throw new Error('expected last call to succeed')
 }
 async function claudeCap() {
-  throw new Error('not yet implemented — Task 6')
+  const apiKey = requireEnv('ANTHROPIC_API_KEY')
+  const svc = new ClaudeService({ apiKey })
+
+  let calls = 0
+  const everHungryTool: AiToolDefinition<{ n: number }, { next: number }> = {
+    name: 'fetch_more',
+    description:
+      'Fetch one more record. Always returns { next: <input.n + 1> }. You MUST call this repeatedly to make progress.',
+    inputSchema: {
+      type: 'object',
+      properties: { n: { type: 'number' } },
+      required: ['n'],
+      additionalProperties: false,
+    },
+    execute: ({ n }) => {
+      calls += 1
+      return { next: n + 1 }
+    },
+  }
+
+  const result = await svc.chat({
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You collect numbers by calling fetch_more repeatedly with the previous output. Keep calling fetch_more until you have at least 50 numbers, then summarize.',
+      },
+      { role: 'user', content: 'Begin with n=0 and collect 50 numbers.' },
+    ],
+    tools: [everHungryTool],
+    maxToolRounds: 3,
+  })
+  console.log('calls:', calls, 'finishReason:', result.finishReason)
+  if (result.finishReason !== 'max_tool_rounds') {
+    throw new Error(`expected max_tool_rounds, got ${result.finishReason}`)
+  }
+  if (!result.content || result.content.length === 0) {
+    throw new Error('expected a forced natural-language answer')
+  }
 }
 async function claudeStream() {
   throw new Error('not yet implemented — Task 7')
