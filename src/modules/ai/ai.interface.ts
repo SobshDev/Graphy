@@ -1,3 +1,5 @@
+import type { AiTool, AiToolCall } from './tools/tools.interface'
+
 export type AiRole = 'system' | 'user' | 'assistant'
 
 export interface AiMessage {
@@ -11,6 +13,8 @@ export interface AiChatOptions {
   temperature?: number
   maxTokens?: number
   signal?: AbortSignal
+  tools?: AiTool[]
+  maxToolIterations?: number
 }
 
 export interface AiUsage {
@@ -22,13 +26,20 @@ export interface AiUsage {
 export interface AiChatResult {
   content: string
   model: string
-  finishReason?: 'stop' | 'length' | 'content_filter' | (string & {})
+  finishReason?:
+    | 'stop'
+    | 'length'
+    | 'content_filter'
+    | 'tool_max_iterations'
+    | (string & {})
   usage?: AiUsage
+  toolCalls?: AiToolCall[]
 }
 
 export interface AiStreamChunk {
   delta: string
   done: boolean
+  result?: AiChatResult
 }
 
 export interface AiStructuredOptions<T> extends AiChatOptions {
