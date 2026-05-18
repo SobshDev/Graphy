@@ -6,6 +6,7 @@ import type { Node, SourceFile } from 'ts-morph'
 import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
+import { extractObjects } from './objectExtractor'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
 
@@ -63,6 +64,7 @@ export function parseProject(root: string): Graph {
     const collected = [
       ...extractFunctions(sourceFile, relativePath),
       ...extractClasses(sourceFile, relativePath),
+      ...extractObjects(sourceFile, relativePath),
     ]
 
     for (const { graphNode, declaration } of collected) {

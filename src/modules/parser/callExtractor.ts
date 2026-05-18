@@ -80,7 +80,8 @@ function resolveSourceId(
       const parent = current.getParent()
       if (
         Node.isVariableDeclaration(parent) ||
-        Node.isPropertyDeclaration(parent)
+        Node.isPropertyDeclaration(parent) ||
+        Node.isPropertyAssignment(parent)
       ) {
         return declarationMap.get(parent)
       }

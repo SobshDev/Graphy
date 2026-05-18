@@ -10,6 +10,7 @@ export type NodeType =
   | 'method'
   | 'arrow'
   | 'class'
+  | 'object'
   | 'constructor'
   | 'getter'
   | 'setter'
