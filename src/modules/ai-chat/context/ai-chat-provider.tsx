@@ -107,8 +107,11 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     setHydrated(true)
   }, [])
 
-  // Ensure activeId always points to an existing conversation.
+  // Ensure activeId always points to an existing conversation. Gated on
+  // hydration so the initial mount doesn't race with `readConversations` and
+  // overwrite the stored activeId with the bootstrap conversation's id.
   useEffect(() => {
+    if (!hydrated) return
     if (conversations.length === 0) {
       const fresh = createEmptyConversation(defaultModel)
       setConversations([fresh])
@@ -121,7 +124,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       )[0]
       setActiveId(newest.id)
     }
-  }, [conversations, activeId, defaultModel])
+  }, [conversations, activeId, defaultModel, hydrated])
 
   // Persist conversations once hydration has happened.
   useEffect(() => {
