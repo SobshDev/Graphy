@@ -24,6 +24,12 @@ export interface ClaudeServiceOptions {
   apiKey: string
   defaultModel?: string
   baseUrl?: string
+  /**
+   * Allow the SDK to run in a browser-like environment (renderer process).
+   * Required when the Anthropic SDK detects it's not running in Node — i.e.
+   * any time we instantiate this from the Electron renderer.
+   */
+  dangerouslyAllowBrowser?: boolean
 }
 
 const DEFAULT_MODEL = 'claude-sonnet-4-6'
@@ -133,6 +139,7 @@ export class ClaudeService implements AiService {
     this.client = new Anthropic({
       apiKey: options.apiKey,
       baseURL: options.baseUrl,
+      dangerouslyAllowBrowser: options.dangerouslyAllowBrowser,
     })
     this.defaultModel = options.defaultModel ?? DEFAULT_MODEL
   }

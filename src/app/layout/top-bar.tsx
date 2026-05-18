@@ -1,7 +1,7 @@
 import { useStore } from '@xyflow/react'
 import { ChevronRight, Play, Share2 } from 'lucide-react'
 
-import { AiPicker } from '@/modules/ai-picker'
+import { AiChatToggle } from '@/modules/ai-chat'
 import { Button } from '@/shared/ui/button'
 import { Separator } from '@/shared/ui/separator'
 
@@ -40,7 +40,7 @@ export function TopBar() {
           Share
         </Button>
 
-        <AiPicker />
+        <AiChatToggle />
 
         <Button size="sm">
           <Play className="size-3 fill-current" strokeWidth={0} />

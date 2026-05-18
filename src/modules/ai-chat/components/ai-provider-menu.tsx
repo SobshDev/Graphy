@@ -1,4 +1,4 @@
-import { BrainCircuit, Check } from 'lucide-react'
+import { Check, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 
 import { Button } from '@/shared/ui/button'
@@ -9,13 +9,13 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu'
 
-import { useAiConfig } from '../hooks/use-ai-config'
+import { useAiChat } from '../hooks/use-ai-chat'
 import type { AiProvider } from '../types'
 import { AI_PROVIDERS, AI_PROVIDER_LABELS } from '../types'
 import { ApiKeyDialog } from './api-key-dialog'
 
-export function AiPicker() {
-  const { activeProvider, keys, setActiveProvider, setKey } = useAiConfig()
+export function AiProviderMenu() {
+  const { activeProvider, keys, setActiveProvider, setKey } = useAiChat()
   const [pendingProvider, setPendingProvider] = useState<AiProvider | null>(
     null,
   )
@@ -33,15 +33,21 @@ export function AiPicker() {
     setActiveProvider(provider)
   }
 
-  const label = activeProvider ? AI_PROVIDER_LABELS[activeProvider] : 'AI'
+  const label = activeProvider
+    ? AI_PROVIDER_LABELS[activeProvider]
+    : 'Select model'
 
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <BrainCircuit className="size-3.5" strokeWidth={1.7} />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 font-mono text-[11px]"
+          >
             {label}
+            <ChevronDown className="size-3" strokeWidth={1.8} />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[10rem]">
