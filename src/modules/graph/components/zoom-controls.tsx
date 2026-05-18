@@ -10,7 +10,7 @@ export function ZoomControls() {
   const zoom = useStore((s) => s.transform[2])
 
   return (
-    <div className="glass border-border absolute bottom-4 right-4 flex items-center overflow-hidden rounded-lg border">
+    <div className="glass border-border absolute bottom-4 right-4 z-20 flex items-center overflow-hidden rounded-lg border">
       <Tooltip>
         <TooltipTrigger asChild>
           <Button

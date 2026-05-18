@@ -1,3 +1,5 @@
+import { MessageCircle } from 'lucide-react'
+
 import { Button } from '@/shared/ui/button'
 
 import { useAiChat } from '../hooks/use-ai-chat'
@@ -12,6 +14,7 @@ export function AiChatToggle() {
       onClick={toggleChat}
       aria-pressed={isOpen}
     >
+      <MessageCircle className="size-3.5" strokeWidth={1.9} />
       Chat
     </Button>
   )
