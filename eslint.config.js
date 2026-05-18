@@ -15,7 +15,7 @@ export default [
     },
   },
   {
-    files: ['src/components/ui/**/*.{ts,tsx}'],
+    files: ['src/shared/ui/**/*.{ts,tsx}'],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
       'no-shadow': 'off',
