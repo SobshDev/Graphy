@@ -47,6 +47,9 @@ export function parseProject(root: string): Graph {
     edges.push(...extractCalls(sourceFile, declarationMap))
   }
 
+  // Pass 3 — annotate each node with its in/out degree
+  annotateDegrees(nodes, edges)
+
   const graph: Graph = {
     version: SCHEMA_VERSION,
     language: 'typescript',
@@ -57,4 +60,16 @@ export function parseProject(root: string): Graph {
 
   validateGraph(graph)
   return graph
+}
+
+function annotateDegrees(nodes: GraphNode[], edges: GraphEdge[]): void {
+  const byId = new Map<string, GraphNode>()
+  for (const node of nodes) byId.set(node.id, node)
+
+  for (const edge of edges) {
+    const src = byId.get(edge.source)
+    const tgt = byId.get(edge.target)
+    if (src) src.outDegree += 1
+    if (tgt) tgt.inDegree += 1
+  }
 }

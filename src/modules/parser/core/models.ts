@@ -16,6 +16,12 @@ export interface GraphNode {
   file: string
   line: number
   signature: string
+  isAsync: boolean
+  isExported: boolean
+  isStatic: boolean
+  bodyLines: number
+  inDegree: number
+  outDegree: number
 }
 
 export interface GraphEdge {
