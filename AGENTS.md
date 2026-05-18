@@ -6,7 +6,7 @@
 
 ## Icons
 
-This project uses **[Tabler Icons](https://tabler.io/icons)** via `@tabler/icons-react`.
+This project uses **[Lucide Icons](https://lucide.dev)** for all icons in the app.
 
 Do not install or use other icon libraries.
 
