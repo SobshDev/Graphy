@@ -50,3 +50,5 @@ This project uses **[Bun](https://bun.sh)** as the package manager and runtime.
 | `bun run tidy`          | Run `format` then `lint` — one-shot cleanup.           |
 
 **Never run dev commands** (`dev`, `dev:web`, `dev:electron`, `start:desktop`) to launch the web server or the Electron app. The user runs these themselves.
+
+**Always run `bun run tidy` after any change** to keep formatting and linting consistent before handing work back to the user.
