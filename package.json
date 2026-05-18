@@ -18,7 +18,6 @@
     "dev:electron": "wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .",
     "build": "vite build",
     "start:desktop": "bun --bun run build && electron .",
-    "preview": "vite preview",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
     "check": "prettier --check .",
