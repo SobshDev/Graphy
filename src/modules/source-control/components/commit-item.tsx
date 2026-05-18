@@ -39,11 +39,21 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
   const refs = parseRefs(commit.refs)
   const color = avatarColor(commit.email || commit.author)
 
+  const toggle = () => setExpanded((v) => !v)
+
   return (
-    <button
-      type="button"
-      className="hover:bg-sidebar-accent/60 hover:border-l-primary/40 group block w-full border-l-2 border-transparent px-3 py-2 text-left transition-colors"
-      onClick={() => setExpanded((v) => !v)}
+    <div
+      role="button"
+      tabIndex={0}
+      aria-expanded={expanded}
+      className="hover:bg-sidebar-accent/60 hover:border-l-primary/40 group cursor-pointer border-l-2 border-transparent px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+      onClick={toggle}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          toggle()
+        }
+      }}
     >
       <div className="flex items-start gap-2">
         <div
@@ -102,6 +112,6 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
           {commit.shortHash}
         </span>
       </div>
-    </button>
+    </div>
   )
 }
