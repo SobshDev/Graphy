@@ -6,6 +6,7 @@ export type CodeNodeData = {
   signature: string
   file: string
   line: number
+  endLine: number
   isAsync: boolean
   isExported: boolean
   isStatic: boolean
