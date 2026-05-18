@@ -11,3 +11,5 @@ function privateHelper(x: number): number {
 }
 
 export const arrowFn = (n: number): number => n + 1
+
+export const GROSVIER = (n: number): number => n + 1

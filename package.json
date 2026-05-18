@@ -13,8 +13,8 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "concurrently -k -n tanstack,electron -c cyan,magenta \"bun --bun run dev:web\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "dev:web": "vite dev --port 3000",
+    "dev": "concurrently -k -n parser,tanstack,electron -c yellow,cyan,magenta \"bun --bun run parser:watch\" \"vite dev --port 3000\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
+    "dev:web": "concurrently -k -n parser,vite -c yellow,cyan \"bun --bun run parser:watch\" \"vite dev --port 3000\"",
     "dev:electron": "wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .",
     "build": "vite build",
     "start:desktop": "bun --bun run build && electron .",
@@ -24,7 +24,9 @@
     "tidy": "bun --bun run format && bun --bun run lint",
     "dist:linux": "bun --bun run build && electron-builder --linux",
     "dist:mac": "bun --bun run build && electron-builder --mac",
-    "dist:win": "bun --bun run build && electron-builder --win"
+    "dist:win": "bun --bun run build && electron-builder --win",
+    "parser:dump": "bun run src/modules/parser/dump.ts",
+    "parser:watch": "bun run src/modules/parser/watch.ts"
   },
   "build": {
     "appId": "com.ntgrm.graphy",
@@ -117,6 +119,7 @@
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
+    "chokidar": "^5.0.0",
     "concurrently": "^9.2.1",
     "cross-env": "^10.1.0",
     "electron": "^42.1.0",

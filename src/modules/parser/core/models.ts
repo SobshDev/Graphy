@@ -3,6 +3,8 @@
 // Différent de :
 // function add(a: number, b: number) { }...
 
+import type { Node as TsMorphNode } from 'ts-morph'
+
 export type NodeType = 'function' | 'method' | 'arrow' | 'class'
 
 export type EdgeType = 'calls' | 'inherits' | 'imports'
@@ -28,6 +30,11 @@ export interface Graph {
   root: string
   nodes: GraphNode[]
   edges: GraphEdge[]
+}
+
+export interface CollectedNode {
+  graphNode: GraphNode
+  declaration: TsMorphNode
 }
 
 export function makeNodeId(file: string, qualifiedName: string): string {

@@ -6,49 +6,46 @@ import {
   useNodesState,
 } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
+import { useEffect, useMemo } from 'react'
 
 import { CodeNode } from '@/modules/graph/components/code-node'
 import type { CodeNodeData } from '@/modules/graph/components/code-node'
+import { useGraph } from '@/modules/graph/hooks/use-graph'
+import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 
 const nodeTypes: NodeTypes = { code: CodeNode }
 
-const seedNodes: Array<Node<CodeNodeData>> = [
-  {
-    id: 'a',
-    type: 'code',
-    position: { x: 0, y: 0 },
-    data: { label: 'parseInput', kind: 'function' },
-  },
-  {
-    id: 'b',
-    type: 'code',
-    position: { x: 260, y: -60 },
-    data: { label: 'normalize', kind: 'function' },
-  },
-  {
-    id: 'c',
-    type: 'code',
-    position: { x: 260, y: 90 },
-    data: { label: 'validate', kind: 'function' },
-  },
-  {
-    id: 'd',
-    type: 'code',
-    position: { x: 540, y: 20 },
-    data: { label: 'render', kind: 'function' },
-  },
-]
-
-const seedEdges: Array<Edge> = [
-  { id: 'a-b', source: 'a', target: 'b' },
-  { id: 'a-c', source: 'a', target: 'c' },
-  { id: 'b-d', source: 'b', target: 'd' },
-  { id: 'c-d', source: 'c', target: 'd' },
-]
-
 export function GraphCanvas() {
-  const [nodes, , onNodesChange] = useNodesState<Node<CodeNodeData>>(seedNodes)
-  const [edges, , onEdgesChange] = useEdgesState<Edge>(seedEdges)
+  const { graph, loading, error } = useGraph()
+
+  const xyflow = useMemo(
+    () => (graph ? toXYFlow(graph) : { nodes: [], edges: [] }),
+    [graph],
+  )
+
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CodeNodeData>>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+
+  useEffect(() => {
+    setNodes(xyflow.nodes)
+    setEdges(xyflow.edges)
+  }, [xyflow, setNodes, setEdges])
+
+  if (error) {
+    return (
+      <div className="text-destructive flex h-full items-center justify-center p-6 font-mono text-xs">
+        {error.message}
+      </div>
+    )
+  }
+
+  if (loading && nodes.length === 0) {
+    return (
+      <div className="text-muted-foreground flex h-full items-center justify-center font-mono text-xs">
+        Parsing…
+      </div>
+    )
+  }
 
   return (
     <ReactFlow
