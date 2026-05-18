@@ -61,7 +61,7 @@ export function AiChatMessages() {
               anything about your graph.
             </h2>
             <p className="font-chat-sans m-0 text-[12.5px] leading-[1.55] text-chat-text-3">
-              Messages live for this session only.
+              Saved locally. Find past chats in the history menu.
             </p>
           </>
         ) : (

@@ -9,8 +9,13 @@ import {
   AiServiceUnavailableError,
   createAiService,
 } from '../lib/get-ai-service'
+import {
+  readConversations,
+  writeConversations,
+} from '../lib/conversation-storage'
+import { generateTitle } from '../lib/generate-title'
 import { readAiConfig, writeAiConfig } from '../lib/storage'
-import type { AiProvider, ChatMessage, ChatModel, TokenUsage } from '../types'
+import type { AiProvider, ChatMessage, ChatModel, Conversation } from '../types'
 import {
   CHAT_MODEL_API_ID,
   CHAT_MODEL_PROVIDER,
@@ -41,7 +46,7 @@ function generateId(): string {
   ) {
     return globalThis.crypto.randomUUID()
   }
-  return `msg_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
+  return `id_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`
 }
 
 function toAiMessages(messages: ChatMessage[]): AiMessage[] {
@@ -50,14 +55,30 @@ function toAiMessages(messages: ChatMessage[]): AiMessage[] {
     .map((m) => ({ role: m.role, content: m.content }))
 }
 
+function createEmptyConversation(model: ChatModel): Conversation {
+  const now = Date.now()
+  return {
+    id: generateId(),
+    title: null,
+    createdAt: now,
+    updatedAt: now,
+    model,
+    messages: [],
+    tokenUsage: { ...EMPTY_TOKEN_USAGE },
+  }
+}
+
 export function AiChatProvider({ children }: AiChatProviderProps) {
-  const [activeModel, setActiveModelState] =
+  const [defaultModel, setDefaultModelState] =
     useState<ChatModel>(DEFAULT_CHAT_MODEL)
   const [keys, setKeys] = useState<Partial<Record<AiProvider, string>>>({})
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [conversations, setConversations] = useState<Conversation[]>(() => [
+    createEmptyConversation(DEFAULT_CHAT_MODEL),
+  ])
+  const [activeId, setActiveId] = useState<string | null>(null)
   const [isStreaming, setIsStreaming] = useState(false)
-  const [tokenUsage, setTokenUsage] = useState<TokenUsage>(EMPTY_TOKEN_USAGE)
+  const [hydrated, setHydrated] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const { graph } = useGraph()
   const graphRef = useRef<Graph | null>(graph)
@@ -65,15 +86,55 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     graphRef.current = graph
   }, [graph])
 
+  // Hydrate from localStorage on mount.
   useEffect(() => {
-    const stored = readAiConfig()
-    setActiveModelState(stored.activeModel)
-    setKeys(stored.keys)
+    const cfg = readAiConfig()
+    setDefaultModelState(cfg.defaultModel)
+    setKeys(cfg.keys)
+
+    const stored = readConversations()
+    if (stored.conversations.length > 0) {
+      setConversations(stored.conversations)
+      setActiveId(stored.activeId ?? stored.conversations[0].id)
+    } else if (cfg.defaultModel !== DEFAULT_CHAT_MODEL) {
+      // Align the bootstrap conversation's model with the persisted default.
+      setConversations((prev) =>
+        prev.map((c) =>
+          c.messages.length === 0 ? { ...c, model: cfg.defaultModel } : c,
+        ),
+      )
+    }
+    setHydrated(true)
   }, [])
 
-  const persist = useCallback(
+  // Ensure activeId always points to an existing conversation. Gated on
+  // hydration so the initial mount doesn't race with `readConversations` and
+  // overwrite the stored activeId with the bootstrap conversation's id.
+  useEffect(() => {
+    if (!hydrated) return
+    if (conversations.length === 0) {
+      const fresh = createEmptyConversation(defaultModel)
+      setConversations([fresh])
+      setActiveId(fresh.id)
+      return
+    }
+    if (!activeId || !conversations.some((c) => c.id === activeId)) {
+      const newest = [...conversations].sort(
+        (a, b) => b.updatedAt - a.updatedAt,
+      )[0]
+      setActiveId(newest.id)
+    }
+  }, [conversations, activeId, defaultModel, hydrated])
+
+  // Persist conversations once hydration has happened.
+  useEffect(() => {
+    if (!hydrated) return
+    writeConversations({ conversations, activeId })
+  }, [conversations, activeId, hydrated])
+
+  const persistConfig = useCallback(
     (next: {
-      activeModel: ChatModel
+      defaultModel: ChatModel
       keys: Partial<Record<AiProvider, string>>
     }) => {
       writeAiConfig(next)
@@ -81,21 +142,44 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     [],
   )
 
+  const patchConversation = useCallback(
+    (id: string, patch: (c: Conversation) => Conversation) => {
+      setConversations((prev) => prev.map((c) => (c.id === id ? patch(c) : c)))
+    },
+    [],
+  )
+
+  const activeConversation = useMemo(
+    () => conversations.find((c) => c.id === activeId) ?? null,
+    [conversations, activeId],
+  )
+
+  const activeModel = activeConversation?.model ?? defaultModel
+  const messages = useMemo(
+    () => activeConversation?.messages ?? [],
+    [activeConversation],
+  )
+  const tokenUsage = activeConversation?.tokenUsage ?? EMPTY_TOKEN_USAGE
+  const activeProvider = CHAT_MODEL_PROVIDER[activeModel]
+
   const setActiveModel = useCallback(
     (model: ChatModel) => {
-      setActiveModelState(model)
-      persist({ activeModel: model, keys })
+      setDefaultModelState(model)
+      persistConfig({ defaultModel: model, keys })
+      if (activeId) {
+        patchConversation(activeId, (c) => ({ ...c, model }))
+      }
     },
-    [keys, persist],
+    [activeId, keys, patchConversation, persistConfig],
   )
 
   const setKey = useCallback(
     (provider: AiProvider, key: string) => {
       const nextKeys = { ...keys, [provider]: key }
       setKeys(nextKeys)
-      persist({ activeModel, keys: nextKeys })
+      persistConfig({ defaultModel, keys: nextKeys })
     },
-    [activeModel, keys, persist],
+    [defaultModel, keys, persistConfig],
   )
 
   const openChat = useCallback(() => setIsOpen(true), [])
@@ -107,19 +191,58 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     abortRef.current = null
   }, [])
 
-  const clearMessages = useCallback(() => {
-    cancelStream()
-    setMessages([])
-    setTokenUsage(EMPTY_TOKEN_USAGE)
-  }, [cancelStream])
+  const createConversation = useCallback(() => {
+    setConversations((prev) => {
+      const current = prev.find((c) => c.id === activeId)
+      if (current && current.messages.length === 0) {
+        // Reuse the existing empty conversation; just freshen its model.
+        if (current.model !== defaultModel) {
+          return prev.map((c) =>
+            c.id === current.id
+              ? { ...c, model: defaultModel, updatedAt: Date.now() }
+              : c,
+          )
+        }
+        return prev
+      }
+      const fresh = createEmptyConversation(defaultModel)
+      setActiveId(fresh.id)
+      return [fresh, ...prev]
+    })
+  }, [activeId, defaultModel])
 
-  const activeProvider = CHAT_MODEL_PROVIDER[activeModel]
+  const switchConversation = useCallback((id: string) => {
+    setActiveId(id)
+  }, [])
+
+  const deleteConversation = useCallback(
+    (id: string) => {
+      setConversations((prev) => {
+        const next = prev.filter((c) => c.id !== id)
+        if (next.length === 0) {
+          const fresh = createEmptyConversation(defaultModel)
+          setActiveId(fresh.id)
+          return [fresh]
+        }
+        if (id === activeId) {
+          const newest = [...next].sort((a, b) => b.updatedAt - a.updatedAt)[0]
+          setActiveId(newest.id)
+        }
+        return next
+      })
+    },
+    [activeId, defaultModel],
+  )
 
   const sendMessage = useCallback(
     (content: string) => {
       const trimmed = content.trim()
       if (!trimmed || isStreaming) return
-      const provider = CHAT_MODEL_PROVIDER[activeModel]
+      const convoId = activeId
+      if (!convoId) return
+      const convo = conversations.find((c) => c.id === convoId)
+      if (!convo) return
+      const provider = CHAT_MODEL_PROVIDER[convo.model]
       const apiKey = keys[provider]
       if (!apiKey) return
 
@@ -136,16 +259,24 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
         pending: true,
       }
 
-      const baseHistory = [...messages, userMessage]
-      setMessages([...baseHistory, assistantPlaceholder])
+      const isFirstTurn = convo.messages.length === 0
+      const baseHistory = [...convo.messages, userMessage]
+      patchConversation(convoId, (c) => ({
+        ...c,
+        messages: [...baseHistory, assistantPlaceholder],
+        updatedAt: Date.now(),
+      }))
       setIsStreaming(true)
 
       const controller = new AbortController()
       abortRef.current = controller
+      const service = createAiService(provider, apiKey)
+      const modelApiId = CHAT_MODEL_API_ID[convo.model]
 
       void (async () => {
+        let firstAssistantText = ''
+        let streamSucceeded = false
         try {
-          const service = createAiService(provider, apiKey)
           const tools = createGraphTools(graphRef.current)
           const aiMessages: AiMessage[] = [
             { role: 'system', content: SYSTEM_PROMPT },
@@ -153,7 +284,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
           ]
           const stream = service.stream({
             messages: aiMessages,
-            model: CHAT_MODEL_API_ID[activeModel],
+            model: modelApiId,
             signal: controller.signal,
             tools,
           })
@@ -163,19 +294,24 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
           for await (const chunk of stream) {
             if (chunk.delta) {
               acc += chunk.delta
-              setMessages((prev) =>
-                prev.map((m) =>
+              patchConversation(convoId, (c) => ({
+                ...c,
+                messages: c.messages.map((m) =>
                   m.id === assistantId ? { ...m, content: acc } : m,
                 ),
-              )
+              }))
             }
             if (chunk.done) {
               const usage = chunk.result?.usage
               if (usage) {
-                setTokenUsage((prev) => ({
-                  prompt: prev.prompt + usage.promptTokens,
-                  completion: prev.completion + usage.completionTokens,
-                  total: prev.total + usage.totalTokens,
+                patchConversation(convoId, (c) => ({
+                  ...c,
+                  tokenUsage: {
+                    prompt: c.tokenUsage.prompt + usage.promptTokens,
+                    completion:
+                      c.tokenUsage.completion + usage.completionTokens,
+                    total: c.tokenUsage.total + usage.totalTokens,
+                  },
                 }))
               }
               finalToolCalls = chunk.result?.toolCalls
@@ -183,8 +319,12 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
             }
           }
 
-          setMessages((prev) =>
-            prev.map((m) =>
+          firstAssistantText = acc
+          streamSucceeded = acc.length > 0
+          patchConversation(convoId, (c) => ({
+            ...c,
+            updatedAt: Date.now(),
+            messages: c.messages.map((m) =>
               m.id === assistantId
                 ? {
                     ...m,
@@ -194,7 +334,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                   }
                 : m,
             ),
-          )
+          }))
         } catch (err) {
           const aborted =
             err instanceof DOMException && err.name === 'AbortError'
@@ -205,8 +345,9 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                 ? err.message
                 : 'Unknown error'
 
-          setMessages((prev) =>
-            prev.map((m) =>
+          patchConversation(convoId, (c) => ({
+            ...c,
+            messages: c.messages.map((m) =>
               m.id === assistantId
                 ? {
                     ...m,
@@ -215,14 +356,32 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                   }
                 : m,
             ),
-          )
+          }))
         } finally {
           setIsStreaming(false)
           abortRef.current = null
         }
+
+        if (!streamSucceeded || !isFirstTurn) return
+        try {
+          const title = await generateTitle(
+            service,
+            modelApiId,
+            userMessage.content,
+            firstAssistantText,
+            new AbortController().signal,
+          )
+          if (title.length > 0) {
+            patchConversation(convoId, (c) =>
+              c.title === null ? { ...c, title } : c,
+            )
+          }
+        } catch {
+          // Title generation is best-effort.
+        }
       })()
     },
-    [activeModel, isStreaming, keys, messages],
+    [activeId, conversations, isStreaming, keys, patchConversation],
   )
 
   const value = useMemo<AiChatContextValue>(
@@ -234,6 +393,8 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       messages,
       isStreaming,
       tokenUsage,
+      conversations,
+      activeConversation,
       setActiveModel,
       setKey,
       openChat,
@@ -241,7 +402,9 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       toggleChat,
       sendMessage,
       cancelStream,
-      clearMessages,
+      createConversation,
+      switchConversation,
+      deleteConversation,
     }),
     [
       activeModel,
@@ -251,6 +414,8 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       messages,
       isStreaming,
       tokenUsage,
+      conversations,
+      activeConversation,
       setActiveModel,
       setKey,
       openChat,
@@ -258,7 +423,9 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       toggleChat,
       sendMessage,
       cancelStream,
-      clearMessages,
+      createConversation,
+      switchConversation,
+      deleteConversation,
     ],
   )
 

@@ -1,6 +1,12 @@
 import { createContext } from 'react'
 
-import type { AiProvider, ChatMessage, ChatModel, TokenUsage } from '../types'
+import type {
+  AiProvider,
+  ChatMessage,
+  ChatModel,
+  Conversation,
+  TokenUsage,
+} from '../types'
 
 export interface AiChatContextValue {
   activeModel: ChatModel
@@ -10,6 +16,8 @@ export interface AiChatContextValue {
   messages: ChatMessage[]
   isStreaming: boolean
   tokenUsage: TokenUsage
+  conversations: Conversation[]
+  activeConversation: Conversation | null
   setActiveModel: (model: ChatModel) => void
   setKey: (provider: AiProvider, key: string) => void
   openChat: () => void
@@ -17,7 +25,9 @@ export interface AiChatContextValue {
   toggleChat: () => void
   sendMessage: (content: string) => void
   cancelStream: () => void
-  clearMessages: () => void
+  createConversation: () => void
+  switchConversation: (id: string) => void
+  deleteConversation: (id: string) => void
 }
 
 export const AiChatContext = createContext<AiChatContextValue | null>(null)
