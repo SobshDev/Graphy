@@ -45,7 +45,7 @@ export function AiChatComposer() {
           <span>add context</span>
         </button>
       </div>
-      <div className="flex flex-col gap-1.5 rounded-lg border border-chat-line-strong bg-chat-sunken px-3 pb-1.5 pt-2.5 transition-colors focus-within:border-chat-accent-rail focus-within:shadow-[0_0_0_3px_var(--color-chat-accent-soft)]">
+      <div className="flex flex-col gap-1.5 rounded-lg border border-chat-line-strong bg-chat-sunken px-1.5 pb-1.5 pt-2.5 transition-colors focus-within:border-chat-accent-rail focus-within:shadow-[0_0_0_3px_var(--color-chat-accent-soft)]">
         <textarea
           value={value}
           onChange={(event) => setValue(event.target.value)}
@@ -53,7 +53,7 @@ export function AiChatComposer() {
           placeholder={placeholder}
           disabled={disabled}
           rows={2}
-          className="font-chat-sans w-full resize-none border-0 bg-transparent text-[13.5px] leading-[1.5] text-chat-text outline-none min-h-[38px] max-h-[140px] placeholder:text-chat-text-4 disabled:cursor-not-allowed disabled:text-chat-text-3"
+          className="font-chat-sans w-full resize-none border-0 bg-transparent px-1.5 text-[13.5px] leading-[1.5] text-chat-text outline-none min-h-[38px] max-h-[140px] placeholder:text-chat-text-4 disabled:cursor-not-allowed disabled:text-chat-text-3"
         />
         <div className="flex items-center gap-1">
           <div className="flex items-center gap-0.5">

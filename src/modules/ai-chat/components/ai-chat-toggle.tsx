@@ -1,4 +1,4 @@
-import { BrainCircuit } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 import { Button } from '@/shared/ui/button'
 
@@ -9,12 +9,12 @@ export function AiChatToggle() {
 
   return (
     <Button
-      variant={isOpen ? 'secondary' : 'ghost'}
       size="sm"
+      className="px-3"
       onClick={toggleChat}
       aria-pressed={isOpen}
     >
-      <BrainCircuit className="size-3.5" strokeWidth={1.7} />
+      <MessageCircle className="size-3.5" strokeWidth={1.9} />
       Chat
     </Button>
   )
