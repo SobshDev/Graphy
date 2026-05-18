@@ -10,12 +10,19 @@ const { parseFolder } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
 const { watchFolder } = require('./watcher.cjs')
 
-function resolveSafePath(root, file) {
-  if (typeof root !== 'string' || typeof file !== 'string') {
-    throw new Error('Invalid root or file path')
+async function resolveSafePath(file) {
+  if (typeof file !== 'string') {
+    throw new Error('Invalid file path')
   }
-  const absoluteRoot = path.resolve(root)
-  const absoluteFile = path.resolve(absoluteRoot, file)
+  if (!currentFolder) {
+    throw new Error('No project folder is open')
+  }
+  const absoluteRoot = await fsp.realpath(currentFolder)
+  const candidate = path.resolve(absoluteRoot, file)
+  const absoluteFile = await fsp.realpath(candidate).catch((err) => {
+    if (err && err.code === 'ENOENT') return candidate
+    throw err
+  })
   const relative = path.relative(absoluteRoot, absoluteFile)
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new Error('File path escapes project root')
@@ -30,38 +37,6 @@ function detectLineEnding(text) {
 function splitLines(text) {
   return text.split(/\r\n|\n/)
 }
-
-ipcMain.handle('function:read', async (_event, payload) => {
-  const { root, file, startLine, endLine } = payload ?? {}
-  const absolute = resolveSafePath(root, file)
-  const raw = await fsp.readFile(absolute, 'utf8')
-  const lines = splitLines(raw)
-  const start = Math.max(1, Number(startLine) | 0)
-  const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
-  const slice = lines.slice(start - 1, end).join('\n')
-  return { source: slice, startLine: start, endLine: end }
-})
-
-ipcMain.handle('function:write', async (_event, payload) => {
-  const { root, file, startLine, endLine, source } = payload ?? {}
-  if (typeof source !== 'string') {
-    throw new Error('Missing source content')
-  }
-  const absolute = resolveSafePath(root, file)
-  const raw = await fsp.readFile(absolute, 'utf8')
-  const eol = detectLineEnding(raw)
-  const lines = splitLines(raw)
-  const start = Math.max(1, Number(startLine) | 0)
-  const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
-  const replacement = source.replace(/\r\n/g, '\n').split('\n')
-  const next = [
-    ...lines.slice(0, start - 1),
-    ...replacement,
-    ...lines.slice(end),
-  ]
-  await fsp.writeFile(absolute, next.join(eol), 'utf8')
-  return { endLine: start - 1 + replacement.length }
-})
 
 app.setName('Graphy')
 app.setAppUserModelId('com.ntgrm.graphy')
@@ -262,6 +237,38 @@ function registerIpc() {
     projectState.clearRecents(app)
     refreshMenu()
     broadcastProject()
+  })
+
+  ipcMain.handle('function:read', async (_event, payload) => {
+    const { file, startLine, endLine } = payload ?? {}
+    const absolute = await resolveSafePath(file)
+    const raw = await fsp.readFile(absolute, 'utf8')
+    const lines = splitLines(raw)
+    const start = Math.max(1, Number(startLine) | 0)
+    const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
+    const slice = lines.slice(start - 1, end).join('\n')
+    return { source: slice, startLine: start, endLine: end }
+  })
+
+  ipcMain.handle('function:write', async (_event, payload) => {
+    const { file, startLine, endLine, source } = payload ?? {}
+    if (typeof source !== 'string') {
+      throw new Error('Missing source content')
+    }
+    const absolute = await resolveSafePath(file)
+    const raw = await fsp.readFile(absolute, 'utf8')
+    const eol = detectLineEnding(raw)
+    const lines = splitLines(raw)
+    const start = Math.max(1, Number(startLine) | 0)
+    const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
+    const replacement = source.replace(/\r\n/g, '\n').split('\n')
+    const next = [
+      ...lines.slice(0, start - 1),
+      ...replacement,
+      ...lines.slice(end),
+    ]
+    await fsp.writeFile(absolute, next.join(eol), 'utf8')
+    return { endLine: start - 1 + replacement.length }
   })
 }
 
