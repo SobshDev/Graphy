@@ -67,12 +67,12 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
       <Handle
         type="target"
         position={Position.Left}
-        className="!h-2 !w-2 !border-0"
+        className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!h-2 !w-2 !border-0"
+        className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
     </div>
   )
