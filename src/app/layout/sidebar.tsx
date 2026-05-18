@@ -30,13 +30,13 @@ const navItems: Array<NavItem> = [
 export function Sidebar() {
   return (
     <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
-      <div className="app-no-drag flex flex-col items-center gap-1">
+      <div className="app-no-drag flex flex-col items-center gap-2">
         {navItems.map(({ icon: Icon, label, shortcut, active }) => (
           <Tooltip key={label}>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
-                size="icon-sm"
+                size="icon-lg"
                 className={
                   active
                     ? 'text-foreground hover:bg-sidebar-accent relative'
@@ -44,7 +44,7 @@ export function Sidebar() {
                 }
               >
                 {active && (
-                  <span className="bg-primary absolute -left-3 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r" />
+                  <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
                 )}
                 <Icon className="size-5" strokeWidth={1.6} />
               </Button>
@@ -63,12 +63,12 @@ export function Sidebar() {
         ))}
       </div>
 
-      <div className="app-no-drag flex flex-col items-center gap-1">
+      <div className="app-no-drag flex flex-col items-center gap-2">
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon-lg"
               className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
             >
               <Bell className="size-4.5" strokeWidth={1.6} />
@@ -81,7 +81,7 @@ export function Sidebar() {
           <TooltipTrigger asChild>
             <Button
               variant="ghost"
-              size="icon-sm"
+              size="icon-lg"
               className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
             >
               <Settings className="size-4.5" strokeWidth={1.6} />

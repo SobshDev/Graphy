@@ -19,7 +19,7 @@ export function Canvas() {
         </span>
       </div>
 
-      <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-4 flex items-center gap-3 font-mono text-[11px]">
+      <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-4 flex h-8 items-center gap-3 font-mono text-[11px]">
         <span className="inline-flex items-center gap-1.5">
           <GitBranch className="size-3" strokeWidth={1.8} />
           main
