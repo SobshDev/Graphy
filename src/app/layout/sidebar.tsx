@@ -1,6 +1,14 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { Bell, Folder, GitBranch, Network, Search, Settings } from 'lucide-react'
+import {
+  Bell,
+  Folder,
+  GitBranch,
+  Network,
+  Search,
+  Settings,
+} from 'lucide-react'
 
+import { setPanelOpen, togglePanel, usePanelOpen } from '@/modules/files'
 import { Button } from '@/shared/ui/button'
 import { Kbd, KbdGroup } from '@/shared/ui/kbd'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -23,17 +31,31 @@ const navItems: Array<NavItem> = [
 export function Sidebar() {
   const location = useLocation()
   const isSettings = location.pathname.startsWith('/settings')
+  const filesPanelOpen = usePanelOpen()
   const activeId = isSettings ? null : 'files'
 
   return (
     <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
       <div className="app-no-drag flex flex-col items-center gap-2">
         {navItems.map(({ id, icon: Icon, label, shortcut, to }) => {
-          const active = activeId === id
+          const active =
+            id === 'files' ? !isSettings && filesPanelOpen : activeId === id
+          const handleClick =
+            id === 'files'
+              ? (e: React.MouseEvent) => {
+                  if (active) {
+                    e.preventDefault()
+                    togglePanel()
+                  } else {
+                    setPanelOpen(true)
+                  }
+                }
+              : undefined
           const button = (
             <Button
               variant="ghost"
               size="icon-lg"
+              onClick={handleClick}
               className={
                 active
                   ? 'text-foreground hover:bg-sidebar-accent relative'

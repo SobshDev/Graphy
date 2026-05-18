@@ -1,11 +1,4 @@
-import {
-  CircleUser,
-  Cpu,
-  Info,
-  Keyboard,
-  Network,
-  Palette,
-} from 'lucide-react'
+import { CircleUser, Cpu, Info, Keyboard, Network, Palette } from 'lucide-react'
 
 import type { SettingsSection } from '../types'
 
