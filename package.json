@@ -1,5 +1,11 @@
 {
   "name": "graphy",
+  "version": "0.1.0",
+  "description": "Graphy desktop application",
+  "author": {
+    "name": "SobshDev",
+    "email": "contact@graphy.dev"
+  },
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
