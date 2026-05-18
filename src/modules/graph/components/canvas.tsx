@@ -1,0 +1,39 @@
+import { GitBranch } from 'lucide-react'
+
+import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
+import { ZoomControls } from '@/modules/graph/components/zoom-controls'
+
+export function Canvas() {
+  return (
+    <section className="relative min-h-0 flex-1 overflow-hidden">
+      <GraphCanvas />
+
+      <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2">
+        <span className="glass border-border text-muted-foreground inline-flex h-7 items-center gap-2 rounded-md border px-2.5 font-mono text-[11px]">
+          <span className="bg-muted-foreground/40 h-1.5 w-1.5 rounded-full" />
+          Idle
+        </span>
+        <span className="glass border-border text-muted-foreground inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px]">
+          <span className="text-muted-foreground/60">view</span>
+          <span className="text-foreground">graph</span>
+        </span>
+      </div>
+
+      <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-4 flex items-center gap-3 font-mono text-[11px]">
+        <span className="inline-flex items-center gap-1.5">
+          <GitBranch className="size-3" strokeWidth={1.8} />
+          main
+        </span>
+        <span>·</span>
+        <span>typescript</span>
+        <span>·</span>
+        <span>
+          ln <span className="text-muted-foreground">0</span>, col{' '}
+          <span className="text-muted-foreground">0</span>
+        </span>
+      </div>
+
+      <ZoomControls />
+    </section>
+  )
+}

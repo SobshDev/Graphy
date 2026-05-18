@@ -15,6 +15,13 @@ export default [
     },
   },
   {
+    files: ['src/shared/ui/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-unnecessary-condition': 'off',
+      'no-shadow': 'off',
+    },
+  },
+  {
     ignores: [
       '.output/**',
       '.tanstack/**',
