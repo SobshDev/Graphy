@@ -15,8 +15,8 @@ import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 
 const nodeTypes: NodeTypes = { code: CodeNode }
 
-export function GraphCanvas({ root = null }: { root?: string | null }) {
-  const { graph, loading, error } = useGraph(root)
+export function GraphCanvas() {
+  const { graph, loading, error } = useGraph()
 
   const xyflow = useMemo(
     () => (graph ? toXYFlow(graph) : { nodes: [], edges: [] }),

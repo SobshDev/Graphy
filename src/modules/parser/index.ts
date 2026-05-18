@@ -1,7 +1,7 @@
 import path from 'node:path'
 import type { Node } from 'ts-morph'
 
-import { buildDeclarationMap, extractCalls } from './callExtractor'
+import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
 import { loadProject } from './projectLoader'
@@ -24,27 +24,24 @@ export function parseProject(root: string): Graph {
     `${root}/**/*.tsx`,
   ])
 
-  // Pass 1 — collect every node + a global ts-morph-declaration → node-id map
+  // Pass 1 — single walk: collect nodes + the ts-morph-declaration → id map
   const nodes: GraphNode[] = []
   const declarationMap = new Map<Node, string>()
 
   for (const sourceFile of sourceFiles) {
     const relativePath = path.relative(root, sourceFile.getFilePath())
-
-    nodes.push(
+    const collected = [
       ...extractFunctions(sourceFile, relativePath),
       ...extractClasses(sourceFile, relativePath),
-    )
+    ]
 
-    for (const [declaration, id] of buildDeclarationMap(
-      sourceFile,
-      relativePath,
-    )) {
-      declarationMap.set(declaration, id)
+    for (const { graphNode, declaration } of collected) {
+      nodes.push(graphNode)
+      declarationMap.set(declaration, graphNode.id)
     }
   }
 
-  // Pass 2 — resolve call edges using the global map
+  // Pass 2 — resolve call edges using the global declaration map
   const edges: GraphEdge[] = []
   for (const sourceFile of sourceFiles) {
     edges.push(...extractCalls(sourceFile, declarationMap))

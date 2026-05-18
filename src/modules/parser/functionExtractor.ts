@@ -1,13 +1,14 @@
 import { Node } from 'ts-morph'
 import type { ParameterDeclaration, SourceFile } from 'ts-morph'
-import type { GraphNode } from './core/models'
+
+import type { CollectedNode } from './core/models'
 import { makeNodeId } from './core/models'
 
 export function extractFunctions(
   sourceFile: SourceFile,
   relativeFilePath: string,
-): GraphNode[] {
-  const nodes: GraphNode[] = []
+): CollectedNode[] {
+  const collected: CollectedNode[] = []
 
   // classic function
   for (const fn of sourceFile.getFunctions()) {
@@ -15,13 +16,16 @@ export function extractFunctions(
     const name = fn.getName()
     if (!name) continue
 
-    nodes.push({
-      id: makeNodeId(relativeFilePath, name),
-      name,
-      type: 'function',
-      file: relativeFilePath,
-      line: fn.getStartLineNumber(),
-      signature: buildSignature(fn.getParameters()),
+    collected.push({
+      graphNode: {
+        id: makeNodeId(relativeFilePath, name),
+        name,
+        type: 'function',
+        file: relativeFilePath,
+        line: fn.getStartLineNumber(),
+        signature: buildSignature(fn.getParameters()),
+      },
+      declaration: fn,
     })
   }
 
@@ -36,17 +40,20 @@ export function extractFunctions(
       continue
 
     const name = variable.getName()
-    nodes.push({
-      id: makeNodeId(relativeFilePath, name),
-      name,
-      type: Node.isArrowFunction(initializer) ? 'arrow' : 'function',
-      file: relativeFilePath,
-      line: variable.getStartLineNumber(),
-      signature: buildSignature(initializer.getParameters()),
+    collected.push({
+      graphNode: {
+        id: makeNodeId(relativeFilePath, name),
+        name,
+        type: Node.isArrowFunction(initializer) ? 'arrow' : 'function',
+        file: relativeFilePath,
+        line: variable.getStartLineNumber(),
+        signature: buildSignature(initializer.getParameters()),
+      },
+      declaration: variable,
     })
   }
 
-  return nodes
+  return collected
 }
 
 function buildSignature(params: ParameterDeclaration[]): string {
