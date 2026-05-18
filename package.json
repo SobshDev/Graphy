@@ -13,10 +13,11 @@
     "#/*": "./src/*"
   },
   "scripts": {
-    "dev": "concurrently -k -n parser,tanstack,electron -c yellow,cyan,magenta \"bun --bun run parser:watch\" \"vite dev --port 3000\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
-    "dev:web": "concurrently -k -n parser,vite -c yellow,cyan \"bun --bun run parser:watch\" \"vite dev --port 3000\"",
+    "dev": "concurrently -k -n parser,tanstack,electron -c yellow,cyan,magenta \"bun --bun run dev:parser\" \"vite dev --port 3000\" \"wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .\"",
     "dev:electron": "wait-on http://localhost:3000 && cross-env ELECTRON_START_URL=http://localhost:3000 electron .",
-    "build": "vite build",
+    "dev:parser": "bun run scripts/build-parser.ts --watch",
+    "build": "bun --bun run build:parser && vite build",
+    "build:parser": "bun run scripts/build-parser.ts",
     "start:desktop": "bun --bun run build && electron .",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
@@ -25,14 +26,14 @@
     "dist:linux": "bun --bun run build && electron-builder --linux",
     "dist:mac": "bun --bun run build && electron-builder --mac",
     "dist:win": "bun --bun run build && electron-builder --win",
-    "parser:dump": "bun run src/modules/parser/dump.ts",
-    "parser:watch": "bun run src/modules/parser/watch.ts"
+    "parser:dump": "bun run src/modules/parser/dump.ts"
   },
   "build": {
     "appId": "com.ntgrm.graphy",
     "productName": "Graphy",
     "files": [
       ".output/**/*",
+      "dist-electron/**/*",
       "electron/**/*",
       "package.json"
     ],
