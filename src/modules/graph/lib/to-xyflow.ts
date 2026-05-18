@@ -3,8 +3,8 @@ import type { Edge, Node } from '@xyflow/react'
 import type { Graph } from '@/modules/parser'
 import type { CodeNodeData } from '@/modules/graph/components/code-node'
 
-const COLUMN_GAP = 280
-const ROW_GAP = 140
+const COLUMN_GAP = 320
+const ROW_GAP = 160
 const COLUMNS = 5
 
 export interface XYFlowGraph {
@@ -18,11 +18,17 @@ export function toXYFlow(graph: Graph): XYFlowGraph {
     type: 'code',
     position: gridPosition(index),
     data: {
-      name: node.name,
+      displayName: qualifiedName(node.id, node.name),
       type: node.type,
       signature: node.signature,
       file: node.file,
       line: node.line,
+      isAsync: node.isAsync,
+      isExported: node.isExported,
+      isStatic: node.isStatic,
+      bodyLines: node.bodyLines,
+      inDegree: node.inDegree,
+      outDegree: node.outDegree,
     },
   }))
 
@@ -40,4 +46,9 @@ function gridPosition(index: number): { x: number; y: number } {
     x: (index % COLUMNS) * COLUMN_GAP,
     y: Math.floor(index / COLUMNS) * ROW_GAP,
   }
+}
+
+function qualifiedName(id: string, fallback: string): string {
+  const idx = id.indexOf('::')
+  return idx >= 0 ? id.slice(idx + 2) : fallback
 }

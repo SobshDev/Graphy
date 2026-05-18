@@ -21,6 +21,12 @@ export function extractClasses(
         file: relativeFilePath,
         line: cls.getStartLineNumber(),
         signature: '',
+        isAsync: false,
+        isExported: cls.isExported(),
+        isStatic: false,
+        bodyLines: spanLines(cls.getStartLineNumber(), cls.getEndLineNumber()),
+        inDegree: 0,
+        outDegree: 0,
       },
       declaration: cls,
     })
@@ -38,6 +44,15 @@ export function extractClasses(
           file: relativeFilePath,
           line: method.getStartLineNumber(),
           signature: buildSignature(method.getParameters()),
+          isAsync: method.isAsync(),
+          isExported: false,
+          isStatic: method.isStatic(),
+          bodyLines: spanLines(
+            method.getStartLineNumber(),
+            method.getEndLineNumber(),
+          ),
+          inDegree: 0,
+          outDegree: 0,
         },
         declaration: method,
       })
@@ -49,4 +64,8 @@ export function extractClasses(
 
 function buildSignature(params: ParameterDeclaration[]): string {
   return `(${params.map((p) => p.getName()).join(', ')})`
+}
+
+function spanLines(start: number, end: number): number {
+  return Math.max(1, end - start + 1)
 }
