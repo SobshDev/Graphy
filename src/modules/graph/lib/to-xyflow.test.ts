@@ -38,6 +38,52 @@ describe('toXYFlow', () => {
     expect(callee?.position.x).toBeGreaterThan(caller?.position.x ?? Infinity)
   })
 
+  it('centers source-only entry nodes against their outgoing flow', async () => {
+    const result = await toXYFlow(makeGraph())
+    const byId = new Map(result.nodes.map((node) => [node.id, node]))
+    const entry = byId.get('index.ts::seedDemo')
+    const firstTarget = byId.get('api/userController.ts::registerUser')
+    const secondTarget = byId.get('db/database.ts::Database.saveUser')
+
+    expect(entry).toBeDefined()
+    expect(firstTarget).toBeDefined()
+    expect(secondTarget).toBeDefined()
+
+    const entryCenter = (entry?.position.y ?? 0) + 27
+    const targetMedian =
+      ((firstTarget?.position.y ?? 0) + (secondTarget?.position.y ?? 0)) / 2 +
+      27
+
+    expect(Math.abs(entryCenter - targetMedian)).toBeLessThan(1)
+  })
+
+  it('keeps nodes in the same column from overlapping', async () => {
+    const result = await toXYFlow(makeGraph())
+    const columns = new Map<number, typeof result.nodes>()
+
+    for (const node of result.nodes) {
+      const columnKey = Math.round(node.position.x / 8) * 8
+      const columnNodes = columns.get(columnKey) ?? []
+      columnNodes.push(node)
+      columns.set(columnKey, columnNodes)
+    }
+
+    for (const columnNodes of columns.values()) {
+      const sortedNodes = [...columnNodes].sort(
+        (a, b) => a.position.y - b.position.y,
+      )
+
+      for (let index = 1; index < sortedNodes.length; index += 1) {
+        const previous = sortedNodes[index - 1]
+        const current = sortedNodes[index]
+
+        expect(current.position.y - previous.position.y).toBeGreaterThanOrEqual(
+          54,
+        )
+      }
+    }
+  })
+
   it('keeps disconnected nodes separated from the main flow', async () => {
     const result = await toXYFlow(makeGraph())
     const connectedNodes = result.nodes.filter(
@@ -74,10 +120,18 @@ function makeGraph(): Graph {
     root: '/tmp/project',
     nodes: [
       makeNode({
+        id: 'index.ts::seedDemo',
+        name: 'seedDemo',
+        file: 'index.ts',
+        line: 4,
+        outDegree: 2,
+      }),
+      makeNode({
         id: 'api/userController.ts::registerUser',
         name: 'registerUser',
         file: 'api/userController.ts',
         line: 4,
+        inDegree: 1,
         outDegree: 1,
       }),
       makeNode({
@@ -95,7 +149,7 @@ function makeGraph(): Graph {
         type: 'method',
         file: 'db/database.ts',
         line: 8,
-        inDegree: 1,
+        inDegree: 2,
       }),
       makeNode({
         id: 'utils/format.ts::slugify',
@@ -105,6 +159,16 @@ function makeGraph(): Graph {
       }),
     ],
     edges: [
+      {
+        source: 'index.ts::seedDemo',
+        target: 'api/userController.ts::registerUser',
+        type: 'calls',
+      },
+      {
+        source: 'index.ts::seedDemo',
+        target: 'db/database.ts::Database.saveUser',
+        type: 'calls',
+      },
       {
         source: 'api/userController.ts::registerUser',
         target: 'services/userService.ts::UserService.create',

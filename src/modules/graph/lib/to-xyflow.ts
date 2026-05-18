@@ -7,6 +7,8 @@ import type { CodeNodeData } from '@/modules/graph/types'
 
 const NODE_WIDTH = 240
 const NODE_HEIGHT = 54
+const COLUMN_X_TOLERANCE = 8
+const MIN_COLUMN_NODE_GAP = 42
 const UNUSED_COLUMNS = 4
 const UNUSED_COLUMN_GAP = 300
 const UNUSED_ROW_GAP = 120
@@ -93,16 +95,21 @@ export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
   const layoutedById = new Map(
     layoutedGraph.children?.map((node) => [node.id, node]) ?? [],
   )
-  const layoutedConnectedNodes = connectedNodes.map((node) => {
-    const layoutedNode = layoutedById.get(node.id)
-    return {
-      ...node,
-      position: {
-        x: layoutedNode?.x ?? node.position.x,
-        y: layoutedNode?.y ?? node.position.y,
-      },
-    }
-  })
+  const layoutedConnectedNodes = resolveColumnOverlaps(
+    centerEntryNodes(
+      connectedNodes.map((node) => {
+        const layoutedNode = layoutedById.get(node.id)
+        return {
+          ...node,
+          position: {
+            x: layoutedNode?.x ?? node.position.x,
+            y: layoutedNode?.y ?? node.position.y,
+          },
+        }
+      }),
+      edges,
+    ),
+  )
   const unusedOrigin = unusedShelfOrigin(layoutedConnectedNodes)
 
   return {
@@ -112,6 +119,129 @@ export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
     ],
     edges,
   }
+}
+
+function resolveColumnOverlaps(
+  nodes: Array<Node<CodeNodeData>>,
+): Array<Node<CodeNodeData>> {
+  const columns = new Map<number, Array<Node<CodeNodeData>>>()
+
+  for (const node of nodes) {
+    const columnKey =
+      Math.round(node.position.x / COLUMN_X_TOLERANCE) * COLUMN_X_TOLERANCE
+    const columnNodes = columns.get(columnKey) ?? []
+    columnNodes.push(node)
+    columns.set(columnKey, columnNodes)
+  }
+
+  const yById = new Map<string, number>()
+  const minGap = NODE_HEIGHT + MIN_COLUMN_NODE_GAP
+
+  for (const columnNodes of columns.values()) {
+    if (columnNodes.length < 2) continue
+
+    const sortedNodes = [...columnNodes].sort(
+      (a, b) => a.position.y - b.position.y,
+    )
+    const originalTop = sortedNodes[0]?.position.y ?? 0
+    const originalBottom =
+      (sortedNodes[sortedNodes.length - 1]?.position.y ?? 0) + NODE_HEIGHT
+    const packedPositions: number[] = []
+    let previousY = -Infinity
+
+    for (const node of sortedNodes) {
+      const y = Math.max(node.position.y, previousY + minGap)
+      packedPositions.push(y)
+      previousY = y
+    }
+
+    const packedTop = packedPositions[0] ?? 0
+    const packedBottom =
+      (packedPositions[packedPositions.length - 1] ?? 0) + NODE_HEIGHT
+    const offset =
+      (originalTop + originalBottom) / 2 - (packedTop + packedBottom) / 2
+
+    sortedNodes.forEach((node, index) => {
+      yById.set(node.id, (packedPositions[index] ?? node.position.y) + offset)
+    })
+  }
+
+  return nodes.map((node) => {
+    const y = yById.get(node.id)
+    if (y === undefined) return node
+
+    return {
+      ...node,
+      position: {
+        ...node.position,
+        y,
+      },
+    }
+  })
+}
+
+function centerEntryNodes(
+  nodes: Array<Node<CodeNodeData>>,
+  edges: Array<Edge>,
+): Array<Node<CodeNodeData>> {
+  const nodesById = new Map(nodes.map((node) => [node.id, node]))
+  const incomingIds = new Set(edges.map((edge) => edge.target))
+  const targetsBySource = new Map<string, string[]>()
+
+  for (const edge of edges) {
+    if (!nodesById.has(edge.source) || !nodesById.has(edge.target)) continue
+    const targets = targetsBySource.get(edge.source) ?? []
+    targets.push(edge.target)
+    targetsBySource.set(edge.source, targets)
+  }
+
+  const entryPlacements = nodes
+    .filter((node) => !incomingIds.has(node.id) && targetsBySource.has(node.id))
+    .map((node) => {
+      const targetCenters = (targetsBySource.get(node.id) ?? [])
+        .map((targetId) => nodesById.get(targetId))
+        .filter((target): target is Node<CodeNodeData> => Boolean(target))
+        .map((target) => target.position.y + NODE_HEIGHT / 2)
+        .sort((a, b) => a - b)
+      const desiredCenter = median(targetCenters)
+
+      return {
+        id: node.id,
+        y: desiredCenter - NODE_HEIGHT / 2,
+      }
+    })
+    .sort((a, b) => a.y - b.y)
+
+  const entryYById = new Map<string, number>()
+  const minEntryGap = NODE_HEIGHT + 52
+  let previousY = -Infinity
+
+  for (const placement of entryPlacements) {
+    const y = Math.max(placement.y, previousY + minEntryGap)
+    entryYById.set(placement.id, y)
+    previousY = y
+  }
+
+  return nodes.map((node) => {
+    const y = entryYById.get(node.id)
+    if (y === undefined) return node
+
+    return {
+      ...node,
+      position: {
+        ...node.position,
+        y,
+      },
+    }
+  })
+}
+
+function median(values: number[]): number {
+  if (values.length === 0) return 0
+  const middle = Math.floor(values.length / 2)
+  if (values.length % 2 === 1) return values[middle] ?? 0
+
+  return ((values[middle - 1] ?? 0) + (values[middle] ?? 0)) / 2
 }
 
 function placeUnusedNodes(

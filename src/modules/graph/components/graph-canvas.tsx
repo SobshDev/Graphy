@@ -4,6 +4,7 @@ import {
   ReactFlow,
   useEdgesState,
   useNodesState,
+  useReactFlow,
 } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useEffect, useState } from 'react'
@@ -17,6 +18,7 @@ const nodeTypes: NodeTypes = { code: CodeNode }
 
 export function GraphCanvas() {
   const { graph, loading, error } = useGraph()
+  const { fitView } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<CodeNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [layouting, setLayouting] = useState(false)
@@ -24,6 +26,7 @@ export function GraphCanvas() {
 
   useEffect(() => {
     let cancelled = false
+    let fitFrame: number | null = null
 
     if (!graph) {
       setNodes([])
@@ -43,6 +46,9 @@ export function GraphCanvas() {
         if (cancelled) return
         setNodes(xyflow.nodes)
         setEdges(xyflow.edges)
+        fitFrame = window.requestAnimationFrame(() => {
+          fitView({ padding: 0.25, duration: 220 })
+        })
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -54,8 +60,9 @@ export function GraphCanvas() {
 
     return () => {
       cancelled = true
+      if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [graph, setNodes, setEdges])
+  }, [fitView, graph, setNodes, setEdges])
 
   const visibleError = error ?? layoutError
 
