@@ -6,6 +6,7 @@ import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
 import { FileExplorer } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
+import { ThemeBootstrap } from '@/modules/themes'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -15,6 +16,7 @@ function App() {
     <TooltipProvider delayDuration={200}>
       <ReactFlowProvider>
         <AiChatProvider>
+          <ThemeBootstrap />
           <main className="bg-canvas text-foreground flex h-screen w-screen overflow-hidden">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col">

@@ -1,3 +1,5 @@
+import { ThemesSection } from '@/modules/themes'
+
 import { settingsSections } from '../data/sections'
 import type { SettingsSectionId } from '../types'
 import { SectionAbout } from './section-about'
@@ -13,6 +15,8 @@ function renderSection(active: SettingsSectionId) {
   switch (active) {
     case 'appearance':
       return <SectionAppearance />
+    case 'themes':
+      return <ThemesSection />
     case 'ai':
       return <SectionAi />
     case 'keybindings':
@@ -24,10 +28,15 @@ function renderSection(active: SettingsSectionId) {
 
 export function SettingsContent({ active }: SettingsContentProps) {
   const section = settingsSections.find((s) => s.id === active)
+  const isWide = active === 'themes'
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-[640px] px-8 pb-16 pt-10">
+      <div
+        className={`mx-auto w-full px-8 pb-16 pt-10 ${
+          isWide ? 'max-w-[760px]' : 'max-w-[640px]'
+        }`}
+      >
         <h1 className="text-foreground mb-8 text-[20px] font-medium tracking-tight">
           {section?.label}
         </h1>

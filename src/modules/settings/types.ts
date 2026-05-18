@@ -1,6 +1,11 @@
 import type { ComponentType } from 'react'
 
-export type SettingsSectionId = 'appearance' | 'ai' | 'keybindings' | 'about'
+export type SettingsSectionId =
+  | 'appearance'
+  | 'themes'
+  | 'ai'
+  | 'keybindings'
+  | 'about'
 
 export type SettingsSection = {
   id: SettingsSectionId
