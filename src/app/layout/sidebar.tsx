@@ -4,6 +4,7 @@ import {
   Folder,
   GitBranch,
   Network,
+  Puzzle,
   Search,
   Settings,
 } from 'lucide-react'
@@ -26,6 +27,12 @@ const navItems: Array<NavItem> = [
   { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
   { id: 'git', icon: GitBranch, label: 'Source control', shortcut: '⌘⇧G' },
   { id: 'graphs', icon: Network, label: 'Graphs', shortcut: '⌘⇧H' },
+  {
+    id: 'extensions',
+    icon: Puzzle,
+    label: 'Extensions',
+    shortcut: '⌘⇧X',
+  },
 ]
 
 export function Sidebar() {

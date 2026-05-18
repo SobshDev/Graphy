@@ -188,6 +188,7 @@ function makeNode(node: Partial<GraphNode> & Pick<GraphNode, 'id' | 'name'>) {
     type: 'function',
     file: 'index.ts',
     line: 1,
+    endLine: 1,
     signature: '()',
     isAsync: false,
     isExported: true,
