@@ -10,16 +10,19 @@ import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useCallback, useEffect, useState } from 'react'
 
 import { CodeNode } from '@/modules/graph/components/code-node'
+import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
+import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import type { CodeNodeData } from '@/modules/graph/types'
 
 const nodeTypes: NodeTypes = { code: CodeNode }
 
 export function GraphCanvas() {
-  const { graph, loading, error } = useGraph()
+  const { graph, folder, loading, error } = useGraph()
+  const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<CodeNodeData>>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
@@ -84,6 +87,16 @@ export function GraphCanvas() {
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
   }, [fitView, graph, setNodes, setEdges])
+
+  if (!folder && !loading) {
+    return (
+      <EmptyState
+        recents={recents}
+        onOpenFolder={openFolder}
+        onOpenRecent={openRecent}
+      />
+    )
+  }
 
   const visibleError = error ?? layoutError
 
