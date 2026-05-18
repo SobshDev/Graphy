@@ -3,20 +3,7 @@ import type { NodeProps } from '@xyflow/react'
 import { memo } from 'react'
 
 import type { NodeType } from '@/modules/parser'
-
-export type CodeNodeData = {
-  displayName: string
-  type: NodeType
-  signature: string
-  file: string
-  line: number
-  isAsync: boolean
-  isExported: boolean
-  isStatic: boolean
-  bodyLines: number
-  inDegree: number
-  outDegree: number
-}
+import type { CodeNodeData } from '@/modules/graph/types'
 
 type CodeNodeProps = NodeProps & { data: CodeNodeData }
 
@@ -65,49 +52,17 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
         </div>
       </div>
 
-      <div className="border-border/60 text-muted-foreground/90 flex items-center gap-2 border-t border-dashed px-3 py-1 pl-4 font-mono text-[10px]">
-        <span title="callers">← {data.inDegree}</span>
-        <span title="callees">→ {data.outDegree}</span>
-        <span className="text-muted-foreground/60">·</span>
-        <span title="body length">{data.bodyLines} ln</span>
-
-        <span className="ml-auto flex items-center gap-1.5">
-          {data.isAsync && <Flag tone="primary">async</Flag>}
-          {data.isStatic && <Flag>static</Flag>}
-        </span>
-      </div>
-
       <Handle
         type="target"
         position={Position.Left}
-        className="!h-2 !w-2 !border-0"
+        className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
       <Handle
         type="source"
         position={Position.Right}
-        className="!h-2 !w-2 !border-0"
+        className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
     </div>
-  )
-}
-
-function Flag({
-  children,
-  tone = 'default',
-}: {
-  children: React.ReactNode
-  tone?: 'default' | 'primary'
-}) {
-  const toneClass =
-    tone === 'primary'
-      ? 'bg-primary/15 text-primary'
-      : 'bg-muted text-foreground/70'
-  return (
-    <span
-      className={`rounded-sm px-1.5 py-px text-[9.5px] uppercase tracking-wide ${toneClass}`}
-    >
-      {children}
-    </span>
   )
 }
 
