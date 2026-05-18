@@ -17,11 +17,15 @@ function CodeCard({ lang, children }: { lang?: string; children: string }) {
     }
   }
   return (
-    <div className="code-card">
-      <div className="hd">
-        <span className="lang">{lang ?? 'text'}</span>
-        <span className="sp" />
-        <button type="button" onClick={handleCopy}>
+    <div className="overflow-hidden rounded-lg border border-chat-line bg-chat-sunken">
+      <div className="font-chat-mono flex items-center gap-2 border-b border-chat-line py-1.5 pl-3 pr-2 text-[11px] text-chat-text-3">
+        <span className="text-chat-text-2">{lang ?? 'text'}</span>
+        <span className="flex-1" />
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="font-chat-mono inline-flex items-center gap-1.5 rounded border-0 bg-transparent px-1.5 py-0.5 text-[11px] text-chat-text-3 hover:bg-chat-hover hover:text-chat-text"
+        >
           {copied ? (
             <Check size={12} strokeWidth={2} />
           ) : (
@@ -30,8 +34,10 @@ function CodeCard({ lang, children }: { lang?: string; children: string }) {
           <span>{copied ? 'copied' : 'copy'}</span>
         </button>
       </div>
-      <pre>
-        <code>{children}</code>
+      <pre className="font-chat-mono m-0 overflow-x-auto px-3 py-2.5 text-[12px] leading-[1.7] text-chat-text">
+        <code className="border-0 bg-transparent p-0 font-[inherit] text-[inherit]">
+          {children}
+        </code>
       </pre>
     </div>
   )
@@ -61,7 +67,10 @@ const components: Components = {
     const isBlock = !!match || text.includes('\n')
     if (!isBlock) {
       return (
-        <code className="inline" {...props}>
+        <code
+          className="font-chat-mono rounded border border-chat-line bg-chat-elev px-1.5 py-px text-[12.5px] text-chat-accent [white-space:break-spaces]"
+          {...props}
+        >
           {children}
         </code>
       )

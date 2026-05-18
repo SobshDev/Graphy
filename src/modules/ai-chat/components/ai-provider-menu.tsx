@@ -39,7 +39,11 @@ export function AiProviderMenu() {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className="cb-mod" title="Model">
+          <button
+            type="button"
+            className="font-chat-mono inline-flex items-center gap-1.5 rounded-[5px] bg-transparent px-[7px] py-[3px] text-[10.5px] text-chat-text-3 hover:bg-chat-hover hover:text-chat-text"
+            title="Model"
+          >
             <span>{CHAT_MODEL_LABELS[activeModel].toLowerCase()}</span>
             <ChevronDown size={11} strokeWidth={1.8} />
           </button>
