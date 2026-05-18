@@ -69,11 +69,11 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
 function typeAccent(type: NodeType): { bar: string; label: string } {
   switch (type) {
     case 'class':
-      return { bar: 'bg-amber-500', label: 'text-amber-600' }
+      return { bar: 'bg-node-class', label: 'text-node-class-fg' }
     case 'method':
-      return { bar: 'bg-violet-500', label: 'text-violet-500' }
+      return { bar: 'bg-node-method', label: 'text-node-method' }
     case 'arrow':
-      return { bar: 'bg-sky-500', label: 'text-sky-500' }
+      return { bar: 'bg-node-arrow', label: 'text-node-arrow' }
     case 'function':
     default:
       return { bar: 'bg-primary', label: 'text-primary' }
