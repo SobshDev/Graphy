@@ -19,6 +19,8 @@
     "check": "prettier --check ."
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.96.0",
+    "@openai/codex-sdk": "^0.130.0",
     "@tailwindcss/vite": "^4.1.18",
     "@tanstack/react-devtools": "latest",
     "@tanstack/react-router": "latest",
