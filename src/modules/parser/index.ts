@@ -16,6 +16,8 @@ export type {
   NodeType,
 } from './core/models'
 export { SCHEMA_VERSION, serializeGraph, validateGraph } from './core/schema'
+export { ClassInspector, inspectClasses } from './classQuery'
+export type { ClassInfo } from './classQuery'
 
 export function parseProject(root: string): Graph {
   const project = loadProject(root)
