@@ -8,8 +8,8 @@ import {
 } from '../lib/get-ai-service'
 import { readAiConfig, writeAiConfig } from '../lib/storage'
 import type { AiProvider, ChatMessage } from '../types'
-import { AiChatContext  } from './ai-chat-context'
-import type {AiChatContextValue} from './ai-chat-context';
+import { AiChatContext } from './ai-chat-context'
+import type { AiChatContextValue } from './ai-chat-context'
 
 interface AiChatProviderProps {
   children: React.ReactNode

@@ -1,41 +1,58 @@
 import { Eraser, X } from 'lucide-react'
 
-import { Button } from '@/shared/ui/button'
+import '../chat.css'
 
 import { useAiChat } from '../hooks/use-ai-chat'
+import { AI_PROVIDER_LABELS } from '../types'
 import { AiChatComposer } from './ai-chat-composer'
 import { AiChatMessages } from './ai-chat-messages'
 import { AiProviderMenu } from './ai-provider-menu'
+import { ClaudeLogo } from './claude-logo'
 
 export function AiChatPanel() {
-  const { isOpen, closeChat, clearMessages, messages } = useAiChat()
+  const { isOpen, closeChat, clearMessages, messages, activeProvider } =
+    useAiChat()
   if (!isOpen) return null
 
+  const providerLabel = activeProvider
+    ? AI_PROVIDER_LABELS[activeProvider].toLowerCase()
+    : 'no model'
+  const count = messages.length
+
   return (
-    <aside className="bg-sidebar flex h-full w-[360px] shrink-0 flex-col border-l">
-      <header className="border-sidebar-border flex h-12 items-center justify-between border-b pl-3 pr-2">
-        <AiProviderMenu />
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={clearMessages}
-            disabled={messages.length === 0}
-            aria-label="Clear chat"
-            className="h-7 w-7"
-          >
-            <Eraser className="size-3.5" strokeWidth={1.7} />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={closeChat}
-            aria-label="Close chat"
-            className="h-7 w-7"
-          >
-            <X className="size-3.5" strokeWidth={1.7} />
-          </Button>
+    <aside className="graphy-chat flex h-full w-[400px] shrink-0 flex-col border-l border-l-[rgba(255,255,255,0.07)]">
+      <header className="chat-head">
+        <span style={{ display: 'inline-flex' }}>
+          <ClaudeLogo size={16} />
+        </span>
+        <div className="title">
+          <span className="ttl">{providerLabel}</span>
+          {count > 0 && (
+            <span className="meta">
+              · {count} {count === 1 ? 'msg' : 'msgs'}
+            </span>
+          )}
         </div>
+        <AiProviderMenu />
+        <button
+          type="button"
+          className="ix"
+          title="Clear chat"
+          aria-label="Clear chat"
+          onClick={clearMessages}
+          disabled={messages.length === 0}
+        >
+          <Eraser size={14} strokeWidth={1.7} />
+        </button>
+        <button
+          type="button"
+          className="ix"
+          title="Close chat"
+          aria-label="Close chat"
+          onClick={closeChat}
+        >
+          <X size={14} strokeWidth={1.7} />
+        </button>
       </header>
 
       <AiChatMessages />

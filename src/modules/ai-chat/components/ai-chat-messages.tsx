@@ -1,9 +1,8 @@
 import { useEffect, useRef } from 'react'
 
-import { cn } from '@/shared/lib/utils'
-
 import { useAiChat } from '../hooks/use-ai-chat'
-import { AI_PROVIDER_LABELS } from '../types'
+import type { ChatMessage } from '../types'
+import { ClaudeLogo } from './claude-logo'
 
 export function AiChatMessages() {
   const { messages, activeProvider, isStreaming } = useAiChat()
@@ -17,41 +16,72 @@ export function AiChatMessages() {
 
   if (messages.length === 0) {
     return (
-      <div className="text-muted-foreground flex flex-1 items-center justify-center px-6 text-center text-xs">
+      <div className="empty">
+        <span className="badge">
+          <span className="dot" />
+          {activeProvider ? 'READY' : 'NO MODEL'}
+        </span>
         {activeProvider ? (
-          <p>
-            Ask {AI_PROVIDER_LABELS[activeProvider]} anything. Messages are kept
-            for this session only.
-          </p>
+          <>
+            <h2>
+              Ask <em>Claude</em> anything about your graph.
+            </h2>
+            <p>Messages live for this session only.</p>
+          </>
         ) : (
-          <p>Pick a model in the header to start chatting.</p>
+          <>
+            <h2>Pick a model to start.</h2>
+            <p>Use the model picker in the header above.</p>
+          </>
         )}
       </div>
     )
   }
 
   return (
-    <div ref={scrollRef} className="flex-1 space-y-3 overflow-y-auto px-4 py-4">
+    <div ref={scrollRef} className="chat-scroll">
       {messages.map((message) => (
-        <div
-          key={message.id}
-          className={cn(
-            'rounded-md px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap',
-            message.role === 'user'
-              ? 'bg-muted text-foreground ml-6'
-              : 'bg-sidebar text-foreground mr-6 border',
-            message.error && 'text-destructive border-destructive/40',
-          )}
-        >
-          {message.error ? (
-            <span>{message.error}</span>
-          ) : message.content.length > 0 ? (
-            <span>{message.content}</span>
-          ) : (
-            <span className="text-muted-foreground">Thinking…</span>
-          )}
-        </div>
+        <MessageRow key={message.id} message={message} />
       ))}
+    </div>
+  )
+}
+
+function MessageRow({ message }: { message: ChatMessage }) {
+  if (message.role === 'user') {
+    return <div className="msg-user">{message.content}</div>
+  }
+
+  const showCaret = message.pending && !message.error
+  const bodyClass = message.error
+    ? 'msg-body is-error'
+    : message.pending && message.content.length === 0
+      ? 'msg-body is-thinking'
+      : 'msg-body'
+
+  return (
+    <div className="msg">
+      <div className="author">
+        <span className="av">
+          <ClaudeLogo size={14} />
+        </span>
+        <b>claude</b>
+      </div>
+      <div className={bodyClass}>
+        {message.error ? (
+          message.error
+        ) : message.content.length === 0 && message.pending ? (
+          <>
+            Thinking
+            <span className="caret" />
+          </>
+        ) : (
+          <>
+            {message.content}
+            {showCaret && <span className="caret" />}
+          </>
+        )}
+      </div>
     </div>
   )
 }

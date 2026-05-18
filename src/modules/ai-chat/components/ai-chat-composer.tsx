@@ -1,8 +1,5 @@
-import { Send, Square } from 'lucide-react'
+import { Square } from 'lucide-react'
 import { useState } from 'react'
-
-import { Button } from '@/shared/ui/button'
-import { Textarea } from '@/shared/ui/textarea'
 
 import { useAiChat } from '../hooks/use-ai-chat'
 
@@ -17,7 +14,7 @@ export function AiChatComposer() {
     ? 'Pick a model to start chatting…'
     : !hasKey
       ? 'Add an API key for this model to chat…'
-      : 'Ask anything. ⏎ to send, ⇧⏎ for newline.'
+      : 'Ask, edit, or assign a task…'
 
   const submit = () => {
     const trimmed = value.trim()
@@ -34,36 +31,40 @@ export function AiChatComposer() {
   }
 
   return (
-    <div className="border-t p-3">
-      <div className="bg-background flex items-end gap-2 rounded-md border px-2 py-1.5">
-        <Textarea
+    <div className="composer">
+      <div className="composer-input">
+        <textarea
           value={value}
           onChange={(event) => setValue(event.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
           disabled={disabled}
           rows={2}
-          className="min-h-0 flex-1 resize-none border-0 bg-transparent px-1 py-1 text-sm shadow-none focus-visible:ring-0"
         />
-        {isStreaming ? (
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={cancelStream}
-            aria-label="Stop generating"
-          >
-            <Square className="size-3.5" strokeWidth={2} />
-          </Button>
-        ) : (
-          <Button
-            size="icon"
-            onClick={submit}
-            disabled={disabled || value.trim().length === 0}
-            aria-label="Send"
-          >
-            <Send className="size-3.5" strokeWidth={1.8} />
-          </Button>
-        )}
+        <div className="composer-bar">
+          <span className="spacer" />
+          {isStreaming ? (
+            <button
+              type="button"
+              className="stop-btn"
+              onClick={cancelStream}
+              aria-label="Stop generating"
+            >
+              <Square size={11} strokeWidth={2} />
+              <span>Stop</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="send-btn"
+              onClick={submit}
+              disabled={disabled || value.trim().length === 0}
+            >
+              <span>Send</span>
+              <span className="kbd">↵</span>
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
