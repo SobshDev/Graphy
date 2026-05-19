@@ -1,6 +1,7 @@
 export * from './ai.interface'
 export * from './messages.util'
 export * from './claude.service'
+export * from './openrouter.service'
 export * from './tools'
 
 // `codex.service` intentionally NOT re-exported here: the `@openai/codex-sdk`

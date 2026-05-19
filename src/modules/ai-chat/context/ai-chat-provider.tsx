@@ -192,6 +192,17 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
     [defaultModel, keys, persistConfig],
   )
 
+  const removeKey = useCallback(
+    (provider: AiProvider) => {
+      if (!(provider in keys)) return
+      const nextKeys = { ...keys }
+      delete nextKeys[provider]
+      setKeys(nextKeys)
+      persistConfig({ defaultModel, keys: nextKeys })
+    },
+    [defaultModel, keys, persistConfig],
+  )
+
   const openChat = useCallback(() => setIsOpen(true), [])
   const closeChat = useCallback(() => setIsOpen(false), [])
   const toggleChat = useCallback(() => setIsOpen((prev) => !prev), [])
@@ -416,6 +427,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       activeConversation,
       setActiveModel,
       setKey,
+      removeKey,
       openChat,
       closeChat,
       toggleChat,
@@ -437,6 +449,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
       activeConversation,
       setActiveModel,
       setKey,
+      removeKey,
       openChat,
       closeChat,
       toggleChat,

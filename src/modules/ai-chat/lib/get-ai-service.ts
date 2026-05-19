@@ -1,5 +1,5 @@
 import type { AiService } from '@/modules/ai'
-import { ClaudeService } from '@/modules/ai'
+import { ClaudeService, OpenRouterService } from '@/modules/ai'
 
 import type { AiProvider } from '../types'
 
@@ -19,6 +19,12 @@ export function createAiService(
       return new ClaudeService({
         apiKey,
         dangerouslyAllowBrowser: true,
+      })
+    case 'openrouter':
+      return new OpenRouterService({
+        apiKey,
+        referer: 'https://graphy.dev',
+        title: 'Graphy',
       })
     case 'codex':
       // The Codex SDK spawns the local `codex` CLI as a subprocess (see
