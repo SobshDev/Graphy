@@ -15,6 +15,10 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   reloadGraph: () => ipcRenderer.invoke('graphy:reload'),
   clearRecents: () => ipcRenderer.invoke('graphy:clear-recents'),
   cacheLayout: (layout) => ipcRenderer.invoke('graphy:cache-layout', layout),
+  readNodeSummary: (nodeId) => ipcRenderer.invoke('summary:read', { nodeId }),
+  writeNodeSummary: (payload) => ipcRenderer.invoke('summary:write', payload),
+  deleteNodeSummary: (nodeId) =>
+    ipcRenderer.invoke('summary:delete', { nodeId }),
   onProject: (handler) => subscribe('project:set', handler),
   onGraph: (handler) => subscribe('graph:set', handler),
   readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),

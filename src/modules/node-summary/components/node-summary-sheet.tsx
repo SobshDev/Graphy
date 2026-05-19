@@ -1,4 +1,4 @@
-import { FileCode, Sparkles } from 'lucide-react'
+import { FileCode, RefreshCw, Sparkles } from 'lucide-react'
 
 import { Button } from '@/shared/ui/button'
 import {
@@ -10,20 +10,23 @@ import {
   SheetTitle,
 } from '@/shared/ui/sheet'
 
-import type { NodeSummaryTarget } from '../types'
+import { useNodeSummary } from '../hooks/use-node-summary'
 import { SummaryFacts } from './summary-facts'
+import { SummaryOverview } from './summary-overview'
 import { SummaryRelationsList } from './summary-relations-list'
 
 type NodeSummarySheetProps = {
-  target: NodeSummaryTarget | null
+  nodeId: string | null
   onOpenChange: (open: boolean) => void
 }
 
 export function NodeSummarySheet({
-  target,
+  nodeId,
   onOpenChange,
 }: NodeSummarySheetProps) {
-  const open = target !== null
+  const { header, callers, callees, overview, status, error, refresh } =
+    useNodeSummary(nodeId)
+  const open = nodeId !== null
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -32,27 +35,42 @@ export function NodeSummarySheet({
         className="flex w-full flex-col gap-0 p-0 data-[side=right]:sm:max-w-[640px]"
       >
         <SheetHeader className="border-border/60 border-b">
-          <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
-            <Sparkles size={11} strokeWidth={1.8} />
-            <span>Node summary</span>
+          <div className="flex items-center justify-between gap-2">
+            <div className="text-muted-foreground flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
+              <Sparkles size={11} strokeWidth={1.8} />
+              <span>Node summary</span>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={refresh}
+              disabled={
+                !header || status === 'streaming' || status === 'validating'
+              }
+              title="Regenerate summary"
+              className="-mr-1"
+            >
+              <RefreshCw size={13} strokeWidth={1.7} />
+              <span className="sr-only">Regenerate summary</span>
+            </Button>
           </div>
           <SheetTitle className="truncate font-mono text-[13px]">
-            {target?.displayName ?? 'Node'}
+            {header?.displayName ?? 'Node'}
           </SheetTitle>
           <SheetDescription className="truncate font-mono text-[11px]">
-            {target ? `${target.file}:${target.line}` : ''}
+            {header ? `${header.file}:${header.line}` : ''}
           </SheetDescription>
         </SheetHeader>
 
-        {target && (
+        {header && (
           <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-6 py-5">
-            <SummaryFacts facts={target.facts} />
+            <SummaryFacts facts={header.facts} />
 
-            {target.signature && (
+            {header.signature && (
               <div className="bg-muted/30 border-border/60 rounded-md border px-3 py-2 font-mono text-[11.5px]">
-                <span className="text-foreground">{target.displayName}</span>
+                <span className="text-foreground">{header.displayName}</span>
                 <span className="text-muted-foreground">
-                  {target.signature}
+                  {header.signature}
                 </span>
               </div>
             )}
@@ -61,28 +79,24 @@ export function NodeSummarySheet({
               <h3 className="text-muted-foreground text-[10px] font-semibold tracking-wider uppercase">
                 Overview
               </h3>
-              <div className="flex flex-col gap-3">
-                {target.overview.map((paragraph, index) => (
-                  <p
-                    key={index}
-                    className="text-foreground/90 text-sm leading-relaxed"
-                  >
-                    {paragraph}
-                  </p>
-                ))}
-              </div>
+              <SummaryOverview
+                paragraphs={overview}
+                status={status}
+                error={error}
+                onRetry={refresh}
+              />
             </section>
 
             <SummaryRelationsList
               title="Used by"
               emptyLabel="No callers found."
-              items={target.callers}
+              items={callers}
             />
 
             <SummaryRelationsList
               title="Uses"
               emptyLabel="No dependencies found."
-              items={target.callees}
+              items={callees}
             />
           </div>
         )}

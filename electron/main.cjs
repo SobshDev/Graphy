@@ -378,6 +378,23 @@ function registerIpc() {
     }
   })
 
+  ipcMain.handle('summary:read', (_e, payload) => {
+    const nodeId = payload?.nodeId
+    if (!currentFolder || typeof nodeId !== 'string') return null
+    return projectState.readSummary(currentFolder, nodeId)
+  })
+
+  ipcMain.handle('summary:write', (_e, payload) => {
+    if (!currentFolder || !payload || typeof payload.nodeId !== 'string') return
+    projectState.writeSummary(currentFolder, payload)
+  })
+
+  ipcMain.handle('summary:delete', (_e, payload) => {
+    const nodeId = payload?.nodeId
+    if (!currentFolder || typeof nodeId !== 'string') return
+    projectState.deleteSummary(currentFolder, nodeId)
+  })
+
   ipcMain.handle('graphy:file-tree', async () => {
     if (!currentFolder) return null
     const root = currentFolder

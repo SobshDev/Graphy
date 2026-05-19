@@ -16,14 +16,26 @@ export type NodeSummaryRelation = {
   line: number
 }
 
-export type NodeSummaryTarget = {
+export type NodeSummaryHeader = {
   displayName: string
   type: NodeType
   signature: string
   file: string
   line: number
+  endLine: number
   facts: NodeSummaryFacts
-  overview: string[]
-  callers: NodeSummaryRelation[]
-  callees: NodeSummaryRelation[]
 }
+
+export type SummaryStatus =
+  | 'idle'
+  | 'loading'
+  | 'validating'
+  | 'streaming'
+  | 'ready'
+  | 'error'
+  | 'no-key'
+
+export type {
+  CachedSummary,
+  CachedSummaryFingerprint,
+} from '@/shared/lib/desktop'

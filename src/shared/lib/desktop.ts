@@ -221,6 +221,20 @@ export type WebFetchResult =
   | { ok: true; contentType: string; body: string; truncated: boolean }
   | { ok: false; reason: string }
 
+export interface CachedSummaryFingerprint {
+  sourceHash: string
+  callerIds: string[]
+  calleeIds: string[]
+}
+
+export interface CachedSummary {
+  nodeId: string
+  overview: string[]
+  fingerprint: CachedSummaryFingerprint
+  model: string
+  generatedAt: number
+}
+
 export interface GraphyDesktop {
   platform: NodeJS.Platform
   getInitialState: () => Promise<InitialState>
@@ -230,6 +244,9 @@ export interface GraphyDesktop {
   reloadGraph: () => Promise<void>
   clearRecents: () => Promise<void>
   cacheLayout: (layout: unknown) => Promise<void>
+  readNodeSummary: (nodeId: string) => Promise<CachedSummary | null>
+  writeNodeSummary: (payload: CachedSummary) => Promise<void>
+  deleteNodeSummary: (nodeId: string) => Promise<void>
   onProject: (handler: (payload: ProjectPayload) => void) => () => void
   onGraph: (handler: (payload: GraphPayload) => void) => () => void
   readFunctionSource: (

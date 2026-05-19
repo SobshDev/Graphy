@@ -5,6 +5,7 @@ const path = require('node:path')
 const STATE_FILE = 'graphy-state.json'
 const CACHE_DIRNAME = '.graphy'
 const CACHE_FILENAME = 'cache.json'
+const SUMMARIES_FILENAME = 'summaries.json'
 const MAX_RECENTS = 10
 
 function statePath(app) {
@@ -87,6 +88,50 @@ function writeCache(folder, graph, layout) {
   fs.writeFileSync(cacheFile(folder), JSON.stringify({ graph, layout }))
 }
 
+function summariesFile(folder) {
+  return path.join(folder, CACHE_DIRNAME, SUMMARIES_FILENAME)
+}
+
+function readSummariesFile(folder) {
+  try {
+    const raw = fs.readFileSync(summariesFile(folder), 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return { summaries: {} }
+    const summaries =
+      parsed.summaries && typeof parsed.summaries === 'object'
+        ? parsed.summaries
+        : {}
+    return { summaries }
+  } catch {
+    return { summaries: {} }
+  }
+}
+
+function writeSummariesFile(folder, file) {
+  const dir = path.join(folder, CACHE_DIRNAME)
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(summariesFile(folder), JSON.stringify(file))
+}
+
+function readSummary(folder, nodeId) {
+  const { summaries } = readSummariesFile(folder)
+  return summaries[nodeId] ?? null
+}
+
+function writeSummary(folder, payload) {
+  const file = readSummariesFile(folder)
+  file.summaries[payload.nodeId] = payload
+  writeSummariesFile(folder, file)
+}
+
+function deleteSummary(folder, nodeId) {
+  const file = readSummariesFile(folder)
+  if (file.summaries[nodeId]) {
+    delete file.summaries[nodeId]
+    writeSummariesFile(folder, file)
+  }
+}
+
 module.exports = {
   read,
   recordFolder,
@@ -94,4 +139,7 @@ module.exports = {
   pruneMissing,
   readCache,
   writeCache,
+  readSummary,
+  writeSummary,
+  deleteSummary,
 }
