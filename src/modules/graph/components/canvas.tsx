@@ -7,6 +7,7 @@ import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
 
 export function Canvas() {
   const branch = useCurrentBranch()
+
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
       <GraphCanvas />

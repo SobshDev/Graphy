@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 
+import { openFile } from '@/modules/files/lib/open-file'
 import { Button } from '@/shared/ui/button'
 import {
   Sheet,
@@ -9,17 +10,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from '@/shared/ui/sheet'
-import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
 
 import { CodeEditor } from './code-editor'
-
-const TAB_SIZE_STORAGE_KEY = 'graphy:function-editor:tab-size'
-
-function readStoredTabSize(): 2 | 4 {
-  if (typeof window === 'undefined') return 4
-  const stored = window.localStorage.getItem(TAB_SIZE_STORAGE_KEY)
-  return stored === '2' ? 2 : 4
-}
 
 export type FunctionSheetTarget = {
   displayName: string
@@ -48,14 +40,6 @@ export function FunctionSheet({
   const [resolvedEndLine, setResolvedEndLine] = useState<number | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
-  const [tabSize, setTabSize] = useState<2 | 4>(readStoredTabSize)
-
-  function handleTabSizeChange(value: string) {
-    if (value !== '2' && value !== '4') return
-    const next = value === '2' ? 2 : 4
-    setTabSize(next)
-    window.localStorage.setItem(TAB_SIZE_STORAGE_KEY, String(next))
-  }
 
   const open = target !== null
 
@@ -136,8 +120,18 @@ export function FunctionSheet({
           <SheetTitle className="truncate font-mono text-[13px]">
             {target?.displayName ?? 'Function'}
           </SheetTitle>
-          <SheetDescription className="truncate font-mono text-[11px]">
-            {target ? `${target.file}:${target.startLine}` : ''}
+          <SheetDescription asChild>
+            <button
+              type="button"
+              className="hover:text-foreground truncate text-left font-mono text-[11px] transition-colors"
+              onClick={() => {
+                if (!target) return
+                const name = target.file.split('/').pop() ?? target.file
+                openFile(target.file, name)
+              }}
+            >
+              {target ? `${target.file}:${target.startLine}` : ''}
+            </button>
           </SheetDescription>
         </SheetHeader>
 
@@ -153,35 +147,11 @@ export function FunctionSheet({
             </div>
           )}
           {(status === 'ready' || status === 'saving') && (
-            <CodeEditor
-              value={draft}
-              onChange={setDraft}
-              language={isTsx}
-              tabSize={tabSize}
-            />
+            <CodeEditor value={draft} onChange={setDraft} language={isTsx} />
           )}
         </div>
 
-        <SheetFooter className="border-border/60 flex-row items-center justify-between border-t">
-          <div className="flex items-center gap-3">
-            <ToggleGroup
-              type="single"
-              size="sm"
-              value={String(tabSize)}
-              onValueChange={handleTabSizeChange}
-              className="font-mono text-[11px]"
-            >
-              <ToggleGroupItem value="2" aria-label="2 spaces indent">
-                2sp
-              </ToggleGroupItem>
-              <ToggleGroupItem value="4" aria-label="4 spaces indent">
-                4sp
-              </ToggleGroupItem>
-            </ToggleGroup>
-            <span className="text-muted-foreground font-mono text-[11px]">
-              {dirty ? 'Unsaved changes' : status === 'ready' ? 'Saved' : ''}
-            </span>
-          </div>
+        <SheetFooter className="border-border/60 flex-row items-center justify-end border-t">
           <div className="flex gap-2">
             <Button
               variant="ghost"

@@ -1,4 +1,4 @@
-import { Link, useLocation } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import {
   Bell,
   Folder,
@@ -11,6 +11,7 @@ import {
 
 import { toggleActivePanel, useActivePanel } from '@/shared/lib/active-panel'
 import type { ActivePanel } from '@/shared/lib/active-panel'
+import { toggleSettings, useSettingsOpen } from '@/shared/lib/settings-open'
 import { Button } from '@/shared/ui/button'
 import { Kbd, KbdGroup } from '@/shared/ui/kbd'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
@@ -50,8 +51,7 @@ const navItems: Array<NavItem> = [
 ]
 
 export function Sidebar() {
-  const location = useLocation()
-  const isSettings = location.pathname.startsWith('/settings')
+  const isSettings = useSettingsOpen()
   const activePanel = useActivePanel()
 
   return (
@@ -119,22 +119,21 @@ export function Sidebar() {
 
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link to="/settings">
-              <Button
-                variant="ghost"
-                size="icon-lg"
-                className={
-                  isSettings
-                    ? 'text-foreground hover:bg-sidebar-accent relative'
-                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground relative'
-                }
-              >
-                {isSettings && (
-                  <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
-                )}
-                <Settings className="size-5" strokeWidth={1.6} />
-              </Button>
-            </Link>
+            <Button
+              variant="ghost"
+              size="icon-lg"
+              onClick={() => toggleSettings()}
+              className={
+                isSettings
+                  ? 'text-foreground hover:bg-sidebar-accent relative'
+                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground relative'
+              }
+            >
+              {isSettings && (
+                <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
+              )}
+              <Settings className="size-5" strokeWidth={1.6} />
+            </Button>
           </TooltipTrigger>
           <TooltipContent side="right">Settings</TooltipContent>
         </Tooltip>
