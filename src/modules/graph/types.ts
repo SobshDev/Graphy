@@ -1,6 +1,7 @@
 import type { NodeType } from '@/modules/parser'
 
 export type CodeNodeData = {
+  kind: 'code'
   displayName: string
   type: NodeType
   signature: string
@@ -14,3 +15,23 @@ export type CodeNodeData = {
   inDegree: number
   outDegree: number
 }
+
+export type SummaryNodeData = {
+  kind: 'summary'
+  label: string
+  subtitle: string
+  count: number
+  fileCount: number
+  inDegree: number
+  outDegree: number
+}
+
+export type SectionNodeData = {
+  kind: 'section'
+  label: string
+  subtitle: string
+  width: number
+  height: number
+}
+
+export type GraphNodeData = CodeNodeData | SummaryNodeData | SectionNodeData

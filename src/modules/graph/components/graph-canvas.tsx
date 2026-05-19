@@ -13,30 +13,51 @@ import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
+import { SectionNode } from '@/modules/graph/components/section-node'
+import { SummaryNode } from '@/modules/graph/components/summary-node'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
-import type { CodeNodeData } from '@/modules/graph/types'
+import type { GraphNodeData } from '@/modules/graph/types'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
-const nodeTypes: NodeTypes = { code: CodeNode }
+const nodeTypes: NodeTypes = {
+  code: CodeNode,
+  section: SectionNode,
+  summary: SummaryNode,
+}
 
 export function GraphCanvas() {
   const { graph, folder, loading, error } = useGraph()
   const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CodeNodeData>>([])
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
+    [],
+  )
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(),
+  )
   const focusRequest = useGraphFocusRequest()
   const lastFocusTs = useRef(0)
 
   const handleNodeClick = useCallback(
-    (_event: unknown, node: Node<CodeNodeData>) => {
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind === 'summary') {
+        setExpandedGroups((current) => {
+          const next = new Set(current)
+          next.add(node.id)
+          return next
+        })
+        return
+      }
+      if (node.data.kind === 'section') return
+
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -50,6 +71,10 @@ export function GraphCanvas() {
   const handleSheetOpenChange = useCallback((open: boolean) => {
     if (!open) setSheetTarget(null)
   }, [])
+
+  useEffect(() => {
+    setExpandedGroups(new Set())
+  }, [graph])
 
   useEffect(() => {
     let cancelled = false
@@ -68,7 +93,7 @@ export function GraphCanvas() {
     setLayouting(true)
     setLayoutError(null)
 
-    toXYFlow(graph)
+    toXYFlow(graph, { expandedGroups })
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
@@ -89,13 +114,15 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [fitView, graph, setNodes, setEdges])
+  }, [expandedGroups, fitView, graph, setNodes, setEdges])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
     lastFocusTs.current = focusRequest.timestamp
     const matching = nodes
-      .filter((n) => n.data.file === focusRequest.file)
+      .filter(
+        (n) => n.data.kind === 'code' && n.data.file === focusRequest.file,
+      )
       .map((n) => n.id)
     if (matching.length > 0) {
       fitView({
