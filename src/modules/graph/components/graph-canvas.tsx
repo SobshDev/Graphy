@@ -46,16 +46,19 @@ export function GraphCanvas() {
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
-      if (node.data.kind === 'summary') {
-        setExpandedGroups((current) => {
-          const next = new Set(current)
-          next.add(node.id)
-          return next
-        })
-        return
-      }
-      if (node.data.kind === 'section') return
+      if (node.data.kind !== 'summary') return
+      setExpandedGroups((current) => {
+        const next = new Set(current)
+        next.add(node.id)
+        return next
+      })
+    },
+    [],
+  )
 
+  const handleNodeDoubleClick = useCallback(
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind !== 'code') return
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -182,6 +185,7 @@ export function GraphCanvas() {
         edges={[]}
         onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}
