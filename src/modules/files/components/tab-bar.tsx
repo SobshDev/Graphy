@@ -3,10 +3,9 @@ import { Network, X } from 'lucide-react'
 import { setActiveView } from '@/shared/lib/active-view'
 import { requestGraphFocus } from '@/shared/lib/graph-focus'
 import { cn } from '@/shared/lib/utils'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 import { getFileIcon } from '../lib/file-icon'
-import { closeTab, setActiveTab, useOpenTabs } from '../lib/open-file'
+import { requestCloseTab, setActiveTab, useOpenTabs } from '../lib/open-file'
 
 export function TabBar() {
   const { tabs, activeIndex } = useOpenTabs()
@@ -46,12 +45,12 @@ export function TabBar() {
               tabIndex={-1}
               onClick={(e) => {
                 e.stopPropagation()
-                closeTab(tab.path)
+                requestCloseTab(tab.path)
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.stopPropagation()
-                  closeTab(tab.path)
+                  requestCloseTab(tab.path)
                 }
               }}
               className="text-muted-foreground hover:text-foreground -mr-1 rounded p-0.5 opacity-0 group-hover:opacity-100"
@@ -62,18 +61,14 @@ export function TabBar() {
         )
       })}
       <div className="ml-auto pr-1">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              onClick={jumpToGraph}
-              className="text-muted-foreground hover:text-foreground rounded p-1"
-            >
-              <Network className="size-3.5" strokeWidth={1.6} />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom">Show in graph</TooltipContent>
-        </Tooltip>
+        <button
+          type="button"
+          onClick={jumpToGraph}
+          className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent flex items-center gap-1.5 rounded px-2 py-1 text-[12px]"
+        >
+          <Network className="size-3.5" strokeWidth={1.6} />
+          <span>Show in graph</span>
+        </button>
       </div>
     </div>
   )

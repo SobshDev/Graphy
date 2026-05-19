@@ -33,7 +33,13 @@ const navItems: Array<NavItem> = [
     shortcut: '⌘1',
     panel: 'files',
   },
-  { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
+  {
+    id: 'search',
+    icon: Search,
+    label: 'Search',
+    shortcut: '⌘⇧F',
+    panel: 'search',
+  },
   {
     id: 'git',
     icon: GitBranch,

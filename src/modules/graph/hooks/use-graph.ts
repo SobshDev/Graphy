@@ -8,6 +8,7 @@ export interface UseGraphResult {
   folder: string | null
   loading: boolean
   error: Error | null
+  layout: unknown
 }
 
 export function useGraph(): UseGraphResult {
@@ -16,6 +17,7 @@ export function useGraph(): UseGraphResult {
     folder: null,
     loading: false,
     error: null,
+    layout: null,
   })
 
   useEffect(() => {
@@ -26,6 +28,7 @@ export function useGraph(): UseGraphResult {
         folder: null,
         loading: false,
         error: new Error('Graphy must be launched as a desktop app.'),
+        layout: null,
       })
       return
     }
@@ -39,6 +42,7 @@ export function useGraph(): UseGraphResult {
         folder: initial.folder,
         loading: initial.loading,
         error: initial.error ? new Error(initial.error) : null,
+        layout: initial.layout,
       })
     })
 
@@ -48,6 +52,7 @@ export function useGraph(): UseGraphResult {
         folder: payload.folder,
         loading: payload.loading,
         error: payload.error ? new Error(payload.error) : null,
+        layout: payload.layout,
       })
     })
 

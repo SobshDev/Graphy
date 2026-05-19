@@ -12,7 +12,9 @@ import { SummaryNode } from '@/modules/graph/components/summary-node'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
+import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
 import type { GraphNodeData } from '@/modules/graph/types'
+import { getDesktop } from '@/shared/lib/desktop'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = {
@@ -22,7 +24,8 @@ const nodeTypes: NodeTypes = {
 }
 
 export function GraphCanvas() {
-  const { graph, folder, loading, error } = useGraph()
+  const { graph, folder, loading, error, layout: rawLayout } = useGraph()
+  const cachedLayout = rawLayout as XYFlowGraph | null
   const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
@@ -84,6 +87,19 @@ export function GraphCanvas() {
       }
     }
 
+    if (cachedLayout && expandedGroups.size === 0) {
+      setNodes(cachedLayout.nodes)
+      setLayoutEdges(cachedLayout.edges)
+      setLayouting(false)
+      setLayoutError(null)
+      fitFrame = window.requestAnimationFrame(() => {
+        fitView({ padding: 0.25, duration: 220 })
+      })
+      return () => {
+        if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
+      }
+    }
+
     setLayouting(true)
     setLayoutError(null)
 
@@ -95,6 +111,7 @@ export function GraphCanvas() {
         fitFrame = window.requestAnimationFrame(() => {
           fitView({ padding: 0.25, duration: 220 })
         })
+        if (expandedGroups.size === 0) getDesktop()?.cacheLayout(xyflow)
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -108,7 +125,7 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [expandedGroups, fitView, graph, setNodes])
+  }, [expandedGroups, fitView, graph, cachedLayout, setNodes])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
@@ -148,7 +165,7 @@ export function GraphCanvas() {
     )
   }
 
-  if ((loading || layouting) && nodes.length === 0) {
+  if ((loading || layouting) && nodes.length === 0 && !cachedLayout) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center font-mono text-xs">
         {loading ? 'Parsing…' : 'Arranging…'}

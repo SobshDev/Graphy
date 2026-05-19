@@ -7,10 +7,12 @@ import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
 import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SettingsPage } from '@/modules/settings'
+import { SearchPanel } from '@/modules/search'
 import { SourceControlPanel } from '@/modules/source-control'
 import { ThemeBootstrap } from '@/modules/themes'
 import { useActiveView } from '@/shared/lib/active-view'
 import { useSettingsOpen } from '@/shared/lib/settings-open'
+import { Toaster } from '@/shared/ui/sonner'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -29,6 +31,7 @@ function App() {
               <TopBar />
               <div className="flex min-h-0 flex-1">
                 <FileExplorer />
+                <SearchPanel />
                 <SourceControlPanel />
                 <MainContent />
               </div>
@@ -40,6 +43,7 @@ function App() {
               <SettingsPage />
             </div>
           )}
+          <Toaster />
         </AiChatProvider>
       </ReactFlowProvider>
     </TooltipProvider>

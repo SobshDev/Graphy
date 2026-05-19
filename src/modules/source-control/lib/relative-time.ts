@@ -46,3 +46,25 @@ export function formatFullDate(iso: string): string {
     minute: '2-digit',
   })
 }
+
+function startOfDay(d: Date): number {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+export function dateGroup(iso: string): string {
+  const d = new Date(iso)
+  if (Number.isNaN(d.getTime())) return 'Unknown'
+
+  const now = new Date()
+  const today = startOfDay(now)
+  const commitDay = startOfDay(d)
+
+  if (commitDay === today) return 'Today'
+  if (commitDay === today - DAY * 1000) return 'Yesterday'
+
+  const diffMs = today - commitDay
+  if (diffMs < 7 * DAY * 1000) return 'This week'
+  if (diffMs < 30 * DAY * 1000) return 'This month'
+
+  return d.toLocaleString(undefined, { month: 'long', year: 'numeric' })
+}
