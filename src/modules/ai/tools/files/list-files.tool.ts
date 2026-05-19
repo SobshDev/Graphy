@@ -55,7 +55,7 @@ export function createListFilesTool(): AiTool {
       if (!listProjectFiles) {
         return {
           available: false,
-          reason: 'IPC method `graphy:fs:list-files` not wired — see STUBS.md',
+          reason: 'IPC method `graphy:fs:list-files` not wired',
         }
       }
       return listProjectFiles({

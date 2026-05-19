@@ -53,7 +53,7 @@ export function createGitDiffTool(): AiTool {
       if (!ext?.gitDiff) {
         return {
           available: false,
-          reason: 'IPC method `gitDiff` not wired — see STUBS.md',
+          reason: 'IPC method `gitDiff` not wired',
         }
       }
       return ext.gitDiff({ file, staged, maxBytes })

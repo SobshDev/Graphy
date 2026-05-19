@@ -998,8 +998,7 @@ function registerIpc() {
     const { file, line, column = 1 } = payload ?? {}
     try {
       const absolute = await resolveSafePath(file)
-      const { Project } = require('ts-morph')
-      const ts = require('typescript')
+      const { Project, ts } = require('ts-morph')
       const tsConfigPath = currentFolder
         ? path.join(currentFolder, 'tsconfig.json')
         : null

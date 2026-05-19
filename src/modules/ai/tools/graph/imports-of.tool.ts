@@ -49,19 +49,12 @@ export function createImportsOfTool(graph: Graph): AiTool {
       if (!id) {
         throw new Error('`id` is required.')
       }
-      if (importEdges.length === 0) {
-        return {
-          available: false,
-          reason:
-            'No import edges in graph — see STUBS.md (import-extractor TODO)',
-        }
-      }
       const targets = importEdges
         .filter((e) => e.source === id)
         .map((e) => byId.get(e.target))
         .filter((n): n is GraphNode => n !== undefined)
         .map(slim)
-      return { id, imports: targets, available: true }
+      return { id, imports: targets }
     },
   }
 }

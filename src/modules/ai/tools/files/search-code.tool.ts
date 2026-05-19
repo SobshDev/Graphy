@@ -65,7 +65,7 @@ export function createSearchCodeTool(): AiTool {
       if (!searchProject) {
         return {
           available: false,
-          reason: 'IPC method `graphy:fs:search` not wired — see STUBS.md',
+          reason: 'IPC method `graphy:fs:search` not wired',
         }
       }
       return searchProject({

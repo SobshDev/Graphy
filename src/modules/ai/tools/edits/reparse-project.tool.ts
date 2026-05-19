@@ -17,7 +17,7 @@ export function createReparseProjectTool(): AiTool {
       if (!ext?.reparseProject) {
         return {
           available: false,
-          reason: 'IPC method `graphy:graph:reparse` not wired — see STUBS.md.',
+          reason: 'IPC method `graphy:graph:reparse` not wired',
         }
       }
       return ext.reparseProject()

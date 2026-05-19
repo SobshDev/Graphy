@@ -55,7 +55,7 @@ export function createTypeAtTool(): AiTool {
       if (!tsTypeAt) {
         return {
           available: false,
-          reason: 'IPC method `graphy:ts:type-at` not wired — see STUBS.md',
+          reason: 'IPC method `graphy:ts:type-at` not wired',
         }
       }
 

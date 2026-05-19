@@ -45,7 +45,7 @@ export function createRunScriptTool(): AiTool {
       if (!ext?.runScript) {
         return {
           available: false,
-          reason: 'IPC method `graphy:shell:run` not wired — see STUBS.md.',
+          reason: 'IPC method `graphy:shell:run` not wired',
         }
       }
       return ext.runScript({ script })

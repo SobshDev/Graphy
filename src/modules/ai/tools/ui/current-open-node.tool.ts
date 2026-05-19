@@ -1,32 +1,21 @@
-import { getDesktop } from '@/shared/lib/desktop'
+import { getOpenFile } from '@/modules/files'
 
 import type { AiTool } from '../tools.interface'
-
-interface CurrentOpenNodeDesktop {
-  getCurrentOpenNode?: () => Promise<
-    { open: true; id: string; file: string; line: number } | { open: false }
-  >
-}
 
 export function createCurrentOpenNodeTool(): AiTool {
   return {
     name: 'current_open_node',
     description:
-      'Return the node currently selected in the canvas or opened in the function sheet. Returns { open: false } when nothing is focused. Use this to answer "what am I looking at?" without the user having to paste a node id.',
+      'Return the file currently open in the editor. Returns { open: false } when no tab is active. Use this to answer "what am I looking at?" without the user having to paste a file path.',
     inputSchema: {
       type: 'object',
       properties: {},
       additionalProperties: false,
     },
-    handler: async () => {
-      const ext = getDesktop() as (CurrentOpenNodeDesktop & object) | null
-      if (!ext?.getCurrentOpenNode) {
-        return {
-          available: false,
-          reason: 'IPC method `getCurrentOpenNode` not wired — see STUBS.md',
-        }
-      }
-      return ext.getCurrentOpenNode()
+    handler: () => {
+      const active = getOpenFile()
+      if (!active) return { open: false }
+      return { open: true, file: active.path, name: active.name }
     },
   }
 }

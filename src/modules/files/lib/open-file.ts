@@ -33,6 +33,10 @@ function getActiveFile(): TabFile | null {
   return state.tabs[state.activeIndex] ?? null
 }
 
+export function getOpenFile(): TabFile | null {
+  return getActiveFile()
+}
+
 let activeRef: TabFile | null = null
 function getActiveSnapshot() {
   const next = getActiveFile()

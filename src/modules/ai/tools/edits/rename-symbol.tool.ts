@@ -57,8 +57,7 @@ export function createRenameSymbolTool(): AiTool {
       if (!ext?.renameSymbol) {
         return {
           available: false,
-          reason:
-            'IPC method `graphy:edits:rename-symbol` not wired — see STUBS.md.',
+          reason: 'IPC method `graphy:edits:rename-symbol` not wired',
         }
       }
       return ext.renameSymbol({ id, newName })

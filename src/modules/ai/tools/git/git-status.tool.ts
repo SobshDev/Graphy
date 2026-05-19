@@ -26,7 +26,7 @@ export function createGitStatusTool(): AiTool {
       if (!ext?.gitStatus) {
         return {
           available: false,
-          reason: 'IPC method `gitStatus` not wired — see STUBS.md',
+          reason: 'IPC method `gitStatus` not wired',
         }
       }
       return ext.gitStatus()

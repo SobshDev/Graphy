@@ -11,6 +11,7 @@ import { SourceControlPanel } from '@/modules/source-control'
 import { ThemeBootstrap } from '@/modules/themes'
 import { useActiveView } from '@/shared/lib/active-view'
 import { useSettingsOpen } from '@/shared/lib/settings-open'
+import { Toaster } from '@/shared/ui/sonner'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -40,6 +41,7 @@ function App() {
               <SettingsPage />
             </div>
           )}
+          <Toaster />
         </AiChatProvider>
       </ReactFlowProvider>
     </TooltipProvider>

@@ -6,6 +6,7 @@ import type { Node, SourceFile } from 'ts-morph'
 import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
+import { extractImports } from './importExtractor'
 import { extractObjects } from './objectExtractor'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
@@ -78,6 +79,7 @@ export function parseProject(root: string): Graph {
   for (const sourceFile of sourceFiles) {
     edges.push(...extractCalls(sourceFile, declarationMap))
   }
+  edges.push(...extractImports(sourceFiles, nodes, declarationMap, root))
 
   // Pass 3 — annotate each node with its in/out degree
   annotateDegrees(nodes, edges)

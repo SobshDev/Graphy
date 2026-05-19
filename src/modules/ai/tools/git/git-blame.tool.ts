@@ -66,7 +66,7 @@ export function createGitBlameTool(): AiTool {
       if (!ext?.gitBlame) {
         return {
           available: false,
-          reason: 'IPC method `gitBlame` not wired — see STUBS.md',
+          reason: 'IPC method `gitBlame` not wired',
         }
       }
       return ext.gitBlame({ file, line, contextLines })

@@ -69,7 +69,7 @@ export function createReadFileTool(): AiTool {
       if (!readProjectFile) {
         return {
           available: false,
-          reason: 'IPC method `graphy:fs:read-file` not wired — see STUBS.md',
+          reason: 'IPC method `graphy:fs:read-file` not wired',
         }
       }
       return readProjectFile({

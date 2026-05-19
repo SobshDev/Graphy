@@ -47,7 +47,7 @@ export function createWebFetchTool(): AiTool {
       if (!webFetch) {
         return {
           available: false,
-          reason: 'IPC method `graphy:web:fetch` not wired — see STUBS.md',
+          reason: 'IPC method `graphy:web:fetch` not wired',
         }
       }
 

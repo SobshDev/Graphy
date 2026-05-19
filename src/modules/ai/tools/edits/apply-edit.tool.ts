@@ -55,7 +55,7 @@ export function createApplyEditTool(): AiTool {
       if (!ext?.applyEdit) {
         return {
           available: false,
-          reason: 'IPC method `graphy:fs:apply-edit` not wired — see STUBS.md.',
+          reason: 'IPC method `graphy:fs:apply-edit` not wired',
         }
       }
       return ext.applyEdit({
