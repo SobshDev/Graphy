@@ -4,9 +4,11 @@ import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
 import { GraphLegend } from '@/modules/graph/components/graph-legend'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
 import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
+import { useProject } from '@/modules/graph'
 
 export function Canvas() {
-  const branch = useCurrentBranch()
+  const { folder } = useProject()
+  const branch = useCurrentBranch(folder)
 
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
