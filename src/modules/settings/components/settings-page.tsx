@@ -10,7 +10,7 @@ import { SettingsNav } from './settings-nav'
 const sectionIds = settingsSections.map((s) => s.id)
 
 export function SettingsPage() {
-  const [active, setActive] = useState<SettingsSectionId>('appearance')
+  const [active, setActive] = useState<SettingsSectionId>('themes')
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
