@@ -118,6 +118,29 @@ async function createWindow() {
     mainWindow.show()
   })
 
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.setZoomFactor(1)
+    mainWindow.webContents.setVisualZoomLevelLimits(1, 1)
+  })
+  mainWindow.webContents.on('zoom-changed', () => {
+    mainWindow.webContents.setZoomFactor(1)
+  })
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.type !== 'keyDown') return
+    const mod = input.control || input.meta
+    if (!mod) return
+    const key = input.key
+    if (
+      key === '+' ||
+      key === '=' ||
+      key === '-' ||
+      key === '_' ||
+      key === '0'
+    ) {
+      event.preventDefault()
+    }
+  })
+
   mainWindow.on('closed', () => {
     if (stopWatcher) {
       stopWatcher()
