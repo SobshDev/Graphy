@@ -2,6 +2,8 @@ import { Fragment, useMemo, useState } from 'react'
 import { ArrowDown, ArrowUp, History } from 'lucide-react'
 
 import { useProject } from '@/modules/graph'
+import { ChangesSection, OverlayToggles } from '@/modules/diff-viewer'
+import { usePanelResize } from '@/shared/hooks/use-panel-resize'
 import { useActivePanel } from '@/shared/lib/active-panel'
 
 import { useGitBranches } from '../hooks/use-git-branches'
@@ -15,6 +17,11 @@ export function SourceControlPanel() {
   const [selectedBranch, setSelectedBranch] = useState<string | undefined>()
   const branchesState = useGitBranches(folder)
   const state = useGitHistory(folder, selectedBranch)
+  const resize = usePanelResize({
+    defaultWidth: 288,
+    minWidth: 240,
+    maxWidth: 560,
+  })
 
   const graphWidth = useMemo(() => {
     if (state.status !== 'ready') return 0
@@ -33,7 +40,21 @@ export function SourceControlPanel() {
   const totalCommits = state.status === 'ready' ? state.data.commits.length : 0
 
   return (
-    <aside className="bg-sidebar border-sidebar-border flex w-72 shrink-0 flex-col border-r">
+    <aside
+      className="bg-sidebar border-sidebar-border relative flex shrink-0 flex-col border-r"
+      style={{ width: resize.width }}
+    >
+      <div
+        role="separator"
+        aria-label="Resize source control panel"
+        aria-orientation="vertical"
+        aria-valuemin={resize.minWidth}
+        aria-valuemax={resize.maxWidth}
+        aria-valuenow={resize.width}
+        tabIndex={0}
+        onPointerDown={resize.beginResize}
+        className="app-no-drag absolute inset-y-0 -right-1 z-10 w-2 cursor-col-resize touch-none outline-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-transparent before:transition-colors hover:before:bg-sidebar-border focus-visible:before:bg-primary"
+      />
       <div className="text-muted-foreground/70 px-3 py-2 text-[11px] font-medium uppercase tracking-wider">
         Source Control
       </div>
@@ -63,6 +84,10 @@ export function SourceControlPanel() {
           )}
         </div>
       )}
+
+      <OverlayToggles />
+
+      <ChangesSection />
 
       <div className="border-sidebar-border/60 flex items-center justify-between border-b px-3 pb-1 pt-2">
         <span className="text-muted-foreground/70 text-[10.5px] font-medium uppercase tracking-wider">
