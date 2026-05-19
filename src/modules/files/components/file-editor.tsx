@@ -18,12 +18,13 @@ import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useCallback, useEffect, useRef } from 'react'
 
 import {
-  closeActiveTab,
+  requestCloseActiveTab,
   saveFile,
   updateFileContent,
   useOpenFile,
 } from '../lib/open-file'
 import { TabBar } from './tab-bar'
+import { UnsavedChangesDialog } from './unsaved-changes-dialog'
 
 function langFromName(name: string) {
   if (/\.[jt]sx$/.test(name)) return javascript({ jsx: true, typescript: true })
@@ -46,7 +47,7 @@ export function FileEditor() {
     }
     if (e.key === 'w') {
       e.preventDefault()
-      closeActiveTab()
+      requestCloseActiveTab()
     }
   }, [])
 
@@ -138,6 +139,7 @@ export function FileEditor() {
     <div className="flex min-w-0 flex-1 flex-col">
       <TabBar />
       <div ref={hostRef} className="min-h-0 flex-1 overflow-hidden" />
+      <UnsavedChangesDialog />
     </div>
   )
 }
