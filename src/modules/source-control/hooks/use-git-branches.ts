@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react'
 
-import { getGitHistory } from '../services/git-history'
-import type { GitHistory } from '../services/git-history'
+import { getGitBranches } from '../services/git-history'
+import type { GitBranches } from '../services/git-history'
 
 type State =
   | { status: 'idle' }
   | { status: 'loading' }
-  | { status: 'ready'; data: GitHistory }
+  | { status: 'ready'; data: GitBranches }
   | { status: 'error' }
 
-export function useGitHistory(folder: string | null, branch?: string) {
+export function useGitBranches(folder: string | null) {
   const [state, setState] = useState<State>({ status: 'idle' })
 
   useEffect(() => {
@@ -20,7 +20,7 @@ export function useGitHistory(folder: string | null, branch?: string) {
 
     let cancelled = false
     setState({ status: 'loading' })
-    getGitHistory({ data: { folder, branch } })
+    getGitBranches({ data: { folder } })
       .then((data) => {
         if (!cancelled) setState({ status: 'ready', data })
       })
@@ -30,7 +30,7 @@ export function useGitHistory(folder: string | null, branch?: string) {
     return () => {
       cancelled = true
     }
-  }, [folder, branch])
+  }, [folder])
 
   return state
 }
