@@ -109,7 +109,7 @@ export class ClassInspector {
     }
 
     for (const node of nodes) {
-      if (node.type !== 'method') continue
+      if (node.type === 'class' || node.type === 'function') continue
       const classId = methodClassId(node.id)
       if (!classId) continue
       const bucket = this.methodsByClassId.get(classId)
