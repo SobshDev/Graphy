@@ -10,33 +10,34 @@ import {
   historyKeymap,
   indentWithTab,
 } from '@codemirror/commands'
-import { javascript } from '@codemirror/lang-javascript'
 import { indentUnit } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { useFileLineDiff } from '../hooks/use-file-line-diff'
+import { diffGutter, setDiffLineStatusEffect } from '../lib/diff-gutter'
+import { langFromName } from '../lib/lang-from-name'
 import {
-  closeActiveTab,
+  requestCloseActiveTab,
   saveFile,
   updateFileContent,
   useOpenFile,
 } from '../lib/open-file'
 import { TabBar } from './tab-bar'
-
-function langFromName(name: string) {
-  if (/\.[jt]sx$/.test(name)) return javascript({ jsx: true, typescript: true })
-  if (/\.ts$/.test(name)) return javascript({ typescript: true })
-  if (/\.[mc]?js$/.test(name)) return javascript()
-  return javascript({ typescript: true })
-}
+import { UnsavedChangesDialog } from './unsaved-changes-dialog'
 
 export function FileEditor() {
   const file = useOpenFile()
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const filePathRef = useRef<string | null>(null)
+
+  const lineDiff = useFileLineDiff({
+    path: file?.path ?? null,
+    savedContent: file?.savedContent ?? '',
+  })
 
   const handleKeys = useCallback((e: KeyboardEvent) => {
     if (!(e.metaKey || e.ctrlKey)) return
@@ -46,7 +47,7 @@ export function FileEditor() {
     }
     if (e.key === 'w') {
       e.preventDefault()
-      closeActiveTab()
+      requestCloseActiveTab()
     }
   }, [])
 
@@ -91,6 +92,7 @@ export function FileEditor() {
       state: EditorState.create({
         doc: file.content,
         extensions: [
+          diffGutter(),
           lineNumbers(),
           history(),
           indentUnit.of('  '),
@@ -132,12 +134,19 @@ export function FileEditor() {
     }
   }, [file?.path])
 
+  useEffect(() => {
+    const view = viewRef.current
+    if (!view) return
+    view.dispatch({ effects: setDiffLineStatusEffect.of(lineDiff) })
+  }, [lineDiff])
+
   if (!file) return null
 
   return (
     <div className="flex min-w-0 flex-1 flex-col">
       <TabBar />
       <div ref={hostRef} className="min-h-0 flex-1 overflow-hidden" />
+      <UnsavedChangesDialog />
     </div>
   )
 }

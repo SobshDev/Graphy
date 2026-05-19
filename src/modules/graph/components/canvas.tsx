@@ -1,6 +1,7 @@
 import { GitBranch } from 'lucide-react'
 import { useState } from 'react'
 
+import { useProject } from '@/modules/graph'
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
 import { LayoutSelector } from '@/modules/graph/components/layout-selector'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
@@ -8,7 +9,8 @@ import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
 import type { GraphLayout } from '@/modules/graph/types'
 
 export function Canvas() {
-  const branch = useCurrentBranch()
+  const { folder } = useProject()
+  const branch = useCurrentBranch(folder)
   const [layout, setLayout] = useState<GraphLayout>('tree')
 
   return (

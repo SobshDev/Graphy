@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { Check, Copy, GitMerge, GitPullRequest } from 'lucide-react'
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
-import { avatarColor, initials } from '../lib/avatar-color'
 import { formatFullDate, relativeTime } from '../lib/relative-time'
 import type { GitCommit } from '../services/git-history'
+import { GraphCommitLine, GraphConnectorLine } from './commit-graph'
 
 type RefKind = 'head' | 'branch' | 'remote' | 'tag'
 
@@ -34,19 +35,34 @@ const REF_STYLES: Record<RefKind, string> = {
   tag: 'bg-amber-500/15 text-amber-400 border-amber-500/30',
 }
 
-export function CommitItem({ commit }: { commit: GitCommit }) {
+export function CommitItem({
+  commit,
+  graphWidth,
+}: {
+  commit: GitCommit
+  graphWidth: number
+}) {
   const [expanded, setExpanded] = useState(false)
+  const [copied, setCopied] = useState(false)
   const refs = parseRefs(commit.refs)
-  const color = avatarColor(commit.email || commit.author)
 
   const toggle = () => setExpanded((v) => !v)
+
+  const copyHash = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(commit.hash)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
+
+  const commitRaw = commit.graphLines[0]?.raw ?? ''
 
   return (
     <div
       role="button"
       tabIndex={0}
       aria-expanded={expanded}
-      className="hover:bg-sidebar-accent/60 hover:border-l-primary/40 group cursor-pointer border-l-2 border-transparent px-3 py-2 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
+      className="hover:bg-sidebar-accent/50 group flex cursor-pointer items-stretch transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary/40"
       onClick={toggle}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -55,63 +71,108 @@ export function CommitItem({ commit }: { commit: GitCommit }) {
         }
       }}
     >
-      <div className="flex items-start gap-2">
-        <div
-          className={`${color} mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold text-white`}
-          title={commit.author}
-        >
-          {initials(commit.author)}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <div
-              className={`text-foreground text-[12.5px] leading-tight ${
-                expanded ? '' : 'truncate'
-              }`}
-              title={commit.subject}
-            >
-              {commit.subject}
-            </div>
-          </div>
-
-          {refs.length > 0 && (
-            <div className="mt-1 flex flex-wrap gap-1">
-              {refs.map((ref) => (
-                <span
-                  key={ref.label + ref.kind}
-                  className={`rounded border px-1 py-px text-[9.5px] font-medium leading-none ${REF_STYLES[ref.kind]}`}
-                >
-                  {ref.label}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="text-muted-foreground/70 mt-1 flex items-center gap-1.5 text-[11px]">
-            <span className="truncate">{commit.author}</span>
-            <span className="opacity-50">•</span>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="shrink-0">{relativeTime(commit.date)}</span>
-              </TooltipTrigger>
-              <TooltipContent side="bottom">
-                {formatFullDate(commit.date)}
-              </TooltipContent>
-            </Tooltip>
-          </div>
-
-          {expanded && commit.body && (
-            <pre className="text-muted-foreground/80 mt-2 whitespace-pre-wrap break-words font-sans text-[11.5px] leading-snug">
-              {commit.body}
-            </pre>
-          )}
-        </div>
-
-        <span className="text-muted-foreground/60 mt-0.5 shrink-0 font-mono text-[10.5px]">
-          {commit.shortHash}
-        </span>
+      <div className="shrink-0 pl-1">
+        <GraphCommitLine raw={commitRaw} graphWidth={graphWidth} />
       </div>
+
+      <div className="min-w-0 flex-1 py-1 pr-3">
+        <div
+          className={`text-foreground/90 text-[12px] leading-snug ${expanded ? '' : 'truncate'}`}
+          title={commit.subject}
+        >
+          {commit.subject}
+        </div>
+
+        {(refs.length > 0 || commit.pr || commit.isMerge) && (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1">
+            {commit.pr && (
+              <span className="flex items-center gap-0.5 rounded border border-purple-500/30 bg-purple-500/15 px-1 py-px text-[9px] font-medium leading-none text-purple-400">
+                <GitPullRequest className="size-2.5" strokeWidth={2} />#
+                {commit.pr}
+              </span>
+            )}
+            {commit.isMerge && (
+              <span className="flex items-center gap-0.5 rounded border border-violet-500/30 bg-violet-500/15 px-1 py-px text-[9px] font-medium leading-none text-violet-400">
+                <GitMerge className="size-2.5" strokeWidth={2} />
+                merge
+              </span>
+            )}
+            {refs.map((ref) => (
+              <span
+                key={ref.label + ref.kind}
+                className={`rounded border px-1 py-px text-[9px] font-medium leading-none ${REF_STYLES[ref.kind]}`}
+              >
+                {ref.label}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-0.5 flex items-center gap-1.5 text-[10.5px] text-muted-foreground/60">
+          <span className="truncate">{commit.author}</span>
+          <span className="opacity-40">·</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="shrink-0">{relativeTime(commit.date)}</span>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {formatFullDate(commit.date)}
+            </TooltipContent>
+          </Tooltip>
+          <span className="opacity-40">·</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                onClick={copyHash}
+                className="inline-flex shrink-0 items-center gap-0.5 font-mono transition-colors hover:text-foreground"
+              >
+                {commit.shortHash}
+                {copied ? (
+                  <Check
+                    className="size-2.5 text-emerald-400"
+                    strokeWidth={2.5}
+                  />
+                ) : (
+                  <Copy
+                    className="size-2.5 opacity-0 group-hover:opacity-60"
+                    strokeWidth={2}
+                  />
+                )}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="bottom">
+              {copied ? 'Copied!' : 'Copy full hash'}
+            </TooltipContent>
+          </Tooltip>
+        </div>
+
+        {expanded && commit.body && (
+          <pre className="mt-1.5 whitespace-pre-wrap break-words font-sans text-[11px] leading-snug text-muted-foreground/70">
+            {commit.body}
+          </pre>
+        )}
+      </div>
+    </div>
+  )
+}
+
+const CONNECTOR_H = 12
+
+export function GraphConnector({
+  raw,
+  graphWidth,
+}: {
+  raw: string
+  graphWidth: number
+}) {
+  return (
+    <div className="pl-1" style={{ height: CONNECTOR_H }}>
+      <GraphConnectorLine
+        raw={raw}
+        height={CONNECTOR_H}
+        graphWidth={graphWidth}
+      />
     </div>
   )
 }

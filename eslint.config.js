@@ -23,6 +23,7 @@ export default [
   },
   {
     ignores: [
+      '.claude/**',
       '.output/**',
       '.tanstack/**',
       'dist/**',

@@ -1,7 +1,11 @@
 const fs = require('node:fs')
+const fsp = require('node:fs/promises')
 const path = require('node:path')
 
 const STATE_FILE = 'graphy-state.json'
+const CACHE_DIRNAME = '.graphy'
+const CACHE_FILENAME = 'cache.json'
+const SUMMARIES_FILENAME = 'summaries.json'
 const MAX_RECENTS = 10
 
 function statePath(app) {
@@ -42,19 +46,100 @@ function clearRecents(app) {
   return next
 }
 
-function pruneMissing(app) {
+async function pruneMissing(app) {
   const state = read(app)
-  const recentFolders = state.recentFolders.filter((p) => {
-    try {
-      return fs.statSync(p).isDirectory()
-    } catch {
-      return false
-    }
-  })
+  const checks = await Promise.all(
+    state.recentFolders.map(async (p) => {
+      try {
+        return (await fsp.stat(p)).isDirectory()
+      } catch {
+        return false
+      }
+    }),
+  )
+  const recentFolders = state.recentFolders.filter((_, i) => checks[i])
   if (recentFolders.length === state.recentFolders.length) return state
   const next = { recentFolders }
   write(app, next)
   return next
 }
 
-module.exports = { read, recordFolder, clearRecents, pruneMissing }
+function cacheFile(folder) {
+  return path.join(folder, CACHE_DIRNAME, CACHE_FILENAME)
+}
+
+function readCache(folder) {
+  try {
+    const raw = fs.readFileSync(cacheFile(folder), 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return null
+    return {
+      graph: parsed.graph ?? null,
+      layout: parsed.layout ?? null,
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeCache(folder, graph, layout) {
+  const dir = path.join(folder, CACHE_DIRNAME)
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(cacheFile(folder), JSON.stringify({ graph, layout }))
+}
+
+function summariesFile(folder) {
+  return path.join(folder, CACHE_DIRNAME, SUMMARIES_FILENAME)
+}
+
+function readSummariesFile(folder) {
+  try {
+    const raw = fs.readFileSync(summariesFile(folder), 'utf8')
+    const parsed = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object') return { summaries: {} }
+    const summaries =
+      parsed.summaries && typeof parsed.summaries === 'object'
+        ? parsed.summaries
+        : {}
+    return { summaries }
+  } catch {
+    return { summaries: {} }
+  }
+}
+
+function writeSummariesFile(folder, file) {
+  const dir = path.join(folder, CACHE_DIRNAME)
+  fs.mkdirSync(dir, { recursive: true })
+  fs.writeFileSync(summariesFile(folder), JSON.stringify(file))
+}
+
+function readSummary(folder, nodeId) {
+  const { summaries } = readSummariesFile(folder)
+  return summaries[nodeId] ?? null
+}
+
+function writeSummary(folder, payload) {
+  const file = readSummariesFile(folder)
+  file.summaries[payload.nodeId] = payload
+  writeSummariesFile(folder, file)
+}
+
+function deleteSummary(folder, nodeId) {
+  const file = readSummariesFile(folder)
+  if (file.summaries[nodeId]) {
+    delete file.summaries[nodeId]
+    writeSummariesFile(folder, file)
+  }
+}
+
+module.exports = {
+  read,
+  recordFolder,
+  clearRecents,
+  pruneMissing,
+  readCache,
+  writeCache,
+  readSummary,
+  writeSummary,
+  deleteSummary,
+}

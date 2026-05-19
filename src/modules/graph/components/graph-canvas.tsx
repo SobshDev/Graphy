@@ -2,6 +2,7 @@ import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
+import { DiffBootstrap } from '@/modules/diff-viewer'
 import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FileNode } from '@/modules/graph/components/file-node'
 import { FolderNode } from '@/modules/graph/components/folder-node'
@@ -196,6 +197,7 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
 
   return (
     <>
+      <DiffBootstrap />
       <ReactFlow
         nodes={nodes}
         edges={renderedEdges}

@@ -11,6 +11,7 @@ import {
 
 import { toggleActivePanel, useActivePanel } from '@/shared/lib/active-panel'
 import type { ActivePanel } from '@/shared/lib/active-panel'
+import { setActiveView, useActiveView } from '@/shared/lib/active-view'
 import { toggleSettings, useSettingsOpen } from '@/shared/lib/settings-open'
 import { Button } from '@/shared/ui/button'
 import { Kbd, KbdGroup } from '@/shared/ui/kbd'
@@ -23,6 +24,7 @@ type NavItem = {
   shortcut?: string
   to?: string
   panel?: Exclude<ActivePanel, null>
+  view?: 'graph'
 }
 
 const navItems: Array<NavItem> = [
@@ -33,7 +35,13 @@ const navItems: Array<NavItem> = [
     shortcut: '⌘1',
     panel: 'files',
   },
-  { id: 'search', icon: Search, label: 'Search', shortcut: '⌘⇧F' },
+  {
+    id: 'search',
+    icon: Search,
+    label: 'Search',
+    shortcut: '⌘⇧F',
+    panel: 'search',
+  },
   {
     id: 'git',
     icon: GitBranch,
@@ -41,7 +49,13 @@ const navItems: Array<NavItem> = [
     shortcut: '⌘⇧G',
     panel: 'git',
   },
-  { id: 'graphs', icon: Network, label: 'Graphs', shortcut: '⌘⇧H' },
+  {
+    id: 'graphs',
+    icon: Network,
+    label: 'Graphs',
+    shortcut: '⌘⇧H',
+    view: 'graph',
+  },
   {
     id: 'extensions',
     icon: Puzzle,
@@ -53,54 +67,65 @@ const navItems: Array<NavItem> = [
 export function Sidebar() {
   const isSettings = useSettingsOpen()
   const activePanel = useActivePanel()
+  const activeView = useActiveView()
 
   return (
     <aside className="bg-sidebar border-sidebar-border app-drag titlebar-pad flex w-15 shrink-0 flex-col items-center justify-between border-r py-3">
       <div className="app-no-drag flex flex-col items-center gap-2">
-        {navItems.map(({ id, icon: Icon, label, shortcut, to, panel }) => {
-          const active = !isSettings && panel != null && activePanel === panel
-          const handleClick = panel
-            ? (e: React.MouseEvent) => {
-                e.preventDefault()
-                toggleActivePanel(panel)
-              }
-            : undefined
-          const button = (
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              onClick={handleClick}
-              className={
-                active
-                  ? 'text-foreground hover:bg-sidebar-accent relative'
-                  : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground relative'
-              }
-            >
-              {active && (
-                <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
-              )}
-              <Icon className="size-5" strokeWidth={1.6} />
-            </Button>
-          )
+        {navItems.map(
+          ({ id, icon: Icon, label, shortcut, to, panel, view }) => {
+            const active =
+              !isSettings &&
+              ((panel != null && activePanel === panel) ||
+                (view != null && activeView === view))
+            const handleClick = panel
+              ? (e: React.MouseEvent) => {
+                  e.preventDefault()
+                  toggleActivePanel(panel)
+                }
+              : view
+                ? (e: React.MouseEvent) => {
+                    e.preventDefault()
+                    setActiveView(view)
+                  }
+                : undefined
+            const button = (
+              <Button
+                variant="ghost"
+                size="icon-lg"
+                onClick={handleClick}
+                className={
+                  active
+                    ? 'text-foreground hover:bg-sidebar-accent relative'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground relative'
+                }
+              >
+                {active && (
+                  <span className="bg-primary absolute -left-2.5 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-r" />
+                )}
+                <Icon className="size-5" strokeWidth={1.6} />
+              </Button>
+            )
 
-          return (
-            <Tooltip key={id}>
-              <TooltipTrigger asChild>
-                {to ? <Link to={to}>{button}</Link> : button}
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <span>{label}</span>
-                {shortcut ? (
-                  <KbdGroup>
-                    {Array.from(shortcut).map((key, i) => (
-                      <Kbd key={i}>{key}</Kbd>
-                    ))}
-                  </KbdGroup>
-                ) : null}
-              </TooltipContent>
-            </Tooltip>
-          )
-        })}
+            return (
+              <Tooltip key={id}>
+                <TooltipTrigger asChild>
+                  {to ? <Link to={to}>{button}</Link> : button}
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                  <span>{label}</span>
+                  {shortcut ? (
+                    <KbdGroup>
+                      {Array.from(shortcut).map((key, i) => (
+                        <Kbd key={i}>{key}</Kbd>
+                      ))}
+                    </KbdGroup>
+                  ) : null}
+                </TooltipContent>
+              </Tooltip>
+            )
+          },
+        )}
       </div>
 
       <div className="app-no-drag flex flex-col items-center gap-2">

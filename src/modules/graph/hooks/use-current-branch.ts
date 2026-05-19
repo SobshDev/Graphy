@@ -2,12 +2,17 @@ import { useEffect, useState } from 'react'
 
 import { getCurrentBranch } from '../services/git'
 
-export function useCurrentBranch() {
+export function useCurrentBranch(folder: string | null) {
   const [branch, setBranch] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!folder) {
+      setBranch(null)
+      return
+    }
+
     let cancelled = false
-    getCurrentBranch()
+    getCurrentBranch({ data: { folder } })
       .then((value) => {
         if (!cancelled) setBranch(value)
       })
@@ -17,7 +22,7 @@ export function useCurrentBranch() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [folder])
 
   return branch
 }

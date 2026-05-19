@@ -193,6 +193,13 @@ body {
   --node-arrow: oklch(0.72 0.15 230);
   --node-function: var(--primary);
 
+  /* Graph diff overlay */
+  --node-diff-added: oklch(0.7 0.16 145);
+  --node-diff-modified: oklch(0.75 0.13 80);
+  --node-diff-deleted: oklch(0.65 0.18 25);
+  --node-diff-caller: oklch(0.7 0.13 50);
+  --node-diff-callee: oklch(0.7 0.12 240);
+
   /* Brand */
   --brand-claude: #d97757;
 }
@@ -261,13 +268,6 @@ body {
     transparent
   );
   --xy-selection-border-default: 1px dashed var(--primary);
-}
-
-.react-flow__node-code,
-.react-flow__node-section,
-.react-flow__node-summary {
-  contain: layout paint style;
-  z-index: 2;
 }
 
 @supports (corner-shape: round) {

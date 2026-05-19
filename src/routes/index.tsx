@@ -4,13 +4,16 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { Sidebar } from '@/app/layout/sidebar'
 import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
+import { DiffView } from '@/modules/diff-viewer'
 import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SettingsPage } from '@/modules/settings'
+import { SearchPanel } from '@/modules/search'
 import { SourceControlPanel } from '@/modules/source-control'
 import { ThemeBootstrap } from '@/modules/themes'
 import { useActiveView } from '@/shared/lib/active-view'
 import { useSettingsOpen } from '@/shared/lib/settings-open'
+import { Toaster } from '@/shared/ui/sonner'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
@@ -29,6 +32,7 @@ function App() {
               <TopBar />
               <div className="flex min-h-0 flex-1">
                 <FileExplorer />
+                <SearchPanel />
                 <SourceControlPanel />
                 <MainContent />
               </div>
@@ -40,6 +44,7 @@ function App() {
               <SettingsPage />
             </div>
           )}
+          <Toaster />
         </AiChatProvider>
       </ReactFlowProvider>
     </TooltipProvider>
@@ -50,6 +55,7 @@ function MainContent() {
   const activeView = useActiveView()
   const openFile = useOpenFile()
 
+  if (activeView === 'diff') return <DiffView />
   if (activeView === 'editor' && openFile) return <FileEditor />
   return <Canvas />
 }

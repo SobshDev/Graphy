@@ -3,6 +3,7 @@ import { ThemesSection } from '@/modules/themes'
 import { settingsSections } from '../data/sections'
 import type { SettingsSectionId } from '../types'
 import { SectionAbout } from './section-about'
+import { SectionAi } from './section-ai'
 
 type SettingsContentProps = {
   active: SettingsSectionId
@@ -12,6 +13,8 @@ function renderSection(active: SettingsSectionId) {
   switch (active) {
     case 'themes':
       return <ThemesSection />
+    case 'ai':
+      return <SectionAi />
     case 'about':
       return <SectionAbout />
   }
