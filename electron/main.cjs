@@ -71,14 +71,6 @@ async function resolveSafePath(file) {
   return absoluteFile
 }
 
-function detectLineEnding(text) {
-  return text.includes('\r\n') ? '\r\n' : '\n'
-}
-
-function splitLines(text) {
-  return text.split(/\r\n|\n/)
-}
-
 app.setName('Graphy')
 app.setAppUserModelId('com.ntgrm.graphy')
 
@@ -407,38 +399,6 @@ function registerIpc() {
     if (typeof content !== 'string') throw new Error('Missing file content')
     const absolute = await resolveSafePath(file)
     await fsp.writeFile(absolute, content, 'utf8')
-  })
-
-  ipcMain.handle('function:read', async (_event, payload) => {
-    const { file, startLine, endLine } = payload ?? {}
-    const absolute = await resolveSafePath(file)
-    const raw = await fsp.readFile(absolute, 'utf8')
-    const lines = splitLines(raw)
-    const start = Math.max(1, Number(startLine) | 0)
-    const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
-    const slice = lines.slice(start - 1, end).join('\n')
-    return { source: slice, startLine: start, endLine: end }
-  })
-
-  ipcMain.handle('function:write', async (_event, payload) => {
-    const { file, startLine, endLine, source } = payload ?? {}
-    if (typeof source !== 'string') {
-      throw new Error('Missing source content')
-    }
-    const absolute = await resolveSafePath(file)
-    const raw = await fsp.readFile(absolute, 'utf8')
-    const eol = detectLineEnding(raw)
-    const lines = splitLines(raw)
-    const start = Math.max(1, Number(startLine) | 0)
-    const end = Math.min(lines.length, Math.max(start, Number(endLine) | 0))
-    const replacement = source.replace(/\r\n/g, '\n').split('\n')
-    const next = [
-      ...lines.slice(0, start - 1),
-      ...replacement,
-      ...lines.slice(end),
-    ]
-    await fsp.writeFile(absolute, next.join(eol), 'utf8')
-    return { endLine: start - 1 + replacement.length }
   })
 }
 

@@ -3,16 +3,15 @@ import path from 'node:path'
 import { Project, ScriptTarget } from 'ts-morph'
 import type { Node, SourceFile } from 'ts-morph'
 
+import { extractBindings } from './bindingExtractor'
+import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
 import { extractObjects } from './objectExtractor'
+import { extractReferences } from './referenceExtractor'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
-import {
-  classifyNode,
-  extractStructuralEdges,
-  makeFileNode,
-} from './structureExtractor'
+import { classifyNode, extractStructuralEdges } from './structureExtractor'
 
 export type {
   EdgeType,
@@ -61,10 +60,8 @@ export function parseProject(root: string): Graph {
     (sourceFile) => !sourceFile.isDeclarationFile(),
   )
 
-  // Pass 1 — collect files, symbols, and the ts-morph-declaration → id map.
-  const nodes: GraphNode[] = sourceFiles.map((sourceFile) =>
-    makeFileNode(root, sourceFile),
-  )
+  // Pass 1 — collect symbols and the ts-morph-declaration → id map.
+  const nodes: GraphNode[] = []
   const declarationMap = new Map<Node, string>()
 
   for (const sourceFile of sourceFiles) {
@@ -73,6 +70,7 @@ export function parseProject(root: string): Graph {
       ...extractFunctions(sourceFile, relativePath),
       ...extractClasses(sourceFile, relativePath),
       ...extractObjects(sourceFile, relativePath),
+      ...extractBindings(sourceFile, relativePath),
     ]
 
     for (const { graphNode, declaration } of collected) {
@@ -82,14 +80,18 @@ export function parseProject(root: string): Graph {
     }
   }
 
-  // Pass 2 — resolve structure-first relationships. We intentionally do not
-  // emit direct call edges here; the graph is organized by app/module shape.
+  // Pass 2 — resolve structural relationships (ownership, JSX, hooks,
+  // instantiation, inheritance) and append plain function-call edges.
   const edges: GraphEdge[] = extractStructuralEdges(
-    root,
     sourceFiles,
     declarationMap,
     nodes,
   )
+
+  for (const sourceFile of sourceFiles) {
+    edges.push(...extractCalls(sourceFile, declarationMap))
+    edges.push(...extractReferences(sourceFile, declarationMap))
+  }
 
   // Pass 3 — annotate each node with its in/out degree
   annotateDegrees(nodes, edges)

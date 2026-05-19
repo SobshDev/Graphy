@@ -55,8 +55,7 @@ export function GraphCanvas() {
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
-        startLine: node.data.line,
-        endLine: node.data.endLine,
+        line: node.data.line,
       })
     },
     [],
@@ -188,7 +187,6 @@ export function GraphCanvas() {
         <CanvasEdges edges={layoutEdges} nodes={nodes} />
       </ReactFlow>
       <FunctionSheet
-        root={graph?.root ?? null}
         target={sheetTarget}
         onOpenChange={handleSheetOpenChange}
       />

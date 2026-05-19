@@ -12,7 +12,7 @@ import {
 } from '@codemirror/commands'
 import { javascript } from '@codemirror/lang-javascript'
 import { indentUnit } from '@codemirror/language'
-import { EditorState } from '@codemirror/state'
+import { EditorSelection, EditorState } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useEffect, useRef } from 'react'
@@ -22,6 +22,7 @@ type CodeEditorProps = {
   onChange: (value: string) => void
   language?: 'tsx' | 'ts'
   tabSize?: 2 | 4
+  scrollToLine?: number
 }
 
 export function CodeEditor({
@@ -29,6 +30,7 @@ export function CodeEditor({
   onChange,
   language = 'tsx',
   tabSize = 4,
+  scrollToLine,
 }: CodeEditorProps) {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
@@ -91,6 +93,18 @@ export function CodeEditor({
       changes: { from: 0, to: view.state.doc.length, insert: value },
     })
   }, [value])
+
+  useEffect(() => {
+    const view = viewRef.current
+    if (!view || !scrollToLine) return
+    const totalLines = view.state.doc.lines
+    const line = Math.min(Math.max(1, scrollToLine), totalLines)
+    const pos = view.state.doc.line(line).from
+    view.dispatch({
+      selection: EditorSelection.cursor(pos),
+      effects: EditorView.scrollIntoView(pos, { y: 'start', yMargin: 24 }),
+    })
+  }, [scrollToLine, value])
 
   return <div ref={hostRef} className="h-full w-full overflow-hidden" />
 }

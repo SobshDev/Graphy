@@ -605,7 +605,7 @@ function summarizeGraph(graph: Graph, options: XYFlowOptions): XYFlowGraph {
     const target = visibleIdByOriginalId.get(edge.target)
     if (!source || !target || source === target) continue
 
-    const key = `${source}->${target}:${edge.type}`
+    const key = `${source}->${target}`
     if (edgeKeys.has(key)) continue
     edgeKeys.add(key)
 

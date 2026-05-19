@@ -14,27 +14,6 @@ export interface GraphPayload {
 
 export interface InitialState extends ProjectPayload, GraphPayload {}
 
-export interface ReadFunctionSourcePayload {
-  root: string
-  file: string
-  startLine: number
-  endLine: number
-}
-
-export interface ReadFunctionSourceResult {
-  source: string
-  startLine: number
-  endLine: number
-}
-
-export interface WriteFunctionSourcePayload extends ReadFunctionSourcePayload {
-  source: string
-}
-
-export interface WriteFunctionSourceResult {
-  endLine: number
-}
-
 export interface FileNode {
   name: string
   path: string
@@ -53,12 +32,6 @@ export interface GraphyDesktop {
   clearRecents: () => Promise<void>
   onProject: (handler: (payload: ProjectPayload) => void) => () => void
   onGraph: (handler: (payload: GraphPayload) => void) => () => void
-  readFunctionSource: (
-    payload: ReadFunctionSourcePayload,
-  ) => Promise<ReadFunctionSourceResult>
-  writeFunctionSource: (
-    payload: WriteFunctionSourcePayload,
-  ) => Promise<WriteFunctionSourceResult>
   getFileTree: () => Promise<FileNode | null>
   readFile: (filePath: string) => Promise<string>
   writeFile: (filePath: string, content: string) => Promise<void>

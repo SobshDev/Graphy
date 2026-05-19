@@ -8,8 +8,6 @@ import type { CodeNodeData } from '@/modules/graph/types'
 type CodeNodeProps = NodeProps & { data: CodeNodeData }
 
 const TYPE_LABEL: Record<NodeType, string> = {
-  file: 'file',
-  route: 'route',
   component: 'cmp',
   hook: 'hook',
   function: 'fn',
@@ -74,10 +72,6 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
 
 function typeAccent(type: NodeType): { bar: string; label: string } {
   switch (type) {
-    case 'file':
-      return { bar: 'bg-muted-foreground', label: 'text-muted-foreground' }
-    case 'route':
-      return { bar: 'bg-rose-500', label: 'text-rose-500' }
     case 'component':
       return { bar: 'bg-node-class', label: 'text-node-class-fg' }
     case 'hook':

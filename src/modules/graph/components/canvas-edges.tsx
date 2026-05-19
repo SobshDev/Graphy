@@ -76,6 +76,9 @@ export function CanvasEdges({ edges, nodes }: CanvasEdgesProps) {
       const viewRight = viewLeft + width / transform[2]
       const viewBottom = viewTop + height / transform[2]
 
+      const arrowLength = 14
+      const arrowAngle = Math.PI / 7
+
       context.beginPath()
       for (const endpoint of edgeEndpoints) {
         if (
@@ -85,6 +88,24 @@ export function CanvasEdges({ edges, nodes }: CanvasEdgesProps) {
         }
 
         context.moveTo(endpoint.sourceX, endpoint.sourceY)
+        context.lineTo(endpoint.targetX, endpoint.targetY)
+
+        const angle = Math.atan2(
+          endpoint.targetY - endpoint.sourceY,
+          endpoint.targetX - endpoint.sourceX,
+        )
+        const wing1X =
+          endpoint.targetX - arrowLength * Math.cos(angle - arrowAngle)
+        const wing1Y =
+          endpoint.targetY - arrowLength * Math.sin(angle - arrowAngle)
+        const wing2X =
+          endpoint.targetX - arrowLength * Math.cos(angle + arrowAngle)
+        const wing2Y =
+          endpoint.targetY - arrowLength * Math.sin(angle + arrowAngle)
+
+        context.moveTo(wing1X, wing1Y)
+        context.lineTo(endpoint.targetX, endpoint.targetY)
+        context.moveTo(wing2X, wing2Y)
         context.lineTo(endpoint.targetX, endpoint.targetY)
       }
       context.stroke()
