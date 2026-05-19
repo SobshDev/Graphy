@@ -5,22 +5,18 @@ const STORAGE_KEY = 'graphy.theme.v1'
 
 export function loadThemeState(): ThemeState {
   if (typeof window === 'undefined') {
-    return { preset: DEFAULT_PRESET_ID, overrides: {} }
+    return { preset: DEFAULT_PRESET_ID }
   }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { preset: DEFAULT_PRESET_ID, overrides: {} }
+    if (!raw) return { preset: DEFAULT_PRESET_ID }
     const parsed = JSON.parse(raw) as Partial<ThemeState>
     return {
       preset:
         typeof parsed.preset === 'string' ? parsed.preset : DEFAULT_PRESET_ID,
-      overrides:
-        parsed.overrides && typeof parsed.overrides === 'object'
-          ? parsed.overrides
-          : {},
     }
   } catch {
-    return { preset: DEFAULT_PRESET_ID, overrides: {} }
+    return { preset: DEFAULT_PRESET_ID }
   }
 }
 

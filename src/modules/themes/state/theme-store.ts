@@ -1,4 +1,3 @@
-import { DEFAULT_PRESET_ID } from '../data/presets'
 import { applyThemeToDocument } from '../services/apply-theme'
 import { loadThemeState, saveThemeState } from '../services/storage'
 import type { ThemePresetId, ThemeState } from '../types'
@@ -42,21 +41,6 @@ export const themeStore = {
     applyThemeToDocument(state)
   },
   setPreset(presetId: ThemePresetId): void {
-    commit({ preset: presetId, overrides: {} })
-  },
-  setOverride(tokenId: string, value: string): void {
-    commit({
-      ...state,
-      overrides: { ...state.overrides, [tokenId]: value },
-    })
-  },
-  clearOverride(tokenId: string): void {
-    if (!(tokenId in state.overrides)) return
-    const overrides = { ...state.overrides }
-    delete overrides[tokenId]
-    commit({ ...state, overrides })
-  },
-  reset(): void {
-    commit({ preset: DEFAULT_PRESET_ID, overrides: {} })
+    commit({ preset: presetId })
   },
 }

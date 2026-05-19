@@ -28,15 +28,10 @@ function renderSection(active: SettingsSectionId) {
 
 export function SettingsContent({ active }: SettingsContentProps) {
   const section = settingsSections.find((s) => s.id === active)
-  const isWide = active === 'themes'
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div
-        className={`mx-auto w-full px-8 pb-16 pt-10 ${
-          isWide ? 'max-w-[760px]' : 'max-w-[640px]'
-        }`}
-      >
+      <div className="mx-auto w-full max-w-[640px] px-8 pb-16 pt-10">
         <h1 className="text-foreground mb-8 text-[20px] font-medium tracking-tight">
           {section?.label}
         </h1>
