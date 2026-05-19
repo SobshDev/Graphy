@@ -8,6 +8,7 @@ import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SettingsPage } from '@/modules/settings'
 import { SourceControlPanel } from '@/modules/source-control'
+import { ThemeBootstrap } from '@/modules/themes'
 import { useActiveView } from '@/shared/lib/active-view'
 import { useSettingsOpen } from '@/shared/lib/settings-open'
 import { TooltipProvider } from '@/shared/ui/tooltip'
@@ -21,6 +22,7 @@ function App() {
     <TooltipProvider delayDuration={200}>
       <ReactFlowProvider>
         <AiChatProvider>
+          <ThemeBootstrap />
           <main className="bg-canvas text-foreground flex h-screen w-screen overflow-hidden">
             <Sidebar />
             <div className="flex min-w-0 flex-1 flex-col">

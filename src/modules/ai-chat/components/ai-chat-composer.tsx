@@ -100,12 +100,12 @@ export function AiChatComposer() {
             ) : (
               <button
                 type="button"
-                className="font-chat-mono inline-flex items-center gap-1.5 rounded-md bg-chat-accent px-2.5 py-1 text-[12px] font-semibold text-[#0a0d04] hover:bg-chat-accent-2 disabled:cursor-not-allowed disabled:bg-chat-elev disabled:text-chat-text-4"
+                className="font-chat-mono bg-chat-accent text-chat-accent-fg hover:bg-chat-accent-2 disabled:bg-chat-elev disabled:text-chat-text-4 inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[12px] font-semibold disabled:cursor-not-allowed"
                 onClick={submit}
                 disabled={disabled || value.trim().length === 0}
               >
                 <span>Send</span>
-                <span className="inline-flex items-center justify-center rounded-[3px] border border-[rgba(10,13,4,0.3)] px-1 text-[10px] leading-[1.4]">
+                <span className="border-chat-accent-fg/30 inline-flex items-center justify-center rounded-[3px] border px-1 text-[10px] leading-[1.4]">
                   ↵
                 </span>
               </button>
