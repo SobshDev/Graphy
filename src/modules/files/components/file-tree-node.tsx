@@ -185,7 +185,7 @@ const RenameInput = forwardRef<
     onCommit: () => void
     onCancel: () => void
   }
->(function RenameInput({ value, onChange, onCommit, onCancel }, ref) {
+>(function ({ value, onChange, onCommit, onCancel }, ref) {
   return (
     <input
       ref={ref}
@@ -202,6 +202,8 @@ const RenameInput = forwardRef<
     />
   )
 })
+
+RenameInput.displayName = 'RenameInput'
 
 function Row({
   depth,

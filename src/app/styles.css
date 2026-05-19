@@ -242,9 +242,9 @@ body {
     transparent
   );
   --xy-node-color-default: var(--foreground);
-  --xy-node-border-default: 1px solid var(--border);
+  --xy-node-border-default: none;
   --xy-node-background-color-default: var(--card);
-  --xy-node-boxshadow-selected-default: 0 0 0 1px var(--primary);
+  --xy-node-boxshadow-selected-default: none;
   --xy-node-border-radius-default: var(--radius-md);
   --xy-edge-stroke-default: color-mix(
     in oklab,

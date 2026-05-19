@@ -4,16 +4,14 @@ export type FileNodeData = {
   displayName: string
   folder: string
   symbolCount: number
-  inDegree: number
-  outDegree: number
+  depth: number
 }
 
-export type SectionNodeData = {
-  kind: 'section'
-  label: string
-  subtitle: string
-  width: number
-  height: number
+export type FolderNodeData = {
+  kind: 'folder'
+  path: string
+  name: string
+  depth: number
 }
 
-export type GraphNodeData = FileNodeData | SectionNodeData
+export type GraphNodeData = FileNodeData | FolderNodeData

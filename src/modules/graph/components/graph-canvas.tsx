@@ -1,12 +1,12 @@
 import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FileNode } from '@/modules/graph/components/file-node'
+import { FolderNode } from '@/modules/graph/components/folder-node'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
-import { SectionNode } from '@/modules/graph/components/section-node'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
@@ -15,8 +15,11 @@ import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = {
   file: FileNode,
-  section: SectionNode,
+  folder: FolderNode,
 }
+
+const OUTGOING_COLOR = '#38bdf8'
+const INCOMING_COLOR = '#fbbf24'
 
 export function GraphCanvas() {
   const { graph, folder, loading, error } = useGraph()
@@ -25,14 +28,50 @@ export function GraphCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
     [],
   )
-  const [layoutEdges, setLayoutEdges] = useState<Edge[]>([])
+  const [treeEdges, setTreeEdges] = useState<Edge[]>([])
+  const [callEdges, setCallEdges] = useState<Edge[]>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const focusRequest = useGraphFocusRequest()
   const lastFocusTs = useRef(0)
+
+  const callAdjacency = useMemo(() => {
+    const outgoing = new Map<string, Edge[]>()
+    const incoming = new Map<string, Edge[]>()
+    for (const edge of callEdges) {
+      const out = outgoing.get(edge.source) ?? []
+      out.push(edge)
+      outgoing.set(edge.source, out)
+      const inc = incoming.get(edge.target) ?? []
+      inc.push(edge)
+      incoming.set(edge.target, inc)
+    }
+    return { outgoing, incoming }
+  }, [callEdges])
+
+  const hoveredCallEdges = useMemo<Edge[]>(() => {
+    if (!hoveredId) return []
+    const out = (callAdjacency.outgoing.get(hoveredId) ?? []).map((edge) => ({
+      ...edge,
+      style: { stroke: OUTGOING_COLOR, strokeWidth: 1.5 },
+      zIndex: 1000,
+    }))
+    const inc = (callAdjacency.incoming.get(hoveredId) ?? []).map((edge) => ({
+      ...edge,
+      style: { stroke: INCOMING_COLOR, strokeWidth: 1.5 },
+      zIndex: 1000,
+    }))
+    return [...out, ...inc]
+  }, [hoveredId, callAdjacency])
+
+  const renderedEdges = useMemo(
+    () => [...treeEdges, ...hoveredCallEdges],
+    [treeEdges, hoveredCallEdges],
+  )
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
@@ -47,6 +86,18 @@ export function GraphCanvas() {
     [],
   )
 
+  const handleNodeMouseEnter = useCallback(
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind !== 'file') return
+      setHoveredId(node.id)
+    },
+    [],
+  )
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredId(null)
+  }, [])
+
   const handleSheetOpenChange = useCallback((open: boolean) => {
     if (!open) setSheetTarget(null)
   }, [])
@@ -57,7 +108,8 @@ export function GraphCanvas() {
 
     if (!graph) {
       setNodes([])
-      setLayoutEdges([])
+      setTreeEdges([])
+      setCallEdges([])
       setLayouting(false)
       setLayoutError(null)
       return () => {
@@ -72,7 +124,8 @@ export function GraphCanvas() {
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
-        setLayoutEdges(xyflow.edges)
+        setTreeEdges(xyflow.treeEdges)
+        setCallEdges(xyflow.callEdges)
         fitFrame = window.requestAnimationFrame(() => {
           fitView({ padding: 0.25, duration: 220 })
         })
@@ -141,9 +194,11 @@ export function GraphCanvas() {
     <>
       <ReactFlow
         nodes={nodes}
-        edges={layoutEdges}
+        edges={renderedEdges}
         onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}

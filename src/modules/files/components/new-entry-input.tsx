@@ -8,7 +8,7 @@ export const NewEntryInput = forwardRef<
     onCommit: (name: string) => void
     onCancel: () => void
   }
->(function NewEntryInput({ kind, onCommit, onCancel }, ref) {
+>(function ({ kind, onCommit, onCancel }, ref) {
   const [value, setValue] = useState('')
   const doneRef = useRef(false)
   const Icon = kind === 'dir' ? Folder : File
@@ -46,3 +46,5 @@ export const NewEntryInput = forwardRef<
     </div>
   )
 })
+
+NewEntryInput.displayName = 'NewEntryInput'
