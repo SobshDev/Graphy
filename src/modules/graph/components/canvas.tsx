@@ -1,11 +1,13 @@
 import { GitBranch } from 'lucide-react'
 
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
+import { GraphLegend } from '@/modules/graph/components/graph-legend'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
 import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
 
 export function Canvas() {
   const branch = useCurrentBranch()
+
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
       <GraphCanvas />
@@ -19,17 +21,6 @@ export function Canvas() {
         className="from-canvas via-canvas/80 pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t to-transparent"
       />
 
-      <div className="pointer-events-none absolute left-4 top-4 z-20 flex items-center gap-2">
-        <span className="glass border-border text-muted-foreground inline-flex h-7 items-center gap-2 rounded-md border px-2.5 font-mono text-[11px]">
-          <span className="bg-muted-foreground/40 h-1.5 w-1.5 rounded-full" />
-          Idle
-        </span>
-        <span className="glass border-border text-muted-foreground inline-flex h-7 items-center gap-1.5 rounded-md border px-2.5 font-mono text-[11px]">
-          <span className="text-muted-foreground/60">view</span>
-          <span className="text-foreground">graph</span>
-        </span>
-      </div>
-
       <div className="text-muted-foreground/70 pointer-events-none absolute bottom-4 left-6 z-20 flex h-8 items-center gap-3 font-mono text-[11px]">
         <span className="inline-flex items-center gap-1.5">
           <GitBranch className="size-3" strokeWidth={1.8} />
@@ -39,6 +30,7 @@ export function Canvas() {
         <span>typescript</span>
       </div>
 
+      <GraphLegend />
       <ZoomControls />
     </section>
   )

@@ -7,7 +7,7 @@ import {
   useReactFlow,
 } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
@@ -17,6 +17,7 @@ import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import type { CodeNodeData } from '@/modules/graph/types'
+import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = { code: CodeNode }
 
@@ -31,6 +32,8 @@ export function GraphCanvas() {
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
+  const focusRequest = useGraphFocusRequest()
+  const lastFocusTs = useRef(0)
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<CodeNodeData>) => {
@@ -88,6 +91,22 @@ export function GraphCanvas() {
     }
   }, [fitView, graph, setNodes, setEdges])
 
+  useEffect(() => {
+    if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
+    lastFocusTs.current = focusRequest.timestamp
+    const matching = nodes
+      .filter((n) => n.data.file === focusRequest.file)
+      .map((n) => n.id)
+    if (matching.length > 0) {
+      fitView({
+        nodes: matching.map((id) => ({ id })),
+        padding: 0.25,
+        duration: 300,
+      })
+    }
+    clearGraphFocus()
+  }, [focusRequest, nodes, fitView])
+
   if (!folder && !loading) {
     return (
       <EmptyState
@@ -132,7 +151,7 @@ export function GraphCanvas() {
           type: 'default',
           pathOptions: { curvature: 0.55 },
         }}
-        minZoom={0.2}
+        minZoom={0.05}
         maxZoom={2.5}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />

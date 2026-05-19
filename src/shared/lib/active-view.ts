@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react'
 
-let open = true
+export type ActiveView = 'editor' | 'graph'
+
+let active: ActiveView = 'graph'
 const listeners = new Set<() => void>()
 
 function subscribe(listener: () => void) {
@@ -11,20 +13,15 @@ function subscribe(listener: () => void) {
 }
 
 function getSnapshot() {
-  return open
+  return active
 }
 
-export function usePanelOpen() {
+export function useActiveView() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
-export function togglePanel() {
-  open = !open
-  for (const listener of listeners) listener()
-}
-
-export function setPanelOpen(next: boolean) {
-  if (open === next) return
-  open = next
+export function setActiveView(next: ActiveView) {
+  if (active === next) return
+  active = next
   for (const listener of listeners) listener()
 }

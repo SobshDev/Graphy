@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+
+import { closeSettings } from '@/shared/lib/settings-open'
 
 import { settingsSections } from '../data/sections'
 import type { SettingsSectionId } from '../types'
@@ -9,7 +10,6 @@ import { SettingsNav } from './settings-nav'
 const sectionIds = settingsSections.map((s) => s.id)
 
 export function SettingsPage() {
-  const navigate = useNavigate()
   const [active, setActive] = useState<SettingsSectionId>('appearance')
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export function SettingsPage() {
       }
       if (event.key === 'Escape') {
         event.preventDefault()
-        navigate({ to: '/' })
+        closeSettings()
         return
       }
       if (event.key === ']' || event.key === '[') {
@@ -41,7 +41,7 @@ export function SettingsPage() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [active, navigate])
+  }, [active])
 
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">

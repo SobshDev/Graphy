@@ -12,6 +12,10 @@ const TYPE_LABEL: Record<NodeType, string> = {
   arrow: 'fn',
   method: 'm',
   class: 'cls',
+  object: 'obj',
+  constructor: 'ctor',
+  getter: 'get',
+  setter: 'set',
 }
 
 function CodeNodeImpl({ data, selected }: CodeNodeProps) {
@@ -69,9 +73,14 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
 function typeAccent(type: NodeType): { bar: string; label: string } {
   switch (type) {
     case 'class':
+    case 'object':
       return { bar: 'bg-node-class', label: 'text-node-class-fg' }
     case 'method':
+    case 'constructor':
       return { bar: 'bg-node-method', label: 'text-node-method' }
+    case 'getter':
+    case 'setter':
+      return { bar: 'bg-node-accessor', label: 'text-node-accessor' }
     case 'arrow':
       return { bar: 'bg-node-arrow', label: 'text-node-arrow' }
     case 'function':

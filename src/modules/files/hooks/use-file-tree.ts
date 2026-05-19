@@ -1,35 +1,51 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
-import { getFileTree } from '../services/file-tree'
-import type { FileNode } from '../types'
+import { getDesktop } from '@/shared/lib/desktop'
+import type { FileNode } from '@/shared/lib/desktop'
 
 type State =
+  | { status: 'idle'; tree: null; error: null }
   | { status: 'loading'; tree: null; error: null }
   | { status: 'ready'; tree: FileNode; error: null }
   | { status: 'error'; tree: null; error: string }
 
-export function useFileTree(): State {
+type FileTreeResult = State & { refresh: () => void }
+
+export function useFileTree(): FileTreeResult {
   const [state, setState] = useState<State>({
-    status: 'loading',
+    status: 'idle',
     tree: null,
     error: null,
   })
 
-  useEffect(() => {
-    let cancelled = false
-    getFileTree()
-      .then((tree) => {
-        if (!cancelled) setState({ status: 'ready', tree, error: null })
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        const message = err instanceof Error ? err.message : 'Unknown error'
-        setState({ status: 'error', tree: null, error: message })
-      })
-    return () => {
-      cancelled = true
+  const fetchTree = useCallback(async () => {
+    const desktop = getDesktop()
+    if (!desktop) {
+      setState({ status: 'idle', tree: null, error: null })
+      return
+    }
+    setState({ status: 'loading', tree: null, error: null })
+    try {
+      const tree = await desktop.getFileTree()
+      if (!tree) {
+        setState({ status: 'idle', tree: null, error: null })
+        return
+      }
+      setState({ status: 'ready', tree, error: null })
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Unknown error'
+      setState({ status: 'error', tree: null, error: message })
     }
   }, [])
 
-  return state
+  useEffect(() => {
+    fetchTree()
+    const desktop = getDesktop()
+    if (!desktop) return
+    return desktop.onProject(() => {
+      fetchTree()
+    })
+  }, [fetchTree])
+
+  return { ...state, refresh: fetchTree }
 }

@@ -6,6 +6,7 @@ import type { Node, SourceFile } from 'ts-morph'
 import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
+import { extractObjects } from './objectExtractor'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
 
@@ -32,12 +33,18 @@ function loadSourceFiles(root: string): SourceFile[] {
   }
 
   const project = new Project({
-    compilerOptions: { target: ScriptTarget.ES2022, rootDir: root },
+    compilerOptions: {
+      target: ScriptTarget.ES2022,
+      rootDir: root,
+      allowJs: true,
+    },
     skipAddingFilesFromTsConfig: true,
   })
   return project.addSourceFilesAtPaths([
     `${root}/**/*.ts`,
     `${root}/**/*.tsx`,
+    `${root}/**/*.js`,
+    `${root}/**/*.jsx`,
     `!${root}/**/node_modules/**`,
     `!${root}/**/dist/**`,
     `!${root}/**/build/**`,
@@ -57,6 +64,7 @@ export function parseProject(root: string): Graph {
     const collected = [
       ...extractFunctions(sourceFile, relativePath),
       ...extractClasses(sourceFile, relativePath),
+      ...extractObjects(sourceFile, relativePath),
     ]
 
     for (const { graphNode, declaration } of collected) {

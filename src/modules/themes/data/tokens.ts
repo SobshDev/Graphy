@@ -414,6 +414,14 @@ export const themeTokens: Array<ThemeToken> = [
     defaultValue: 'oklch(0.62 0.22 295)',
   },
   {
+    id: 'node-accessor',
+    cssVar: '--node-accessor',
+    label: 'Accessor node accent',
+    description: 'Getter and setter node color',
+    group: 'graph',
+    defaultValue: 'oklch(0.7 0.12 195)',
+  },
+  {
     id: 'node-arrow',
     cssVar: '--node-arrow',
     label: 'Arrow node accent',
