@@ -7,7 +7,7 @@ const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 const { simpleGit } = require('simple-git')
 
-const IGNORED_DIRS = new Set(['.git'])
+const IGNORED_DIRS = new Set(['.git', '.graphy'])
 
 const ALLOWED_WEB_FETCH_HOSTS = new Set([
   'lucide.dev',
@@ -43,9 +43,11 @@ function matchGlob(pattern, filePath) {
 }
 
 const { applyMenu } = require('./menu.cjs')
-const { parseFolder } = require('./parser-service.cjs')
+const { parseFolder, parseFiles } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
 const { watchFolder, buildIgnoreSet } = require('./watcher.cjs')
+
+const INCREMENTAL_FILE_THRESHOLD = 25
 
 let _gitCache = null
 function getGit() {
@@ -276,7 +278,7 @@ async function openFolder(folder) {
   refreshMenu()
   broadcastProject()
 
-  const cached = projectState.readCache(app, resolved)
+  const cached = projectState.readCache(resolved)
   if (cached) {
     currentGraph = cached.graph
     currentLayout = cached.layout
@@ -288,32 +290,40 @@ async function openFolder(folder) {
     stopWatcher()
     stopWatcher = null
   }
-  stopWatcher = watchFolder(resolved, () => {
+  stopWatcher = watchFolder(resolved, (changedFiles) => {
     if (currentFolder === resolved) {
-      void runParse(resolved)
+      void runParse(resolved, changedFiles)
     }
   })
 
   await runParse(resolved)
 }
 
-async function runParse(folder) {
+async function runParse(folder, changedFiles = null) {
   const generation = ++parseGeneration
   parseError = null
   parseInFlight = folder
   broadcastGraph()
 
+  const useIncremental =
+    Array.isArray(changedFiles) &&
+    changedFiles.length > 0 &&
+    changedFiles.length <= INCREMENTAL_FILE_THRESHOLD &&
+    currentGraph !== null
+
   try {
-    const graph = await parseFolder(app, folder)
+    const graph = useIncremental
+      ? await parseFiles(app, folder, changedFiles, currentGraph)
+      : await parseFolder(app, folder)
     if (generation !== parseGeneration) return
     currentGraph = graph
-    currentLayout = null
+    if (!useIncremental) currentLayout = null
     parseError = null
-    projectState.writeCache(app, folder, graph, null)
+    projectState.writeCache(folder, graph, currentLayout)
   } catch (err) {
     if (generation !== parseGeneration) return
     parseError = err instanceof Error ? err.message : String(err)
-    currentGraph = null
+    if (!useIncremental) currentGraph = null
   } finally {
     if (generation === parseGeneration) {
       parseInFlight = null
@@ -364,7 +374,7 @@ function registerIpc() {
   ipcMain.handle('graphy:cache-layout', (_e, layout) => {
     if (currentFolder && currentGraph) {
       currentLayout = layout
-      projectState.writeCache(app, currentFolder, currentGraph, layout)
+      projectState.writeCache(currentFolder, currentGraph, layout)
     }
   })
 

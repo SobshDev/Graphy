@@ -23,10 +23,11 @@ function resolveParserBundle(app) {
   return found
 }
 
-function parseFolder(app, folder) {
+function runParser(app, folder, { incremental = false, input = null } = {}) {
   return new Promise((resolve, reject) => {
     const bundlePath = resolveParserBundle(app)
-    const child = fork(bundlePath, [folder], {
+    const args = incremental ? [folder, '--incremental'] : [folder]
+    const child = fork(bundlePath, args, {
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
       stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
     })
@@ -70,7 +71,22 @@ function parseFolder(app, folder) {
         ),
       )
     })
+
+    if (incremental && input) {
+      child.send({ type: 'input', ...input })
+    }
   })
 }
 
-module.exports = { parseFolder }
+function parseFolder(app, folder) {
+  return runParser(app, folder)
+}
+
+function parseFiles(app, folder, changedFiles, previousGraph) {
+  return runParser(app, folder, {
+    incremental: true,
+    input: { changedFiles, previousGraph },
+  })
+}
+
+module.exports = { parseFolder, parseFiles }

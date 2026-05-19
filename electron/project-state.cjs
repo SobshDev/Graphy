@@ -1,10 +1,10 @@
-const crypto = require('node:crypto')
 const fs = require('node:fs')
 const fsp = require('node:fs/promises')
 const path = require('node:path')
 
 const STATE_FILE = 'graphy-state.json'
-const CACHE_DIR = 'graph-cache'
+const CACHE_DIRNAME = '.graphy'
+const CACHE_FILENAME = 'cache.json'
 const MAX_RECENTS = 10
 
 function statePath(app) {
@@ -63,18 +63,13 @@ async function pruneMissing(app) {
   return next
 }
 
-function cacheDir(app) {
-  return path.join(app.getPath('userData'), CACHE_DIR)
+function cacheFile(folder) {
+  return path.join(folder, CACHE_DIRNAME, CACHE_FILENAME)
 }
 
-function cacheFile(app, folder) {
-  const hash = crypto.createHash('sha256').update(folder).digest('hex')
-  return path.join(cacheDir(app), `${hash}.json`)
-}
-
-function readCache(app, folder) {
+function readCache(folder) {
   try {
-    const raw = fs.readFileSync(cacheFile(app, folder), 'utf8')
+    const raw = fs.readFileSync(cacheFile(folder), 'utf8')
     const parsed = JSON.parse(raw)
     if (!parsed || typeof parsed !== 'object') return null
     return {
@@ -86,10 +81,10 @@ function readCache(app, folder) {
   }
 }
 
-function writeCache(app, folder, graph, layout) {
-  const dir = cacheDir(app)
+function writeCache(folder, graph, layout) {
+  const dir = path.join(folder, CACHE_DIRNAME)
   fs.mkdirSync(dir, { recursive: true })
-  fs.writeFileSync(cacheFile(app, folder), JSON.stringify({ graph, layout }))
+  fs.writeFileSync(cacheFile(folder), JSON.stringify({ graph, layout }))
 }
 
 module.exports = {
