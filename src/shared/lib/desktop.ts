@@ -10,6 +10,7 @@ export interface GraphPayload {
   graph: Graph | null
   error: string | null
   loading: boolean
+  layout: unknown
 }
 
 export interface InitialState extends ProjectPayload, GraphPayload {}
@@ -43,6 +44,13 @@ export interface FileNode {
   children?: FileNode[]
 }
 
+export interface SearchMatch {
+  file: string
+  line: number
+  column: number
+  content: string
+}
+
 export interface GraphyDesktop {
   platform: NodeJS.Platform
   getInitialState: () => Promise<InitialState>
@@ -51,6 +59,7 @@ export interface GraphyDesktop {
   closeFolder: () => Promise<void>
   reloadGraph: () => Promise<void>
   clearRecents: () => Promise<void>
+  cacheLayout: (layout: unknown) => Promise<void>
   onProject: (handler: (payload: ProjectPayload) => void) => () => void
   onGraph: (handler: (payload: GraphPayload) => void) => () => void
   readFunctionSource: (
@@ -67,6 +76,7 @@ export interface GraphyDesktop {
   moveFile: (sourcePath: string, destDir: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   renameFile: (oldPath: string, newName: string) => Promise<{ newPath: string }>
+  searchText: (query: string) => Promise<SearchMatch[]>
 }
 
 declare global {
