@@ -16,16 +16,6 @@ export type CodeNodeData = {
   outDegree: number
 }
 
-export type SummaryNodeData = {
-  kind: 'summary'
-  label: string
-  subtitle: string
-  count: number
-  fileCount: number
-  inDegree: number
-  outDegree: number
-}
-
 export type SectionNodeData = {
   kind: 'section'
   label: string
@@ -34,4 +24,4 @@ export type SectionNodeData = {
   height: number
 }
 
-export type GraphNodeData = CodeNodeData | SummaryNodeData | SectionNodeData
+export type GraphNodeData = CodeNodeData | SectionNodeData

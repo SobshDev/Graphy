@@ -3,12 +3,7 @@ import ELK from 'elkjs/lib/elk.bundled.js'
 import type { ElkExtendedEdge, ElkNode } from 'elkjs/lib/elk.bundled.js'
 
 import type { Graph } from '@/modules/parser'
-import type {
-  CodeNodeData,
-  GraphNodeData,
-  SectionNodeData,
-  SummaryNodeData,
-} from '@/modules/graph/types'
+import type { GraphNodeData, SectionNodeData } from '@/modules/graph/types'
 
 const NODE_WIDTH = 240
 const NODE_HEIGHT = 54
@@ -34,17 +29,8 @@ export interface XYFlowGraph {
   edges: Array<Edge>
 }
 
-export interface XYFlowOptions {
-  expandedGroups?: Iterable<string>
-}
-
-export async function toXYFlow(
-  graph: Graph,
-  options: XYFlowOptions = {},
-): Promise<XYFlowGraph> {
-  const summarized = summarizeGraph(graph, options)
-  const nodes = summarized.nodes
-  const edges = summarized.edges
+export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
+  const { nodes, edges } = graphToFlow(graph)
 
   if (nodes.length === 0) return { nodes, edges }
 
@@ -293,7 +279,6 @@ function sectionLabel(
   const firstEntry = entries.length > 0 ? entries[0] : undefined
   let title = 'Entry flow'
   if (firstEntry?.data.kind === 'code') title = firstEntry.data.displayName
-  if (firstEntry?.data.kind === 'summary') title = firstEntry.data.label
   const suffix = entries.length > 1 ? ` + ${entries.length - 1} more` : ''
 
   return {
@@ -539,156 +524,44 @@ function qualifiedName(id: string, fallback: string): string {
   return idx >= 0 ? id.slice(idx + 2) : fallback
 }
 
-function summarizeGraph(graph: Graph, options: XYFlowOptions): XYFlowGraph {
-  const expandedGroups = new Set(options.expandedGroups ?? [])
-  const groups = new Map<
-    string,
-    {
-      data: Omit<SummaryNodeData, 'inDegree' | 'outDegree'>
-      memberIds: Set<string>
-      files: Set<string>
-    }
-  >()
-  const visibleIdByOriginalId = new Map<string, string>()
-  const visibleNodes: Array<Node<GraphNodeData>> = []
-
-  for (const node of graph.nodes) {
-    const group = groupForNode(node)
-    if (!group || expandedGroups.has(group.id)) {
-      visibleIdByOriginalId.set(node.id, node.id)
-      visibleNodes.push({
-        id: node.id,
-        type: 'code',
-        position: { x: 0, y: 0 },
-        data: {
-          kind: 'code',
-          displayName: qualifiedName(node.id, node.name),
-          type: node.type,
-          signature: node.signature,
-          file: node.file,
-          line: node.line,
-          endLine: node.endLine,
-          isAsync: node.isAsync,
-          isExported: node.isExported,
-          isStatic: node.isStatic,
-          bodyLines: node.bodyLines,
-          inDegree: node.inDegree,
-          outDegree: node.outDegree,
-        },
-      })
-      continue
-    }
-
-    const existing = groups.get(group.id) ?? {
-      data: {
-        kind: 'summary' as const,
-        label: group.label,
-        subtitle: group.subtitle,
-        count: 0,
-        fileCount: 0,
-      },
-      memberIds: new Set<string>(),
-      files: new Set<string>(),
-    }
-    existing.data.count += 1
-    existing.memberIds.add(node.id)
-    existing.files.add(node.file)
-    groups.set(group.id, existing)
-    visibleIdByOriginalId.set(node.id, group.id)
-  }
+function graphToFlow(graph: Graph): XYFlowGraph {
+  const nodes: Array<Node<GraphNodeData>> = graph.nodes.map((node) => ({
+    id: node.id,
+    type: 'code',
+    position: { x: 0, y: 0 },
+    data: {
+      kind: 'code',
+      displayName: qualifiedName(node.id, node.name),
+      type: node.type,
+      signature: node.signature,
+      file: node.file,
+      line: node.line,
+      endLine: node.endLine,
+      isAsync: node.isAsync,
+      isExported: node.isExported,
+      isStatic: node.isStatic,
+      bodyLines: node.bodyLines,
+      inDegree: node.inDegree,
+      outDegree: node.outDegree,
+    },
+  }))
 
   const edgeKeys = new Set<string>()
-  const visibleEdges: Edge[] = []
+  const edges: Edge[] = []
 
   for (const edge of graph.edges) {
-    const source = visibleIdByOriginalId.get(edge.source)
-    const target = visibleIdByOriginalId.get(edge.target)
-    if (!source || !target || source === target) continue
-
-    const key = `${source}->${target}`
+    if (edge.source === edge.target) continue
+    const key = `${edge.source}->${edge.target}`
     if (edgeKeys.has(key)) continue
     edgeKeys.add(key)
 
-    visibleEdges.push({
+    edges.push({
       id: key,
-      source,
-      target,
+      source: edge.source,
+      target: edge.target,
       type: 'straight',
-      className: 'graph-edge',
-      interactionWidth: 0,
-      selectable: false,
-      focusable: false,
     })
   }
 
-  const degreeById = new Map<string, { inDegree: number; outDegree: number }>()
-  for (const edge of visibleEdges) {
-    const sourceDegree = degreeById.get(edge.source) ?? {
-      inDegree: 0,
-      outDegree: 0,
-    }
-    sourceDegree.outDegree += 1
-    degreeById.set(edge.source, sourceDegree)
-
-    const targetDegree = degreeById.get(edge.target) ?? {
-      inDegree: 0,
-      outDegree: 0,
-    }
-    targetDegree.inDegree += 1
-    degreeById.set(edge.target, targetDegree)
-  }
-
-  for (const [id, group] of groups) {
-    const degree = degreeById.get(id) ?? { inDegree: 0, outDegree: 0 }
-    visibleNodes.push({
-      id,
-      type: 'summary',
-      position: { x: 0, y: 0 },
-      data: {
-        ...group.data,
-        fileCount: group.files.size,
-        subtitle: `${group.data.subtitle} · ${group.data.count} symbols`,
-        inDegree: degree.inDegree,
-        outDegree: degree.outDegree,
-      },
-    })
-  }
-
-  return { nodes: visibleNodes, edges: visibleEdges }
-}
-
-function groupForNode(node: Graph['nodes'][number]):
-  | {
-      id: string
-      label: string
-      subtitle: string
-    }
-  | undefined {
-  if (node.file.startsWith('src/shared/ui/')) {
-    return {
-      id: 'summary:src/shared/ui',
-      label: 'UI primitives',
-      subtitle: 'src/shared/ui',
-    }
-  }
-
-  if (node.inDegree === 0 && node.outDegree === 0) {
-    const folder = summaryFolder(node.file)
-    return {
-      id: `summary:isolated:${folder}`,
-      label: 'Unconnected symbols',
-      subtitle: folder,
-    }
-  }
-
-  return undefined
-}
-
-function summaryFolder(file: string): string {
-  const parts = file.split('/')
-  if (parts.length <= 1) return file
-  if (parts[0] === 'src' && parts.length >= 3) {
-    return parts.slice(0, 3).join('/')
-  }
-  return parts.slice(0, 2).join('/')
+  return { nodes, edges }
 }

@@ -20,12 +20,6 @@ export function useActivePanel() {
   return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
 
-export function setActivePanel(next: ActivePanel) {
-  if (active === next) return
-  active = next
-  for (const listener of listeners) listener()
-}
-
 export function toggleActivePanel(id: Exclude<ActivePanel, null>) {
   active = active === id ? null : id
   for (const listener of listeners) listener()
