@@ -4,18 +4,48 @@ import type { Graph, GraphNode } from '@/modules/parser'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 
 describe('toXYFlow', () => {
-  it('returns every input node and edge exactly once', async () => {
+  it('summarizes noisy detail without losing cross-boundary edges', async () => {
     const graph = makeGraph()
 
     const result = await toXYFlow(graph)
 
-    expect(result.nodes.map((node) => node.id).sort()).toEqual(
-      graph.nodes.map((node) => node.id).sort(),
+    expect(result.nodes.map((node) => node.id).sort()).toEqual([
+      'api/userController.ts::registerUser',
+      'db/database.ts::Database.saveUser',
+      'index.ts::seedDemo',
+      'section:index.ts::seedDemo',
+      'services/userService.ts::UserService.create',
+      'summary:isolated:utils/format.ts',
+      'summary:src/shared/ui',
+    ])
+    expect(
+      result.edges.map((edge) => `${edge.source}->${edge.target}`),
+    ).toEqual(
+      expect.arrayContaining([
+        'api/userController.ts::registerUser->summary:src/shared/ui',
+      ]),
     )
-    expect(result.edges).toHaveLength(graph.edges.length)
     expect(new Set(result.edges.map((edge) => edge.id)).size).toBe(
-      graph.edges.length,
+      result.edges.length,
     )
+  })
+
+  it('places connected nodes inside an entry section', async () => {
+    const result = await toXYFlow(makeGraph())
+    const section = result.nodes.find(
+      (node) => node.id === 'section:index.ts::seedDemo',
+    )
+    const sectionChildren = result.nodes.filter(
+      (node) => node.parentId === section?.id,
+    )
+
+    expect(section?.type).toBe('section')
+    expect(sectionChildren.length).toBeGreaterThan(0)
+    expect(
+      sectionChildren.every(
+        (node) => node.position.x >= 0 && node.position.y >= 0,
+      ),
+    ).toBe(true)
   })
 
   it('assigns finite numeric positions', async () => {
@@ -25,6 +55,19 @@ describe('toXYFlow', () => {
       expect(Number.isFinite(node.position.x)).toBe(true)
       expect(Number.isFinite(node.position.y)).toBe(true)
     }
+  })
+
+  it('expands summarized groups on request', async () => {
+    const result = await toXYFlow(makeGraph(), {
+      expandedGroups: ['summary:src/shared/ui'],
+    })
+
+    expect(result.nodes.map((node) => node.id)).toContain(
+      'src/shared/ui/button.tsx::Button',
+    )
+    expect(result.nodes.map((node) => node.id)).not.toContain(
+      'summary:src/shared/ui',
+    )
   })
 
   it('places direct callees to the right of their callers', async () => {
@@ -87,10 +130,10 @@ describe('toXYFlow', () => {
   it('keeps disconnected nodes separated from the main flow', async () => {
     const result = await toXYFlow(makeGraph())
     const connectedNodes = result.nodes.filter(
-      (node) => node.id !== 'utils/format.ts::slugify',
+      (node) => node.id !== 'summary:isolated:utils/format.ts',
     )
     const unusedNode = result.nodes.find(
-      (node) => node.id === 'utils/format.ts::slugify',
+      (node) => node.id === 'summary:isolated:utils/format.ts',
     )
     const connectedBottom = Math.max(
       ...connectedNodes.map((node) => node.position.y),
@@ -157,6 +200,13 @@ function makeGraph(): Graph {
         file: 'utils/format.ts',
         line: 1,
       }),
+      makeNode({
+        id: 'src/shared/ui/button.tsx::Button',
+        name: 'Button',
+        file: 'src/shared/ui/button.tsx',
+        line: 4,
+        inDegree: 1,
+      }),
     ],
     edges: [
       {
@@ -177,6 +227,11 @@ function makeGraph(): Graph {
       {
         source: 'services/userService.ts::UserService.create',
         target: 'db/database.ts::Database.saveUser',
+        type: 'calls',
+      },
+      {
+        source: 'api/userController.ts::registerUser',
+        target: 'src/shared/ui/button.tsx::Button',
         type: 'calls',
       },
     ],

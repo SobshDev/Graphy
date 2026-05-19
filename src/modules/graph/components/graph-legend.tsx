@@ -6,6 +6,10 @@ import { Button } from '@/shared/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 const LEGEND_ITEMS: { type: NodeType; abbr: string; label: string }[] = [
+  { type: 'file', abbr: 'file', label: 'File' },
+  { type: 'route', abbr: 'route', label: 'Route file' },
+  { type: 'component', abbr: 'cmp', label: 'Component' },
+  { type: 'hook', abbr: 'hook', label: 'Hook' },
   { type: 'function', abbr: 'fn', label: 'Function' },
   { type: 'arrow', abbr: 'fn', label: 'Arrow function' },
   { type: 'class', abbr: 'cls', label: 'Class' },
@@ -18,9 +22,15 @@ const LEGEND_ITEMS: { type: NodeType; abbr: string; label: string }[] = [
 
 function accentColor(type: NodeType): string {
   switch (type) {
+    case 'file':
+      return 'bg-muted-foreground'
+    case 'route':
+      return 'bg-rose-500'
+    case 'component':
     case 'class':
     case 'object':
       return 'bg-amber-500'
+    case 'hook':
     case 'method':
     case 'constructor':
       return 'bg-violet-500'
@@ -37,9 +47,15 @@ function accentColor(type: NodeType): string {
 
 function labelColor(type: NodeType): string {
   switch (type) {
+    case 'file':
+      return 'text-muted-foreground'
+    case 'route':
+      return 'text-rose-500'
+    case 'component':
     case 'class':
     case 'object':
       return 'text-amber-600'
+    case 'hook':
     case 'method':
     case 'constructor':
       return 'text-violet-500'

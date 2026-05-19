@@ -11,8 +11,8 @@ export interface DumpResult {
 
 export function dumpGraph(root: string): DumpResult {
   const graph = parseProject(root)
-  const outDir = path.join(process.cwd(), 'public')
-  const outPath = path.join(outDir, 'sample-graph.json')
+  const outDir = path.join(process.cwd(), '.graphy')
+  const outPath = path.join(outDir, 'graph-dump.json')
 
   mkdirSync(outDir, { recursive: true })
   writeFileSync(outPath, serializeGraph(graph))

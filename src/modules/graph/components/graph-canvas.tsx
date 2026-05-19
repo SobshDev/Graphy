@@ -1,45 +1,60 @@
-import {
-  Background,
-  BackgroundVariant,
-  ReactFlow,
-  useEdgesState,
-  useNodesState,
-  useReactFlow,
-} from '@xyflow/react'
+import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CanvasEdges } from '@/modules/graph/components/canvas-edges'
 import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
+import { SectionNode } from '@/modules/graph/components/section-node'
+import { SummaryNode } from '@/modules/graph/components/summary-node'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
-import type { CodeNodeData } from '@/modules/graph/types'
+import type { GraphNodeData } from '@/modules/graph/types'
 import { getDesktop } from '@/shared/lib/desktop'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
-const nodeTypes: NodeTypes = { code: CodeNode }
+const nodeTypes: NodeTypes = {
+  code: CodeNode,
+  section: SectionNode,
+  summary: SummaryNode,
+}
 
 export function GraphCanvas() {
   const { graph, folder, loading, error, layout: rawLayout } = useGraph()
   const cachedLayout = rawLayout as XYFlowGraph | null
   const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node<CodeNodeData>>([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
+    [],
+  )
+  const [layoutEdges, setLayoutEdges] = useState<Edge[]>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+    () => new Set(),
+  )
   const focusRequest = useGraphFocusRequest()
   const lastFocusTs = useRef(0)
 
   const handleNodeClick = useCallback(
-    (_event: unknown, node: Node<CodeNodeData>) => {
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind === 'summary') {
+        setExpandedGroups((current) => {
+          const next = new Set(current)
+          next.add(node.id)
+          return next
+        })
+        return
+      }
+      if (node.data.kind === 'section') return
+
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -55,12 +70,16 @@ export function GraphCanvas() {
   }, [])
 
   useEffect(() => {
+    setExpandedGroups(new Set())
+  }, [graph])
+
+  useEffect(() => {
     let cancelled = false
     let fitFrame: number | null = null
 
     if (!graph) {
       setNodes([])
-      setEdges([])
+      setLayoutEdges([])
       setLayouting(false)
       setLayoutError(null)
       return () => {
@@ -68,9 +87,9 @@ export function GraphCanvas() {
       }
     }
 
-    if (cachedLayout) {
+    if (cachedLayout && expandedGroups.size === 0) {
       setNodes(cachedLayout.nodes)
-      setEdges(cachedLayout.edges)
+      setLayoutEdges(cachedLayout.edges)
       setLayouting(false)
       setLayoutError(null)
       fitFrame = window.requestAnimationFrame(() => {
@@ -84,15 +103,15 @@ export function GraphCanvas() {
     setLayouting(true)
     setLayoutError(null)
 
-    toXYFlow(graph)
+    toXYFlow(graph, { expandedGroups })
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
-        setEdges(xyflow.edges)
+        setLayoutEdges(xyflow.edges)
         fitFrame = window.requestAnimationFrame(() => {
           fitView({ padding: 0.25, duration: 220 })
         })
-        getDesktop()?.cacheLayout(xyflow)
+        if (expandedGroups.size === 0) getDesktop()?.cacheLayout(xyflow)
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -106,13 +125,15 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [fitView, graph, cachedLayout, setNodes, setEdges])
+  }, [expandedGroups, fitView, graph, cachedLayout, setNodes])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
     lastFocusTs.current = focusRequest.timestamp
     const matching = nodes
-      .filter((n) => n.data.file === focusRequest.file)
+      .filter(
+        (n) => n.data.kind === 'code' && n.data.file === focusRequest.file,
+      )
       .map((n) => n.id)
     if (matching.length > 0) {
       fitView({
@@ -156,22 +177,32 @@ export function GraphCanvas() {
     <>
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={[]}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
+        onlyRenderVisibleElements
+        nodesDraggable={false}
+        nodesConnectable={false}
+        nodesFocusable={false}
+        edgesFocusable={false}
+        elementsSelectable={false}
+        elevateNodesOnSelect={false}
+        elevateEdgesOnSelect={false}
+        selectNodesOnDrag={false}
+        zoomOnDoubleClick={false}
         defaultEdgeOptions={{
-          type: 'default',
-          pathOptions: { curvature: 0.55 },
+          type: 'straight',
+          interactionWidth: 0,
+          selectable: false,
         }}
         minZoom={0.05}
         maxZoom={2.5}
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+        <CanvasEdges edges={layoutEdges} nodes={nodes} />
       </ReactFlow>
       <FunctionSheet
         root={graph?.root ?? null}
