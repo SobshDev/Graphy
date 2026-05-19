@@ -14,6 +14,8 @@ import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
 import type { GraphNodeData } from '@/modules/graph/types'
+import { MOCK_SUMMARY_TARGET, NodeSummarySheet } from '@/modules/node-summary'
+import type { NodeSummaryTarget } from '@/modules/node-summary'
 import { getDesktop } from '@/shared/lib/desktop'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 import { DiffBootstrap } from '@/modules/diff-viewer'
@@ -38,20 +40,50 @@ export function GraphCanvas() {
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
+  const [summaryTarget, setSummaryTarget] = useState<NodeSummaryTarget | null>(
+    null,
+  )
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set(),
   )
   const focusRequest = useGraphFocusRequest()
   const lastFocusTs = useRef(0)
+  const pendingClickTimer = useRef<number | null>(null)
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
-      if (node.data.kind !== 'summary') return
-      setExpandedGroups((current) => {
-        const next = new Set(current)
-        next.add(node.id)
-        return next
-      })
+      if (node.data.kind === 'summary') {
+        setExpandedGroups((current) => {
+          const next = new Set(current)
+          next.add(node.id)
+          return next
+        })
+        return
+      }
+      if (node.data.kind !== 'code') return
+
+      if (pendingClickTimer.current !== null) {
+        window.clearTimeout(pendingClickTimer.current)
+      }
+      pendingClickTimer.current = window.setTimeout(() => {
+        pendingClickTimer.current = null
+        // TODO: replace mock body with a real summary fetched for this node.
+        setSummaryTarget({
+          ...MOCK_SUMMARY_TARGET,
+          displayName: node.data.displayName,
+          type: node.data.type,
+          signature: node.data.signature,
+          file: node.data.file,
+          line: node.data.line,
+          facts: {
+            isAsync: node.data.isAsync,
+            isExported: node.data.isExported,
+            bodyLines: node.data.bodyLines,
+            inDegree: node.data.inDegree,
+            outDegree: node.data.outDegree,
+          },
+        })
+      }, 220)
     },
     [],
   )
@@ -59,6 +91,10 @@ export function GraphCanvas() {
   const handleNodeDoubleClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
       if (node.data.kind !== 'code') return
+      if (pendingClickTimer.current !== null) {
+        window.clearTimeout(pendingClickTimer.current)
+        pendingClickTimer.current = null
+      }
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -68,6 +104,14 @@ export function GraphCanvas() {
     },
     [],
   )
+
+  useEffect(() => {
+    return () => {
+      if (pendingClickTimer.current !== null) {
+        window.clearTimeout(pendingClickTimer.current)
+      }
+    }
+  }, [])
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     if (!open) setSheetTarget(null)
@@ -214,6 +258,12 @@ export function GraphCanvas() {
         root={graph?.root ?? null}
         target={sheetTarget}
         onOpenChange={handleSheetOpenChange}
+      />
+      <NodeSummarySheet
+        target={summaryTarget}
+        onOpenChange={(open) => {
+          if (!open) setSummaryTarget(null)
+        }}
       />
     </>
   )
