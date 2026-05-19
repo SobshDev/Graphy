@@ -7,6 +7,7 @@ import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
 import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SettingsPage } from '@/modules/settings'
+import { SearchPanel } from '@/modules/search'
 import { SourceControlPanel } from '@/modules/source-control'
 import { ThemeBootstrap } from '@/modules/themes'
 import { useActiveView } from '@/shared/lib/active-view'
@@ -30,6 +31,7 @@ function App() {
               <TopBar />
               <div className="flex min-h-0 flex-1">
                 <FileExplorer />
+                <SearchPanel />
                 <SourceControlPanel />
                 <MainContent />
               </div>

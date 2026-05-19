@@ -131,6 +131,7 @@ let mainWindow
 let startedServerUrl
 let currentFolder = null
 let currentGraph = null
+let currentLayout = null
 let parseError = null
 let parseInFlight = null
 let parseGeneration = 0
@@ -249,6 +250,7 @@ function broadcastGraph() {
     graph: currentGraph,
     error: parseError,
     loading: parseInFlight !== null,
+    layout: currentLayout,
   })
 }
 
@@ -274,6 +276,14 @@ async function openFolder(folder) {
   refreshMenu()
   broadcastProject()
 
+  const cached = projectState.readCache(app, resolved)
+  if (cached) {
+    currentGraph = cached.graph
+    currentLayout = cached.layout
+    parseError = null
+    broadcastGraph()
+  }
+
   if (stopWatcher) {
     stopWatcher()
     stopWatcher = null
@@ -297,7 +307,9 @@ async function runParse(folder) {
     const graph = await parseFolder(app, folder)
     if (generation !== parseGeneration) return
     currentGraph = graph
+    currentLayout = null
     parseError = null
+    projectState.writeCache(app, folder, graph, null)
   } catch (err) {
     if (generation !== parseGeneration) return
     parseError = err instanceof Error ? err.message : String(err)
@@ -318,6 +330,7 @@ function closeFolder() {
   }
   currentFolder = null
   currentGraph = null
+  currentLayout = null
   parseError = null
   parseInFlight = null
   refreshMenu()
@@ -332,6 +345,7 @@ function registerIpc() {
     graph: currentGraph,
     error: parseError,
     loading: parseInFlight !== null,
+    layout: currentLayout,
   }))
 
   ipcMain.handle('graphy:open-folder', () => promptOpenFolder())
@@ -346,6 +360,12 @@ function registerIpc() {
     projectState.clearRecents(app)
     refreshMenu()
     broadcastProject()
+  })
+  ipcMain.handle('graphy:cache-layout', (_e, layout) => {
+    if (currentFolder && currentGraph) {
+      currentLayout = layout
+      projectState.writeCache(app, currentFolder, currentGraph, layout)
+    }
   })
 
   ipcMain.handle('graphy:file-tree', async () => {
@@ -452,6 +472,50 @@ function registerIpc() {
     if (typeof content !== 'string') throw new Error('Missing file content')
     const absolute = await resolveSafePath(file)
     await fsp.writeFile(absolute, content, 'utf8')
+  })
+
+  ipcMain.handle('graphy:search-text', async (_event, query) => {
+    if (!currentFolder || typeof query !== 'string' || !query) return []
+    const MAX_RESULTS = 1000
+    const EXCLUDE_DIRS = [
+      '.git',
+      'node_modules',
+      'dist',
+      'dist-electron',
+      '.output',
+      '.next',
+      '.nuxt',
+    ]
+    return new Promise((resolve) => {
+      const args = ['-rn', '-I', '--fixed-strings']
+      for (const dir of EXCLUDE_DIRS) args.push(`--exclude-dir=${dir}`)
+      args.push('--', query, '.')
+      const child = spawn('grep', args, { cwd: currentFolder })
+      let out = ''
+      child.stdout.on('data', (chunk) => {
+        out += chunk.toString()
+      })
+      child.stderr.on('data', () => {})
+      child.on('error', () => resolve([]))
+      child.on('close', () => {
+        const results = []
+        for (const line of out.split('\n')) {
+          if (!line) continue
+          const match = line.match(/^(.+?):(\d+):(.*)$/)
+          if (!match) continue
+          let file = match[1]
+          if (file.startsWith('./')) file = file.slice(2)
+          results.push({
+            file,
+            line: Number(match[2]),
+            column: 0,
+            content: match[3],
+          })
+          if (results.length >= MAX_RESULTS) break
+        }
+        resolve(results)
+      })
+    })
   })
 
   ipcMain.handle('function:read', async (_event, payload) => {
@@ -1174,7 +1238,7 @@ async function waitForServer(url) {
 }
 
 app.whenReady().then(async () => {
-  projectState.pruneMissing(app)
+  await projectState.pruneMissing(app)
   registerIpc()
   refreshMenu()
   await createWindow()

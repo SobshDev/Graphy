@@ -10,6 +10,7 @@ export interface GraphPayload {
   graph: Graph | null
   error: string | null
   loading: boolean
+  layout: unknown
 }
 
 export interface InitialState extends ProjectPayload, GraphPayload {}
@@ -41,6 +42,13 @@ export interface FileNode {
   kind: 'file' | 'dir'
   ignored?: boolean
   children?: FileNode[]
+}
+
+export interface SearchMatch {
+  file: string
+  line: number
+  column: number
+  content: string
 }
 
 export interface ReadFilePayload {
@@ -204,6 +212,7 @@ export interface GraphyDesktop {
   closeFolder: () => Promise<void>
   reloadGraph: () => Promise<void>
   clearRecents: () => Promise<void>
+  cacheLayout: (layout: unknown) => Promise<void>
   onProject: (handler: (payload: ProjectPayload) => void) => () => void
   onGraph: (handler: (payload: GraphPayload) => void) => () => void
   readFunctionSource: (
@@ -220,6 +229,7 @@ export interface GraphyDesktop {
   moveFile: (sourcePath: string, destDir: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   renameFile: (oldPath: string, newName: string) => Promise<{ newPath: string }>
+  searchText: (query: string) => Promise<SearchMatch[]>
   readProjectFile: (payload: ReadFilePayload) => Promise<ReadFileResult>
   searchProject: (payload: SearchCodePayload) => Promise<SearchCodeResult>
   listProjectFiles: (payload: ListFilesPayload) => Promise<ListFilesResult>

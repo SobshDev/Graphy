@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   closeFolder: () => ipcRenderer.invoke('graphy:close-folder'),
   reloadGraph: () => ipcRenderer.invoke('graphy:reload'),
   clearRecents: () => ipcRenderer.invoke('graphy:clear-recents'),
+  cacheLayout: (layout) => ipcRenderer.invoke('graphy:cache-layout', layout),
   onProject: (handler) => subscribe('project:set', handler),
   onGraph: (handler) => subscribe('graph:set', handler),
   readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),
@@ -27,6 +28,7 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   deleteFile: (filePath) => ipcRenderer.invoke('graphy:delete-file', filePath),
   renameFile: (oldPath, newName) =>
     ipcRenderer.invoke('graphy:rename-file', { oldPath, newName }),
+  searchText: (query) => ipcRenderer.invoke('graphy:search-text', query),
   readFile: (filePath) => ipcRenderer.invoke('graphy:read-file', filePath),
   writeFile: (filePath, content) =>
     ipcRenderer.invoke('graphy:write-file', { file: filePath, content }),

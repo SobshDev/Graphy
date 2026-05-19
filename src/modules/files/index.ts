@@ -4,6 +4,7 @@ export {
   closeActiveTab,
   closeTab,
   getOpenFile,
+  openFile,
   setActiveTab,
   useOpenFile,
   useOpenTabs,

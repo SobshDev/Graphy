@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export type ActivePanel = 'files' | 'git' | null
+export type ActivePanel = 'files' | 'search' | 'git' | null
 
 let active: ActivePanel = 'files'
 const listeners = new Set<() => void>()
