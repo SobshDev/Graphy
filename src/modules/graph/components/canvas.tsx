@@ -1,15 +1,19 @@
 import { GitBranch } from 'lucide-react'
+import { useState } from 'react'
 
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
+import { LayoutSelector } from '@/modules/graph/components/layout-selector'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
 import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
+import type { GraphLayout } from '@/modules/graph/types'
 
 export function Canvas() {
   const branch = useCurrentBranch()
+  const [layout, setLayout] = useState<GraphLayout>('tree')
 
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
-      <GraphCanvas />
+      <GraphCanvas layout={layout} />
 
       <div
         aria-hidden="true"
@@ -29,6 +33,7 @@ export function Canvas() {
         <span>typescript</span>
       </div>
 
+      <LayoutSelector value={layout} onChange={setLayout} />
       <ZoomControls />
     </section>
   )

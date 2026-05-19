@@ -22,6 +22,9 @@ function FolderNodeImpl({ data }: FolderNodeProps) {
       <Handle
         type="target"
         position={Position.Left}
+        style={
+          data.layout === 'radial' ? { left: '50%', top: '50%' } : undefined
+        }
         className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
       <span
@@ -29,15 +32,15 @@ function FolderNodeImpl({ data }: FolderNodeProps) {
         className="size-1.5 shrink-0 rounded-full"
         style={{ backgroundColor: colors.accent }}
       />
-      <span
-        className="truncate font-mono text-[12px] font-medium"
-        style={{ color: colors.label }}
-      >
+      <span className="text-foreground truncate font-mono text-[12px] font-medium">
         {data.name || '/'}
       </span>
       <Handle
         type="source"
         position={Position.Right}
+        style={
+          data.layout === 'radial' ? { left: '50%', top: '50%' } : undefined
+        }
         className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
     </div>

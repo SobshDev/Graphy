@@ -10,7 +10,7 @@ import type { FunctionSheetTarget } from '@/modules/graph/components/function-sh
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
-import type { GraphNodeData } from '@/modules/graph/types'
+import type { GraphLayout, GraphNodeData } from '@/modules/graph/types'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = {
@@ -21,7 +21,11 @@ const nodeTypes: NodeTypes = {
 const OUTGOING_COLOR = '#38bdf8'
 const INCOMING_COLOR = '#fbbf24'
 
-export function GraphCanvas() {
+type GraphCanvasProps = {
+  layout: GraphLayout
+}
+
+export function GraphCanvas({ layout }: GraphCanvasProps) {
   const { graph, folder, loading, error } = useGraph()
   const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
@@ -120,7 +124,7 @@ export function GraphCanvas() {
     setLayouting(true)
     setLayoutError(null)
 
-    toXYFlow(graph)
+    toXYFlow(graph, layout)
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
@@ -142,7 +146,7 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [fitView, graph, setNodes])
+  }, [fitView, graph, layout, setNodes])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
@@ -213,7 +217,9 @@ export function GraphCanvas() {
         elevateEdgesOnSelect={false}
         selectNodesOnDrag={false}
         zoomOnDoubleClick={false}
-        defaultEdgeOptions={{ type: 'smoothstep' }}
+        defaultEdgeOptions={{
+          type: layout === 'radial' ? 'straight' : 'smoothstep',
+        }}
         minZoom={0.05}
         maxZoom={2.5}
       />

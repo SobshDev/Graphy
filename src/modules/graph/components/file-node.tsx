@@ -12,7 +12,7 @@ function FileNodeImpl({ data }: FileNodeProps) {
 
   return (
     <div
-      className="graph-node-surface relative flex w-[240px] flex-col overflow-hidden rounded-md"
+      className="bg-card relative flex w-[240px] flex-col overflow-hidden rounded-md"
       title={data.file}
     >
       <span
@@ -25,21 +25,27 @@ function FileNodeImpl({ data }: FileNodeProps) {
         <div className="text-foreground truncate font-mono text-[13px] font-semibold">
           {data.displayName}
         </div>
-        <div className="text-muted-foreground/80 flex items-center gap-2 truncate font-mono text-[10.5px]">
-          <span className="truncate">{data.folder || '/'}</span>
+        <div className="text-muted-foreground/80 flex items-center gap-2 font-mono text-[10.5px]">
+          <span>{data.callsOut} calls</span>
           <span aria-hidden>·</span>
-          <span className="shrink-0">{data.symbolCount} sym</span>
+          <span>{data.callsIn} called by</span>
         </div>
       </div>
 
       <Handle
         type="target"
         position={Position.Left}
+        style={
+          data.layout === 'radial' ? { left: '50%', top: '50%' } : undefined
+        }
         className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
       <Handle
         type="source"
         position={Position.Right}
+        style={
+          data.layout === 'radial' ? { left: '50%', top: '50%' } : undefined
+        }
         className="!h-0 !w-0 !border-0 !bg-transparent !opacity-0"
       />
     </div>

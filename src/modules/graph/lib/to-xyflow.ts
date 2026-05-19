@@ -4,6 +4,7 @@ import type { Graph } from '@/modules/parser'
 import type {
   FileNodeData,
   FolderNodeData,
+  GraphLayout,
   GraphNodeData,
 } from '@/modules/graph/types'
 
@@ -11,6 +12,11 @@ const FILE_NODE_WIDTH = 240
 const FILE_NODE_HEIGHT = 54
 const FOLDER_NODE_WIDTH = 160
 const FOLDER_NODE_HEIGHT = 32
+
+const RING_BASE = 220
+const RING_STEP = 240
+const MIN_ARC = 170
+
 const COL_CLEARANCE = 80
 const ROW_GAP = 78
 const SUBTREE_GAP = 96
@@ -39,42 +45,27 @@ interface Placed {
   y: number
 }
 
-export async function toXYFlow(graph: Graph): Promise<XYFlowGraph> {
-  const { files, callEdges } = collectFiles(graph)
+export async function toXYFlow(
+  graph: Graph,
+  layout: GraphLayout = 'tree',
+): Promise<XYFlowGraph> {
+  const edgeType = layout === 'radial' ? 'straight' : 'smoothstep'
+  const { files, callEdges } = collectFiles(graph, edgeType, layout)
   if (files.length === 0) {
     return { nodes: [], treeEdges: [], callEdges }
   }
 
   const root = buildFolderTree(files)
-  const columnX = computeColumnX(root)
-  const placements = layoutTidyTree(root, columnX)
-  const { nodes, treeEdges } = emitTree(root, placements)
+  const placements =
+    layout === 'radial' ? layoutRadial(root) : layoutTidyTree(root)
+  const { nodes, treeEdges } = emitTree(root, placements, layout, edgeType)
 
   return { nodes, treeEdges, callEdges }
 }
 
-function computeColumnX(root: FolderTree): number[] {
-  // Per-depth max node width: folders contribute FOLDER_NODE_WIDTH at their
-  // depth, files contribute FILE_NODE_WIDTH at parent_depth + 1.
-  const widths: number[] = []
-
-  function walk(folder: FolderTree, depth: number): void {
-    widths[depth] = Math.max(widths[depth] ?? 0, FOLDER_NODE_WIDTH)
-    if (folder.files.length > 0) {
-      const fileDepth = depth + 1
-      widths[fileDepth] = Math.max(widths[fileDepth] ?? 0, FILE_NODE_WIDTH)
-    }
-    for (const sub of folder.subfolders) walk(sub, depth + 1)
-  }
-  walk(root, 0)
-
-  const xs: number[] = []
-  let cursor = 0
-  for (let i = 0; i < widths.length; i++) {
-    xs[i] = cursor
-    cursor += (widths[i] ?? FOLDER_NODE_WIDTH) + COL_CLEARANCE
-  }
-  return xs
+function radiusForDepth(depth: number): number {
+  if (depth < 0) return 0
+  return RING_BASE + depth * RING_STEP
 }
 
 function buildFolderTree(
@@ -123,18 +114,33 @@ function sortTree(folder: FolderTree): void {
   for (const sub of folder.subfolders) sortTree(sub)
 }
 
-function layoutTidyTree(
-  root: FolderTree,
-  columnX: number[],
-): Map<string, Placed> {
-  // Tracks each node's *center* y. Top-left positions are derived at
-  // emit time using each node kind's own height, so slim folder nodes
-  // stay visually aligned with the taller file cards.
+function layoutTidyTree(root: FolderTree): Map<string, Placed> {
+  // Columns left-to-right, one per depth. Each column is centered on the
+  // widest node it holds. Children stack vertically inside their parent's
+  // sub-range; placements store node *centers*.
+  const widths: number[] = []
+  function walkWidth(folder: FolderTree, depth: number): void {
+    widths[depth] = Math.max(widths[depth] ?? 0, FOLDER_NODE_WIDTH)
+    if (folder.files.length > 0) {
+      widths[depth + 1] = Math.max(widths[depth + 1] ?? 0, FILE_NODE_WIDTH)
+    }
+    for (const sub of folder.subfolders) walkWidth(sub, depth + 1)
+  }
+  walkWidth(root, 0)
+
+  const columnCenters: number[] = []
+  let xCursor = 0
+  for (let i = 0; i < widths.length; i++) {
+    const w = widths[i] ?? FOLDER_NODE_WIDTH
+    columnCenters[i] = xCursor + w / 2
+    xCursor += w + COL_CLEARANCE
+  }
+
   const placements = new Map<string, Placed>()
   let nextCenterY = FILE_NODE_HEIGHT / 2
 
   function place(folder: FolderTree, depth: number): number {
-    const x = columnX[depth] ?? 0
+    const x = columnCenters[depth] ?? 0
     const childCenters: number[] = []
 
     folder.subfolders.forEach((sub, idx) => {
@@ -151,7 +157,7 @@ function layoutTidyTree(
       nextCenterY += ROW_GAP
       placements.set(file.id, {
         id: file.id,
-        x: columnX[depth + 1] ?? 0,
+        x: columnCenters[depth + 1] ?? 0,
         y: centerY,
       })
       childCenters.push(centerY)
@@ -178,9 +184,102 @@ function layoutTidyTree(
   return placements
 }
 
+function layoutRadial(root: FolderTree): Map<string, Placed> {
+  // Each node requires a minimum arc length (MIN_ARC) at its ring; an
+  // internal folder needs at least the sum of its children's required
+  // angles. The whole tree is uniformly scaled so root's required angle
+  // fits inside 2π.
+  const placements = new Map<string, Placed>()
+  const angleCache = new Map<FolderTree, number>()
+
+  function requiredAngle(folder: FolderTree, depth: number): number {
+    const cached = angleCache.get(folder)
+    if (cached !== undefined) return cached
+
+    let sum = 0
+    for (const sub of folder.subfolders) {
+      sum += requiredAngle(sub, depth + 1)
+    }
+    if (folder.files.length > 0) {
+      sum += (folder.files.length * MIN_ARC) / radiusForDepth(depth + 1)
+    }
+    if (sum === 0) {
+      sum = MIN_ARC / Math.max(radiusForDepth(depth), 1)
+    }
+    angleCache.set(folder, sum)
+    return sum
+  }
+
+  let rootTotal = 0
+  for (const sub of root.subfolders) rootTotal += requiredAngle(sub, 0)
+  if (root.files.length > 0) {
+    rootTotal += (root.files.length * MIN_ARC) / radiusForDepth(0)
+  }
+  const scale = Math.max(1, rootTotal / (2 * Math.PI))
+
+  function ringRadius(depth: number): number {
+    if (depth < 0) return 0
+    return scale * radiusForDepth(depth)
+  }
+
+  function placeSubtree(
+    folder: FolderTree,
+    depth: number,
+    start: number,
+  ): void {
+    const span = requiredAngle(folder, depth) / scale
+    const angle = start + span / 2
+    const r = ringRadius(depth)
+    placements.set(folderId(folder.path), {
+      id: folderId(folder.path),
+      x: r * Math.cos(angle),
+      y: r * Math.sin(angle),
+    })
+
+    let cursor = start
+    for (const sub of folder.subfolders) {
+      const subSpan = requiredAngle(sub, depth + 1) / scale
+      placeSubtree(sub, depth + 1, cursor)
+      cursor += subSpan
+    }
+    for (const file of folder.files) {
+      const fileSpan = MIN_ARC / radiusForDepth(depth + 1) / scale
+      const fileAngle = cursor + fileSpan / 2
+      const fr = ringRadius(depth + 1)
+      placements.set(file.id, {
+        id: file.id,
+        x: fr * Math.cos(fileAngle),
+        y: fr * Math.sin(fileAngle),
+      })
+      cursor += fileSpan
+    }
+  }
+
+  let cursor = -Math.PI / 2
+  for (const sub of root.subfolders) {
+    placeSubtree(sub, 0, cursor)
+    cursor += requiredAngle(sub, 0) / scale
+  }
+  for (const file of root.files) {
+    const fileSpan = MIN_ARC / radiusForDepth(0) / scale
+    const fileAngle = cursor + fileSpan / 2
+    const fr = ringRadius(0)
+    placements.set(file.id, {
+      id: file.id,
+      x: fr * Math.cos(fileAngle),
+      y: fr * Math.sin(fileAngle),
+    })
+    cursor += fileSpan
+  }
+
+  return placements
+}
+
 function emitTree(
   root: FolderTree,
   placements: Map<string, Placed>,
+  layout: GraphLayout,
+  edgeType: 'straight' | 'smoothstep',
 ): { nodes: Array<Node<GraphNodeData>>; treeEdges: Edge[] } {
   const nodes: Array<Node<GraphNodeData>> = []
   const treeEdges: Edge[] = []
@@ -194,12 +293,12 @@ function emitTree(
       id: file.id,
       type: 'file',
       position: {
-        x: fileCenter.x,
+        x: fileCenter.x - FILE_NODE_WIDTH / 2,
         y: fileCenter.y - FILE_NODE_HEIGHT / 2,
       },
       width: FILE_NODE_WIDTH,
       height: FILE_NODE_HEIGHT,
-      data: { ...file.data, depth },
+      data: { ...file.data, depth, layout },
     })
   }
 
@@ -211,12 +310,13 @@ function emitTree(
       path: folder.path,
       name: folder.name,
       depth,
+      layout,
     }
     nodes.push({
       id,
       type: 'folder',
       position: {
-        x: center.x,
+        x: center.x - FOLDER_NODE_WIDTH / 2,
         y: center.y - FOLDER_NODE_HEIGHT / 2,
       },
       width: FOLDER_NODE_WIDTH,
@@ -232,7 +332,7 @@ function emitTree(
         id: `tree:${id}->${childId}`,
         source: id,
         target: childId,
-        type: 'smoothstep',
+        type: edgeType,
         style: TREE_EDGE_STYLE,
       })
       visit(sub, depth + 1)
@@ -244,7 +344,7 @@ function emitTree(
         id: `tree:${id}->${file.id}`,
         source: id,
         target: file.id,
-        type: 'smoothstep',
+        type: edgeType,
         style: TREE_EDGE_STYLE,
       })
     }
@@ -260,20 +360,26 @@ function folderId(folderPath: string): string {
   return `dir:${folderPath || '/'}`
 }
 
-function collectFiles(graph: Graph): {
+function collectFiles(
+  graph: Graph,
+  edgeType: 'straight' | 'smoothstep',
+  layout: GraphLayout,
+): {
   files: Array<{ id: string; data: FileNodeData }>
   callEdges: Edge[]
 } {
   const fileBySymbolId = new Map<string, string>()
-  const fileSymbolCount = new Map<string, number>()
+  const fileSet = new Set<string>()
 
   for (const node of graph.nodes) {
     fileBySymbolId.set(node.id, node.file)
-    fileSymbolCount.set(node.file, (fileSymbolCount.get(node.file) ?? 0) + 1)
+    fileSet.add(node.file)
   }
 
   const edgeKeys = new Set<string>()
   const callEdges: Edge[] = []
+  const callsOut = new Map<string, number>()
+  const callsIn = new Map<string, number>()
 
   for (const edge of graph.edges) {
     const source = fileBySymbolId.get(edge.source)
@@ -284,32 +390,35 @@ function collectFiles(graph: Graph): {
     if (edgeKeys.has(key)) continue
     edgeKeys.add(key)
 
+    callsOut.set(source, (callsOut.get(source) ?? 0) + 1)
+    callsIn.set(target, (callsIn.get(target) ?? 0) + 1)
+
     callEdges.push({
       id: `call:${key}`,
       source,
       target,
-      type: 'smoothstep',
+      type: edgeType,
     })
   }
 
-  const files = Array.from(fileSymbolCount.entries()).map(
-    ([file, symbolCount]) => {
-      const parts = file.split('/')
-      const displayName = parts[parts.length - 1] ?? file
-      const folder = parts.slice(0, -1).join('/')
-      return {
-        id: file,
-        data: {
-          kind: 'file' as const,
-          file,
-          displayName,
-          folder,
-          symbolCount,
-          depth: 0,
-        },
-      }
-    },
-  )
+  const files = Array.from(fileSet).map((file) => {
+    const parts = file.split('/')
+    const displayName = parts[parts.length - 1] ?? file
+    const folder = parts.slice(0, -1).join('/')
+    return {
+      id: file,
+      data: {
+        kind: 'file' as const,
+        file,
+        displayName,
+        folder,
+        callsOut: callsOut.get(file) ?? 0,
+        callsIn: callsIn.get(file) ?? 0,
+        depth: 0,
+        layout,
+      },
+    }
+  })
 
   return { files, callEdges }
 }

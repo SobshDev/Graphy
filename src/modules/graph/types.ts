@@ -1,10 +1,14 @@
+export type GraphLayout = 'tree' | 'radial'
+
 export type FileNodeData = {
   kind: 'file'
   file: string
   displayName: string
   folder: string
-  symbolCount: number
+  callsOut: number
+  callsIn: number
   depth: number
+  layout: GraphLayout
 }
 
 export type FolderNodeData = {
@@ -12,6 +16,7 @@ export type FolderNodeData = {
   path: string
   name: string
   depth: number
+  layout: GraphLayout
 }
 
 export type GraphNodeData = FileNodeData | FolderNodeData
