@@ -174,7 +174,6 @@ project. The main process must:
   escaping it.
 - Bail out if no project is open.
 
-
 ---
 
 # STUBS.md — Tier 4: Context Tools
