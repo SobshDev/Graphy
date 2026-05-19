@@ -18,9 +18,10 @@ const COMPONENT_ROW_WIDTH = 3600
 const COMPONENT_GAP_X = 220
 const COMPONENT_GAP_Y = 160
 const SECTION_PADDING_X = 48
-const SECTION_PADDING_TOP = 82
+const SECTION_PADDING_TOP = 42
 const SECTION_PADDING_BOTTOM = 42
-const SECTION_MIN_SIZE = 420
+const SECTION_MIN_WIDTH = 420
+const SECTION_MIN_HEIGHT = 180
 const UNUSED_COLUMNS = 6
 const UNUSED_COLUMN_GAP = 300
 const UNUSED_ROW_GAP = 92
@@ -218,11 +219,13 @@ function frameComponent(
   edges: Array<Edge>,
 ): LayoutedComponent {
   const bounds = nodeBounds(nodes)
-  const width = Math.max(bounds.width + SECTION_PADDING_X * 2, SECTION_MIN_SIZE)
-  const height = Math.max(
-    bounds.height + SECTION_PADDING_TOP + SECTION_PADDING_BOTTOM,
-    SECTION_MIN_SIZE,
-  )
+  const contentWidth = bounds.width + SECTION_PADDING_X * 2
+  const contentHeight =
+    bounds.height + SECTION_PADDING_TOP + SECTION_PADDING_BOTTOM
+  const width = Math.max(contentWidth, SECTION_MIN_WIDTH)
+  const height = Math.max(contentHeight, SECTION_MIN_HEIGHT)
+  const extraX = Math.max(0, width - contentWidth) / 2
+  const extraY = Math.max(0, height - contentHeight) / 2
   const sectionId = `section:${entryNodeIds(nodes, edges).join('|') || nodes[0]?.id || 'empty'}`
   const label = sectionLabel(nodes, edges)
   const childNodes = nodes.map((node) => ({
@@ -230,8 +233,8 @@ function frameComponent(
     parentId: sectionId,
     extent: 'parent' as const,
     position: {
-      x: node.position.x + SECTION_PADDING_X,
-      y: node.position.y + SECTION_PADDING_TOP,
+      x: node.position.x + SECTION_PADDING_X + extraX,
+      y: node.position.y + SECTION_PADDING_TOP + extraY,
     },
   }))
   const sectionNode: Node<SectionNodeData> = {

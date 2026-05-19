@@ -275,10 +275,15 @@ body {
   stroke: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
 }
 
+.graph-canvas-edges {
+  color: color-mix(in oklab, var(--muted-foreground) 62%, transparent);
+}
+
 .react-flow__node-code,
 .react-flow__node-section,
 .react-flow__node-summary {
   contain: layout paint style;
+  z-index: 2;
 }
 
 @supports (corner-shape: round) {

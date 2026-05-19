@@ -1,14 +1,8 @@
-import {
-  Background,
-  BackgroundVariant,
-  ReactFlow,
-  useEdgesState,
-  useNodesState,
-  useReactFlow,
-} from '@xyflow/react'
+import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
+import { CanvasEdges } from '@/modules/graph/components/canvas-edges'
 import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
@@ -34,7 +28,7 @@ export function GraphCanvas() {
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
     [],
   )
-  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
+  const [layoutEdges, setLayoutEdges] = useState<Edge[]>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
@@ -82,7 +76,7 @@ export function GraphCanvas() {
 
     if (!graph) {
       setNodes([])
-      setEdges([])
+      setLayoutEdges([])
       setLayouting(false)
       setLayoutError(null)
       return () => {
@@ -97,7 +91,7 @@ export function GraphCanvas() {
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
-        setEdges(xyflow.edges)
+        setLayoutEdges(xyflow.edges)
         fitFrame = window.requestAnimationFrame(() => {
           fitView({ padding: 0.25, duration: 220 })
         })
@@ -114,7 +108,7 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [expandedGroups, fitView, graph, setNodes, setEdges])
+  }, [expandedGroups, fitView, graph, setNodes])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
@@ -166,9 +160,8 @@ export function GraphCanvas() {
     <>
       <ReactFlow
         nodes={nodes}
-        edges={edges}
+        edges={[]}
         onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
         onNodeClick={handleNodeClick}
         nodeTypes={nodeTypes}
         fitView
@@ -192,7 +185,7 @@ export function GraphCanvas() {
         minZoom={0.05}
         maxZoom={2.5}
       >
-        <Background variant={BackgroundVariant.Dots} gap={32} size={1} />
+        <CanvasEdges edges={layoutEdges} nodes={nodes} />
       </ReactFlow>
       <FunctionSheet
         root={graph?.root ?? null}
