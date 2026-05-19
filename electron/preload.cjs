@@ -32,6 +32,23 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   readFile: (filePath) => ipcRenderer.invoke('graphy:read-file', filePath),
   writeFile: (filePath, content) =>
     ipcRenderer.invoke('graphy:write-file', { file: filePath, content }),
+  readProjectFile: (payload) =>
+    ipcRenderer.invoke('graphy:fs:read-file', payload),
+  searchProject: (payload) => ipcRenderer.invoke('graphy:fs:search', payload),
+  listProjectFiles: (payload) =>
+    ipcRenderer.invoke('graphy:fs:list-files', payload),
+  applyEdit: (payload) => ipcRenderer.invoke('graphy:fs:apply-edit', payload),
+  renameSymbol: (payload) =>
+    ipcRenderer.invoke('graphy:edits:rename-symbol', payload),
+  reparseProject: () => ipcRenderer.invoke('graphy:graph:reparse'),
+  runScript: (payload) => ipcRenderer.invoke('graphy:shell:run', payload),
+  gitStatus: () => ipcRenderer.invoke('graphy:git:status'),
+  gitDiff: (payload) => ipcRenderer.invoke('graphy:git:diff', payload),
+  gitBlame: (payload) => ipcRenderer.invoke('graphy:git:blame', payload),
+  focusNode: (payload) => ipcRenderer.invoke('graphy:ui:focus-node', payload),
+  tsTypeAt: (payload) => ipcRenderer.invoke('graphy:ts:type-at', payload),
+  webFetch: (payload) => ipcRenderer.invoke('graphy:web:fetch', payload),
+  onFocusNode: (handler) => subscribe('graphy:ui:focus-node', handler),
 })
 
 window.addEventListener('DOMContentLoaded', () => {

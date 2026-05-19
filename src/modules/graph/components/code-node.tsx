@@ -74,15 +74,15 @@ function typeAccent(type: NodeType): { bar: string; label: string } {
   switch (type) {
     case 'class':
     case 'object':
-      return { bar: 'bg-amber-500', label: 'text-amber-600' }
+      return { bar: 'bg-node-class', label: 'text-node-class-fg' }
     case 'method':
     case 'constructor':
-      return { bar: 'bg-violet-500', label: 'text-violet-500' }
+      return { bar: 'bg-node-method', label: 'text-node-method' }
     case 'getter':
     case 'setter':
-      return { bar: 'bg-teal-500', label: 'text-teal-500' }
+      return { bar: 'bg-node-accessor', label: 'text-node-accessor' }
     case 'arrow':
-      return { bar: 'bg-sky-500', label: 'text-sky-500' }
+      return { bar: 'bg-node-arrow', label: 'text-node-arrow' }
     case 'function':
     default:
       return { bar: 'bg-primary', label: 'text-primary' }

@@ -1,7 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import type { AiMessage } from '@/modules/ai'
-import { createGraphTools } from '@/modules/ai'
+import {
+  createEditsTools,
+  createFilesTools,
+  createGitTools,
+  createGraphTools,
+  createSettingsTools,
+  createShellTools,
+  createUiTools,
+  createWebTools,
+} from '@/modules/ai'
 import { useGraph } from '@/modules/graph'
 import type { Graph } from '@/modules/parser'
 
@@ -278,7 +287,16 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
         let firstAssistantText = ''
         let streamSucceeded = false
         try {
-          const tools = createGraphTools(graphRef.current)
+          const tools = [
+            ...createGraphTools(graphRef.current),
+            ...createEditsTools(),
+            ...createFilesTools(),
+            ...createGitTools(),
+            ...createSettingsTools(),
+            ...createShellTools(),
+            ...createUiTools(),
+            ...createWebTools(),
+          ]
           const aiMessages: AiMessage[] = [
             { role: 'system', content: SYSTEM_PROMPT },
             ...toAiMessages(baseHistory),

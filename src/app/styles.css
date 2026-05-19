@@ -96,6 +96,34 @@ body {
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+@utility corner-continuous {
+  corner-shape: var(--corner-continuous);
+}
+
+@utility corner-panel {
+  corner-shape: var(--corner-panel);
+}
+
+@utility corner-round {
+  corner-shape: var(--corner-round);
+}
+
+@utility corner-none {
+  corner-shape: round;
+}
+
+@utility corner-* {
+  corner-shape: --value(
+    'round',
+    'squircle',
+    'square',
+    'bevel',
+    'scoop',
+    'notch'
+  );
+  corner-shape: --value([*]);
+}
+
 :root {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
@@ -121,6 +149,9 @@ body {
   --chart-4: oklch(0.62 0.18 128);
   --chart-5: oklch(0.5 0.13 130);
   --radius: 0.625rem;
+  --corner-continuous: superellipse(1.12);
+  --corner-panel: superellipse(1.3);
+  --corner-round: round;
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.9 0.26 122);
@@ -130,27 +161,72 @@ body {
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
   --canvas: oklch(0.16 0 0);
+
+  /* Chat surfaces */
+  --chat-bg: oklch(0.205 0 0);
+  --chat-elev: oklch(0.255 0 0);
+  --chat-hover: oklch(0.295 0 0);
+  --chat-sunken: oklch(0.17 0 0);
+  --chat-bubble: oklch(0.245 0 0);
+  --chat-line: rgba(255, 255, 255, 0.07);
+  --chat-line-strong: rgba(255, 255, 255, 0.12);
+  --chat-text: #f5f5f5;
+  --chat-text-2: #a3a3a3;
+  --chat-text-3: #6e6e6e;
+  --chat-text-4: #454545;
+  --chat-accent: #c8ccd2;
+  --chat-accent-2: #dde0e5;
+  --chat-accent-rail: rgba(200, 204, 210, 0.5);
+  --chat-accent-soft: rgba(200, 204, 210, 0.08);
+  --chat-accent-fg: #0a0d04;
+  --chat-danger: #ff6868;
+  --chat-danger-border: rgba(255, 104, 104, 0.4);
+  --chat-scrollbar: rgba(255, 255, 255, 0.06);
+  --chat-scrollbar-hover: rgba(255, 255, 255, 0.12);
+
+  /* Graph */
+  --graph-dot: #2a2f37;
+  --node-class: oklch(0.79 0.16 75);
+  --node-class-fg: oklch(0.7 0.16 65);
+  --node-method: oklch(0.62 0.22 295);
+  --node-accessor: oklch(0.7 0.12 195);
+  --node-arrow: oklch(0.72 0.15 230);
+  --node-function: var(--primary);
+
+  /* Brand */
+  --brand-claude: #d97757;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
 
-  --color-chat-bg: var(--sidebar);
-  --color-chat-elev: oklch(0.255 0 0);
-  --color-chat-hover: oklch(0.295 0 0);
-  --color-chat-sunken: oklch(0.17 0 0);
-  --color-chat-bubble: oklch(0.245 0 0);
-  --color-chat-line: rgba(255, 255, 255, 0.07);
-  --color-chat-line-strong: rgba(255, 255, 255, 0.12);
-  --color-chat-text: #f5f5f5;
-  --color-chat-text-2: #a3a3a3;
-  --color-chat-text-3: #6e6e6e;
-  --color-chat-text-4: #454545;
-  --color-chat-accent: #c8ccd2;
-  --color-chat-accent-2: #dde0e5;
-  --color-chat-accent-rail: rgba(200, 204, 210, 0.5);
-  --color-chat-accent-soft: rgba(200, 204, 210, 0.08);
-  --color-chat-danger: #ff6868;
+  --color-chat-bg: var(--chat-bg);
+  --color-chat-elev: var(--chat-elev);
+  --color-chat-hover: var(--chat-hover);
+  --color-chat-sunken: var(--chat-sunken);
+  --color-chat-bubble: var(--chat-bubble);
+  --color-chat-line: var(--chat-line);
+  --color-chat-line-strong: var(--chat-line-strong);
+  --color-chat-text: var(--chat-text);
+  --color-chat-text-2: var(--chat-text-2);
+  --color-chat-text-3: var(--chat-text-3);
+  --color-chat-text-4: var(--chat-text-4);
+  --color-chat-accent: var(--chat-accent);
+  --color-chat-accent-2: var(--chat-accent-2);
+  --color-chat-accent-rail: var(--chat-accent-rail);
+  --color-chat-accent-soft: var(--chat-accent-soft);
+  --color-chat-accent-fg: var(--chat-accent-fg);
+  --color-chat-danger: var(--chat-danger);
+  --color-chat-danger-border: var(--chat-danger-border);
+
+  --color-node-class: var(--node-class);
+  --color-node-class-fg: var(--node-class-fg);
+  --color-node-method: var(--node-method);
+  --color-node-accessor: var(--node-accessor);
+  --color-node-arrow: var(--node-arrow);
+  --color-node-function: var(--node-function);
+
+  --color-brand-claude: var(--brand-claude);
 
   --font-chat-mono:
     'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -209,6 +285,16 @@ body {
   );
 }
 
+@supports (corner-shape: round) {
+  :where([class~='rounded'], [class*='rounded-']) {
+    corner-shape: var(--corner-continuous);
+  }
+
+  :where([class~='rounded-full'], [class*='rounded-full']) {
+    corner-shape: var(--corner-round);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -224,7 +310,11 @@ body {
 @layer utilities {
   .dotgrid {
     background-color: var(--canvas);
-    background-image: radial-gradient(circle, #2a2f37 1px, transparent 1px);
+    background-image: radial-gradient(
+      circle,
+      var(--graph-dot) 1px,
+      transparent 1px
+    );
     background-size: 22px 22px;
   }
 
