@@ -137,13 +137,16 @@ export interface RunCommandResult {
 export interface GitStatusResult {
   branch: string | null
   staged: string[]
-  unstaged: string[]
+  modified: string[]
+  deleted: string[]
+  renamed: { from: string; to: string }[]
   untracked: string[]
 }
 
 export interface GitDiffPayload {
   file?: string
   staged?: boolean
+  ref?: string
   maxBytes?: number
 }
 

@@ -16,6 +16,8 @@ import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { useFileLineDiff } from '../hooks/use-file-line-diff'
+import { diffGutter, setDiffLineStatusEffect } from '../lib/diff-gutter'
 import { langFromName } from '../lib/lang-from-name'
 import {
   requestCloseActiveTab,
@@ -31,6 +33,11 @@ export function FileEditor() {
   const hostRef = useRef<HTMLDivElement | null>(null)
   const viewRef = useRef<EditorView | null>(null)
   const filePathRef = useRef<string | null>(null)
+
+  const lineDiff = useFileLineDiff({
+    path: file?.path ?? null,
+    savedContent: file?.savedContent ?? '',
+  })
 
   const handleKeys = useCallback((e: KeyboardEvent) => {
     if (!(e.metaKey || e.ctrlKey)) return
@@ -85,6 +92,7 @@ export function FileEditor() {
       state: EditorState.create({
         doc: file.content,
         extensions: [
+          diffGutter(),
           lineNumbers(),
           history(),
           indentUnit.of('  '),
@@ -125,6 +133,12 @@ export function FileEditor() {
       filePathRef.current = null
     }
   }, [file?.path])
+
+  useEffect(() => {
+    const view = viewRef.current
+    if (!view) return
+    view.dispatch({ effects: setDiffLineStatusEffect.of(lineDiff) })
+  }, [lineDiff])
 
   if (!file) return null
 

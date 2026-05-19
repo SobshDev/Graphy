@@ -14,6 +14,7 @@ import type { FileNode } from '@/shared/lib/desktop'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 import { useFileTree } from '../hooks/use-file-tree'
+import { useGitFileStatus } from '../hooks/use-git-file-status'
 import type { ContextMenuState } from '../lib/file-tree-context'
 import { FileTreeContext } from '../lib/file-tree-context'
 import { FileContextMenu } from './file-context-menu'
@@ -24,7 +25,14 @@ type NewEntry = { kind: 'file' | 'dir' } | null
 
 export function FileExplorer() {
   const open = useActivePanel() === 'files'
-  const { refresh, ...state } = useFileTree()
+  const { refresh: refreshTree, ...state } = useFileTree()
+  const tree = state.status === 'ready' ? state.tree : null
+  const { statusMap: gitStatusMap, refresh: refreshGitStatus } =
+    useGitFileStatus(tree)
+  const refresh = useCallback(() => {
+    refreshTree()
+    refreshGitStatus()
+  }, [refreshTree, refreshGitStatus])
   const [menu, setMenu] = useState<ContextMenuState>(null)
   const [renamingPath, setRenamingPath] = useState<string | null>(null)
   const [newEntry, setNewEntry] = useState<NewEntry>(null)
@@ -75,6 +83,7 @@ export function FileExplorer() {
       moveNode,
       expandAll,
       collapseAll,
+      gitStatusMap,
     }),
     [
       refresh,
@@ -85,6 +94,7 @@ export function FileExplorer() {
       moveNode,
       expandAll,
       collapseAll,
+      gitStatusMap,
     ],
   )
 
