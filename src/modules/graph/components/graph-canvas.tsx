@@ -151,7 +151,7 @@ export function GraphCanvas() {
           type: 'default',
           pathOptions: { curvature: 0.55 },
         }}
-        minZoom={0.2}
+        minZoom={0.05}
         maxZoom={2.5}
       >
         <Background variant={BackgroundVariant.Dots} gap={22} size={1} />

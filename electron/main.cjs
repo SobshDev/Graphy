@@ -5,21 +5,7 @@ const net = require('node:net')
 const path = require('node:path')
 const { pathToFileURL } = require('node:url')
 
-const IGNORED_DIRS = new Set([
-  'node_modules',
-  '.git',
-  'dist',
-  'build',
-  '.next',
-  '.turbo',
-  '.output',
-  '.vinxi',
-  '.nitro',
-  '.cache',
-  'coverage',
-  'release',
-  'dist-electron',
-])
+const IGNORED_DIRS = new Set(['.git'])
 
 const { applyMenu } = require('./menu.cjs')
 const { parseFolder } = require('./parser-service.cjs')
