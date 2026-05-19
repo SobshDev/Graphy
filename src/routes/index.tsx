@@ -6,13 +6,17 @@ import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
 import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
+import { SettingsPage } from '@/modules/settings'
 import { SourceControlPanel } from '@/modules/source-control'
 import { useActiveView } from '@/shared/lib/active-view'
+import { useSettingsOpen } from '@/shared/lib/settings-open'
 import { TooltipProvider } from '@/shared/ui/tooltip'
 
 export const Route = createFileRoute('/')({ component: App })
 
 function App() {
+  const settingsOpen = useSettingsOpen()
+
   return (
     <TooltipProvider delayDuration={200}>
       <ReactFlowProvider>
@@ -29,6 +33,11 @@ function App() {
             </div>
             <AiChatPanel />
           </main>
+          {settingsOpen && (
+            <div className="bg-canvas text-foreground fixed inset-0 z-50 flex overflow-hidden">
+              <SettingsPage />
+            </div>
+          )}
         </AiChatProvider>
       </ReactFlowProvider>
     </TooltipProvider>
