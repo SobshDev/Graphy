@@ -3,6 +3,7 @@ export { FileExplorer } from './components/file-explorer'
 export {
   closeActiveTab,
   closeTab,
+  getOpenFile,
   setActiveTab,
   useOpenFile,
   useOpenTabs,

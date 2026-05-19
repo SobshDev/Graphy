@@ -73,4 +73,4 @@ function watchFolder(root, onChange) {
   }
 }
 
-module.exports = { watchFolder }
+module.exports = { watchFolder, buildIgnoreSet }
