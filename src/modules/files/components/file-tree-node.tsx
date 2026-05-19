@@ -108,6 +108,7 @@ export function FileTreeNode({ node, depth }: Props) {
         <Row
           depth={depth}
           dropTarget={dragOver}
+          dimmed={node.ignored}
           onClick={() => setExpanded((v) => !v)}
           onContextMenu={handleContextMenu}
           draggable
@@ -151,6 +152,7 @@ export function FileTreeNode({ node, depth }: Props) {
     <Row
       depth={depth}
       active={isActive}
+      dimmed={node.ignored}
       onClick={() => {
         if (!isRenaming) openFile(node.path, node.name)
       }}
@@ -205,6 +207,7 @@ function Row({
   depth,
   active,
   dropTarget,
+  dimmed,
   onClick,
   onContextMenu,
   draggable,
@@ -217,6 +220,7 @@ function Row({
   depth: number
   active?: boolean
   dropTarget?: boolean
+  dimmed?: boolean
   onClick: () => void
   onContextMenu?: (e: React.MouseEvent) => void
   draggable?: boolean
@@ -244,6 +248,7 @@ function Row({
           : active
             ? 'bg-sidebar-accent text-foreground'
             : 'text-muted-foreground hover:bg-sidebar-accent hover:text-foreground',
+        dimmed && !active && !dropTarget && 'opacity-45',
       )}
     >
       {children}

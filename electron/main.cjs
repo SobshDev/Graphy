@@ -1,4 +1,5 @@
 const { app, BrowserWindow, dialog, ipcMain, shell } = require('electron')
+const { spawn } = require('node:child_process')
 const fs = require('node:fs')
 const fsp = require('node:fs/promises')
 const net = require('node:net')
@@ -11,6 +12,44 @@ const { applyMenu } = require('./menu.cjs')
 const { parseFolder } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
 const { watchFolder } = require('./watcher.cjs')
+
+function getGitIgnoredPaths(root, paths) {
+  if (paths.length === 0) return Promise.resolve(new Set())
+  return new Promise((resolve) => {
+    let child
+    try {
+      child = spawn('git', ['check-ignore', '--stdin', '-z'], { cwd: root })
+    } catch {
+      return resolve(new Set())
+    }
+    let out = ''
+    child.stdout.on('data', (chunk) => {
+      out += chunk.toString()
+    })
+    child.stderr.on('data', () => {})
+    child.on('error', () => resolve(new Set()))
+    child.on('close', (code) => {
+      if (code !== 0 && code !== 1) return resolve(new Set())
+      resolve(new Set(out.split('\0').filter(Boolean)))
+    })
+    child.stdin.on('error', () => {})
+    child.stdin.write(paths.join('\0'))
+    child.stdin.end()
+  })
+}
+
+function collectPaths(node, out) {
+  if (node.path) out.push(node.path)
+  if (node.children) for (const c of node.children) collectPaths(c, out)
+}
+
+function markIgnored(node, ignoredSet, parentIgnored) {
+  const isIgnored = parentIgnored || ignoredSet.has(node.path)
+  if (isIgnored) node.ignored = true
+  if (node.children) {
+    for (const c of node.children) markIgnored(c, ignoredSet, isIgnored)
+  }
+}
 
 async function resolveSafePath(file) {
   if (typeof file !== 'string') {
@@ -270,12 +309,21 @@ function registerIpc() {
       return nodes
     }
 
-    return {
+    const tree = {
       name: path.basename(root),
       path: '',
       kind: 'dir',
       children: await walk(root),
     }
+
+    const allPaths = []
+    for (const c of tree.children) collectPaths(c, allPaths)
+    const ignoredSet = await getGitIgnoredPaths(root, allPaths)
+    if (ignoredSet.size > 0) {
+      for (const c of tree.children) markIgnored(c, ignoredSet, false)
+    }
+
+    return tree
   })
 
   ipcMain.handle('graphy:create-file', async (_event, filePath) => {

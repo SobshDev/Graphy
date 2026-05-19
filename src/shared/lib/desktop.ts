@@ -39,6 +39,7 @@ export interface FileNode {
   name: string
   path: string
   kind: 'file' | 'dir'
+  ignored?: boolean
   children?: FileNode[]
 }
 
