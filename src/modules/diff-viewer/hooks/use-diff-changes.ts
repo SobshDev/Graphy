@@ -34,7 +34,9 @@ export function useDiffChanges(folder: string | null): HookResult {
 
       const hasChanges =
         gitStatus.staged.length > 0 ||
-        gitStatus.unstaged.length > 0 ||
+        gitStatus.modified.length > 0 ||
+        gitStatus.deleted.length > 0 ||
+        gitStatus.renamed.length > 0 ||
         gitStatus.untracked.length > 0
 
       if (!hasChanges) {

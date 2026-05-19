@@ -21,6 +21,7 @@ export {
 } from './state/diff-overlay'
 
 export { diffToNodeStatus } from './lib/diff-to-node-status'
+export { parseUnifiedDiff } from './lib/parse-unified-diff'
 
 export type {
   ChangedFile,

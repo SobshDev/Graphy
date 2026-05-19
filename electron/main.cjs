@@ -990,20 +990,23 @@ function registerIpc() {
     return {
       branch,
       staged: status.staged,
-      unstaged: [
-        ...status.modified,
-        ...status.deleted,
-        ...status.renamed.map((r) => r.to),
-      ],
+      modified: status.modified,
+      deleted: status.deleted,
+      renamed: status.renamed.map((r) => ({ from: r.from, to: r.to })),
       untracked: status.not_added,
     }
   })
 
   ipcMain.handle('graphy:git:diff', async (_event, payload) => {
-    const { file, staged, maxBytes } = payload ?? {}
+    const { file, staged, ref, maxBytes } = payload ?? {}
     const git = getGit()
     const cap = typeof maxBytes === 'number' ? maxBytes : 32768
-    const args = staged ? ['--cached'] : []
+    const args = []
+    if (typeof ref === 'string' && ref) {
+      args.push(ref)
+    } else if (staged) {
+      args.push('--cached')
+    }
     if (typeof file === 'string' && file) args.push('--', file)
     const diff = await git.diff(args)
     if (diff.length > cap) {

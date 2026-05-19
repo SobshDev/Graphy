@@ -2,6 +2,8 @@ import { createContext, useContext } from 'react'
 
 import type { FileNode } from '@/shared/lib/desktop'
 
+import type { GitFileStatus } from '../types'
+
 export type ContextMenuState = {
   node: FileNode
   x: number
@@ -17,6 +19,7 @@ type FileTreeActions = {
   moveNode: (sourcePath: string, destDir: string) => Promise<void>
   expandAll: number
   collapseAll: number
+  gitStatusMap: Map<string, GitFileStatus>
 }
 
 export const FileTreeContext = createContext<FileTreeActions>({
@@ -28,6 +31,7 @@ export const FileTreeContext = createContext<FileTreeActions>({
   moveNode: async () => {},
   expandAll: 0,
   collapseAll: 0,
+  gitStatusMap: new Map(),
 })
 
 export function useFileTreeActions() {

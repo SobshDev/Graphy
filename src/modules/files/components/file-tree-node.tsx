@@ -7,9 +7,15 @@ import { cn } from '@/shared/lib/utils'
 import { getFileIcon } from '../lib/file-icon'
 import { useFileTreeActions } from '../lib/file-tree-context'
 import { closeFile, openFile, useOpenFile } from '../lib/open-file'
-import type { FileNode } from '../types'
+import type { FileNode, GitFileStatus } from '../types'
 
 const DRAG_MIME = 'application/x-graphy-path'
+
+const GIT_STATUS_CLASS: Record<GitFileStatus, string> = {
+  added: 'text-green-500',
+  modified: 'text-amber-500',
+  deleted: 'text-red-500',
+}
 
 type Props = {
   node: FileNode
@@ -22,10 +28,19 @@ export function FileTreeNode({ node, depth }: Props) {
   const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const currentFile = useOpenFile()
-  const { openContextMenu, renamingPath, clearRename, refresh, moveNode } =
-    useFileTreeActions()
+  const {
+    openContextMenu,
+    renamingPath,
+    clearRename,
+    refresh,
+    moveNode,
+    gitStatusMap,
+  } = useFileTreeActions()
 
   const { expandAll, collapseAll } = useFileTreeActions()
+
+  const gitStatus = gitStatusMap.get(node.path) ?? null
+  const gitColorClass = gitStatus ? GIT_STATUS_CLASS[gitStatus] : null
 
   const isRenaming = renamingPath === node.path
 
@@ -134,7 +149,7 @@ export function FileTreeNode({ node, depth }: Props) {
               onCancel={clearRename}
             />
           ) : (
-            <span className="truncate">{node.name}</span>
+            <span className={cn('truncate', gitColorClass)}>{node.name}</span>
           )}
         </Row>
         {expanded &&
@@ -171,7 +186,7 @@ export function FileTreeNode({ node, depth }: Props) {
           onCancel={clearRename}
         />
       ) : (
-        <span className="truncate">{node.name}</span>
+        <span className={cn('truncate', gitColorClass)}>{node.name}</span>
       )}
     </Row>
   )
