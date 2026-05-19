@@ -6,7 +6,7 @@ import { cn } from '@/shared/lib/utils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip'
 
 import { getFileIcon } from '../lib/file-icon'
-import { closeTab, setActiveTab, useOpenTabs } from '../lib/open-file'
+import { requestCloseTab, setActiveTab, useOpenTabs } from '../lib/open-file'
 
 export function TabBar() {
   const { tabs, activeIndex } = useOpenTabs()
@@ -46,12 +46,12 @@ export function TabBar() {
               tabIndex={-1}
               onClick={(e) => {
                 e.stopPropagation()
-                closeTab(tab.path)
+                requestCloseTab(tab.path)
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.stopPropagation()
-                  closeTab(tab.path)
+                  requestCloseTab(tab.path)
                 }
               }}
               className="text-muted-foreground hover:text-foreground -mr-1 rounded p-0.5 opacity-0 group-hover:opacity-100"
