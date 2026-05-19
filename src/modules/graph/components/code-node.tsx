@@ -24,10 +24,8 @@ function CodeNodeImpl({ data, selected }: CodeNodeProps) {
 
   return (
     <div
-      className={`glass relative flex w-[240px] flex-col overflow-hidden rounded-md border shadow-sm transition-shadow ${
-        selected
-          ? 'border-primary shadow-[0_0_0_1px_var(--primary)]'
-          : 'border-border'
+      className={`graph-node-surface relative flex w-[240px] flex-col overflow-hidden rounded-md border ${
+        selected ? 'border-primary' : 'border-border'
       } ${data.isExported ? '' : 'border-dashed'}`}
       title={`${data.file}:${data.line}`}
     >

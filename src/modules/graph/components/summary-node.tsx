@@ -10,8 +10,8 @@ type SummaryNodeProps = NodeProps & { data: SummaryNodeData }
 function SummaryNodeImpl({ data, selected }: SummaryNodeProps) {
   return (
     <div
-      className={`glass border-border relative flex w-[240px] flex-col overflow-hidden rounded-md border border-dashed shadow-sm transition-shadow ${
-        selected ? 'border-primary shadow-[0_0_0_1px_var(--primary)]' : ''
+      className={`graph-node-surface border-border relative flex w-[240px] flex-col overflow-hidden rounded-md border border-dashed ${
+        selected ? 'border-primary' : ''
       }`}
       title={`${data.count} symbols across ${data.fileCount} files`}
     >

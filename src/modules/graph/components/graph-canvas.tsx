@@ -174,14 +174,25 @@ export function GraphCanvas() {
         fitView
         fitViewOptions={{ padding: 0.25 }}
         proOptions={{ hideAttribution: true }}
+        onlyRenderVisibleElements
+        nodesDraggable={false}
+        nodesConnectable={false}
+        nodesFocusable={false}
+        edgesFocusable={false}
+        elementsSelectable={false}
+        elevateNodesOnSelect={false}
+        elevateEdgesOnSelect={false}
+        selectNodesOnDrag={false}
+        zoomOnDoubleClick={false}
         defaultEdgeOptions={{
-          type: 'default',
-          pathOptions: { curvature: 0.55 },
+          type: 'straight',
+          interactionWidth: 0,
+          selectable: false,
         }}
         minZoom={0.05}
         maxZoom={2.5}
       >
-        <Background variant={BackgroundVariant.Dots} gap={22} size={1} />
+        <Background variant={BackgroundVariant.Dots} gap={32} size={1} />
       </ReactFlow>
       <FunctionSheet
         root={graph?.root ?? null}

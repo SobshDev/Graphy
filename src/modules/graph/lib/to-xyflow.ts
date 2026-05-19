@@ -610,7 +610,11 @@ function summarizeGraph(graph: Graph, options: XYFlowOptions): XYFlowGraph {
       id: key,
       source,
       target,
+      type: 'straight',
       className: 'graph-edge',
+      interactionWidth: 0,
+      selectable: false,
+      focusable: false,
     })
   }
 
