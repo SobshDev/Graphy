@@ -11,7 +11,7 @@ type State =
 
 type FileTreeResult = State & { refresh: () => void }
 
-export function useFileTree(showHidden: boolean): FileTreeResult {
+export function useFileTree(): FileTreeResult {
   const [state, setState] = useState<State>({
     status: 'idle',
     tree: null,
@@ -26,7 +26,7 @@ export function useFileTree(showHidden: boolean): FileTreeResult {
     }
     setState({ status: 'loading', tree: null, error: null })
     try {
-      const tree = await desktop.getFileTree({ showHidden })
+      const tree = await desktop.getFileTree()
       if (!tree) {
         setState({ status: 'idle', tree: null, error: null })
         return
@@ -36,7 +36,7 @@ export function useFileTree(showHidden: boolean): FileTreeResult {
       const message = err instanceof Error ? err.message : 'Unknown error'
       setState({ status: 'error', tree: null, error: message })
     }
-  }, [showHidden])
+  }, [])
 
   useEffect(() => {
     fetchTree()

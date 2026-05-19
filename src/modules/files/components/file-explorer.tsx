@@ -2,8 +2,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import {
   ChevronsDownUp,
   ChevronsUpDown,
-  Eye,
-  EyeOff,
   FilePlus,
   FolderOpen,
   FolderPlus,
@@ -25,8 +23,7 @@ type NewEntry = { kind: 'file' | 'dir' } | null
 
 export function FileExplorer() {
   const open = useActivePanel() === 'files'
-  const [showHidden, setShowHidden] = useState(false)
-  const { refresh, ...state } = useFileTree(showHidden)
+  const { refresh, ...state } = useFileTree()
   const [menu, setMenu] = useState<ContextMenuState>(null)
   const [renamingPath, setRenamingPath] = useState<string | null>(null)
   const [newEntry, setNewEntry] = useState<NewEntry>(null)
@@ -113,7 +110,6 @@ export function FileExplorer() {
   if (!open) return null
 
   const hasFolder = state.status === 'ready'
-  const HiddenIcon = showHidden ? Eye : EyeOff
 
   return (
     <FileTreeContext value={actions}>
@@ -143,11 +139,6 @@ export function FileExplorer() {
                 icon={ChevronsDownUp}
                 tip="Collapse all"
                 onClick={() => setCollapseAll((n) => n + 1)}
-              />
-              <ToolbarBtn
-                icon={HiddenIcon}
-                tip={showHidden ? 'Hide dotfiles' : 'Show dotfiles'}
-                onClick={() => setShowHidden((v) => !v)}
               />
             </div>
           )}

@@ -19,7 +19,7 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),
   writeFunctionSource: (payload) =>
     ipcRenderer.invoke('function:write', payload),
-  getFileTree: (opts) => ipcRenderer.invoke('graphy:file-tree', opts),
+  getFileTree: () => ipcRenderer.invoke('graphy:file-tree'),
   createFile: (filePath) => ipcRenderer.invoke('graphy:create-file', filePath),
   createDir: (dirPath) => ipcRenderer.invoke('graphy:create-dir', dirPath),
   moveFile: (sourcePath, destDir) =>

@@ -58,7 +58,7 @@ export interface GraphyDesktop {
   writeFunctionSource: (
     payload: WriteFunctionSourcePayload,
   ) => Promise<WriteFunctionSourceResult>
-  getFileTree: (opts?: { showHidden?: boolean }) => Promise<FileNode | null>
+  getFileTree: () => Promise<FileNode | null>
   readFile: (filePath: string) => Promise<string>
   writeFile: (filePath: string, content: string) => Promise<void>
   createFile: (filePath: string) => Promise<void>

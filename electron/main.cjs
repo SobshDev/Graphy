@@ -255,17 +255,15 @@ function registerIpc() {
     broadcastProject()
   })
 
-  ipcMain.handle('graphy:file-tree', async (_event, payload) => {
+  ipcMain.handle('graphy:file-tree', async () => {
     if (!currentFolder) return null
     const root = currentFolder
-    const showHidden = payload?.showHidden === true
 
     async function walk(absPath) {
       const entries = await fsp.readdir(absPath, { withFileTypes: true })
       const nodes = []
       for (const entry of entries) {
         if (IGNORED_DIRS.has(entry.name)) continue
-        if (!showHidden && entry.name.startsWith('.')) continue
         const childAbs = path.join(absPath, entry.name)
         const rel = path.relative(root, childAbs)
         if (entry.isDirectory()) {
