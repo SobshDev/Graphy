@@ -1,15 +1,6 @@
 import { getDesktop } from '@/shared/lib/desktop'
-import type { GraphyDesktop } from '@/shared/lib/desktop'
 
 import type { AiTool } from '../tools.interface'
-
-interface ReparseProjectResult {
-  ok: true
-}
-
-type DesktopExt = GraphyDesktop & {
-  reparseProject: () => Promise<ReparseProjectResult>
-}
 
 export function createReparseProjectTool(): AiTool {
   return {
@@ -22,7 +13,7 @@ export function createReparseProjectTool(): AiTool {
       additionalProperties: false,
     },
     handler: async () => {
-      const ext = getDesktop() as DesktopExt | null
+      const ext = getDesktop()
       if (!ext?.reparseProject) {
         return {
           available: false,

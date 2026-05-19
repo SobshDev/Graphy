@@ -43,6 +43,159 @@ export interface FileNode {
   children?: FileNode[]
 }
 
+export interface ReadFilePayload {
+  path: string
+  startLine?: number
+  endLine?: number
+  maxBytes?: number
+}
+
+export type ReadFileResult =
+  | {
+      found: true
+      path: string
+      startLine: number
+      endLine: number
+      source: string
+      truncated: boolean
+    }
+  | { found: false; path: string }
+
+export interface SearchCodePayload {
+  query: string
+  regex: boolean
+  filePattern?: string
+  maxResults: number
+}
+
+export interface SearchHit {
+  file: string
+  line: number
+  match: string
+  preview: string
+}
+
+export interface SearchCodeResult {
+  results: SearchHit[]
+  truncated: boolean
+}
+
+export interface ListFilesPayload {
+  pattern?: string
+  dir?: string
+  maxResults: number
+}
+
+export interface ListFilesResult {
+  files: string[]
+  truncated: boolean
+}
+
+export interface ApplyEditPayload {
+  file: string
+  oldString: string
+  newString: string
+  replaceAll: boolean
+}
+
+export interface ApplyEditResult {
+  applied: boolean
+  file: string
+  replacements: number
+}
+
+export interface RenameSymbolPayload {
+  id: string
+  newName: string
+}
+
+export type RenameSymbolResult =
+  | { applied: true; id: string; newId: string; affectedFiles: string[] }
+  | { applied: false; id: string; reason: string }
+
+export interface RunScriptPayload {
+  script: 'lint' | 'check' | 'tidy' | 'test'
+}
+
+export interface RunScriptResult {
+  exitCode: number
+  stdout: string
+  stderr: string
+  truncated: boolean
+}
+
+export interface GitStatusResult {
+  branch: string | null
+  staged: string[]
+  unstaged: string[]
+  untracked: string[]
+}
+
+export interface GitDiffPayload {
+  file?: string
+  staged?: boolean
+  maxBytes?: number
+}
+
+export interface GitDiffResult {
+  diff: string
+  truncated: boolean
+}
+
+export interface GitBlamePayload {
+  file: string
+  line?: number
+  contextLines?: number
+}
+
+export interface GitBlameLine {
+  line: number
+  sha: string
+  author: string
+  date: string
+  content: string
+}
+
+export interface GitBlameResult {
+  lines: GitBlameLine[]
+}
+
+export interface FocusNodePayload {
+  id: string
+}
+
+export interface FocusNodeResult {
+  ok: boolean
+  id: string
+}
+
+export interface TsTypeAtPayload {
+  file: string
+  line: number
+  column?: number
+}
+
+export type TsTypeAtResult =
+  | {
+      found: true
+      file: string
+      line: number
+      column: number
+      name: string
+      type: string
+      kind: string
+    }
+  | { found: false }
+
+export interface WebFetchPayload {
+  url: string
+  maxBytes?: number
+}
+
+export type WebFetchResult =
+  | { ok: true; contentType: string; body: string; truncated: boolean }
+  | { ok: false; reason: string }
+
 export interface GraphyDesktop {
   platform: NodeJS.Platform
   getInitialState: () => Promise<InitialState>
@@ -67,6 +220,20 @@ export interface GraphyDesktop {
   moveFile: (sourcePath: string, destDir: string) => Promise<void>
   deleteFile: (filePath: string) => Promise<void>
   renameFile: (oldPath: string, newName: string) => Promise<{ newPath: string }>
+  readProjectFile: (payload: ReadFilePayload) => Promise<ReadFileResult>
+  searchProject: (payload: SearchCodePayload) => Promise<SearchCodeResult>
+  listProjectFiles: (payload: ListFilesPayload) => Promise<ListFilesResult>
+  applyEdit: (payload: ApplyEditPayload) => Promise<ApplyEditResult>
+  renameSymbol: (payload: RenameSymbolPayload) => Promise<RenameSymbolResult>
+  reparseProject: () => Promise<{ ok: true }>
+  runScript: (payload: RunScriptPayload) => Promise<RunScriptResult>
+  gitStatus: () => Promise<GitStatusResult>
+  gitDiff: (payload: GitDiffPayload) => Promise<GitDiffResult>
+  gitBlame: (payload: GitBlamePayload) => Promise<GitBlameResult>
+  focusNode: (payload: FocusNodePayload) => Promise<FocusNodeResult>
+  tsTypeAt: (payload: TsTypeAtPayload) => Promise<TsTypeAtResult>
+  webFetch: (payload: WebFetchPayload) => Promise<WebFetchResult>
+  onFocusNode: (handler: (payload: FocusNodePayload) => void) => () => void
 }
 
 declare global {

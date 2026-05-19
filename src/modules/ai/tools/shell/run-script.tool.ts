@@ -1,5 +1,4 @@
 import { getDesktop } from '@/shared/lib/desktop'
-import type { GraphyDesktop } from '@/shared/lib/desktop'
 
 import type { AiTool } from '../tools.interface'
 
@@ -8,21 +7,6 @@ type AllowedScript = (typeof ALLOWED_SCRIPTS)[number]
 
 interface RunScriptInput {
   script?: string
-}
-
-interface RunScriptPayload {
-  script: AllowedScript
-}
-
-interface RunScriptResult {
-  exitCode: number
-  stdout: string
-  stderr: string
-  truncated: boolean
-}
-
-type DesktopExt = GraphyDesktop & {
-  runScript: (payload: RunScriptPayload) => Promise<RunScriptResult>
 }
 
 function isAllowedScript(value: string): value is AllowedScript {
@@ -57,7 +41,7 @@ export function createRunScriptTool(): AiTool {
           `\`script\` must be one of ${ALLOWED_SCRIPTS.join(', ')}.`,
         )
       }
-      const ext = getDesktop() as DesktopExt | null
+      const ext = getDesktop()
       if (!ext?.runScript) {
         return {
           available: false,

@@ -1,5 +1,4 @@
 import { getDesktop } from '@/shared/lib/desktop'
-import type { GraphyDesktop } from '@/shared/lib/desktop'
 
 import type { AiTool } from '../tools.interface'
 
@@ -8,23 +7,6 @@ interface ApplyEditInput {
   oldString?: string
   newString?: string
   replaceAll?: boolean
-}
-
-interface ApplyEditPayload {
-  file: string
-  oldString: string
-  newString: string
-  replaceAll: boolean
-}
-
-interface ApplyEditResult {
-  applied: boolean
-  file: string
-  replacements: number
-}
-
-type DesktopExt = GraphyDesktop & {
-  applyEdit: (payload: ApplyEditPayload) => Promise<ApplyEditResult>
 }
 
 export function createApplyEditTool(): AiTool {
@@ -69,7 +51,7 @@ export function createApplyEditTool(): AiTool {
       if (typeof newString !== 'string') {
         throw new Error('`newString` is required.')
       }
-      const ext = getDesktop() as DesktopExt | null
+      const ext = getDesktop()
       if (!ext?.applyEdit) {
         return {
           available: false,
