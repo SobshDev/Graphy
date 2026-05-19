@@ -20,6 +20,7 @@ export interface AiChatContextValue {
   activeConversation: Conversation | null
   setActiveModel: (model: ChatModel) => void
   setKey: (provider: AiProvider, key: string) => void
+  removeKey: (provider: AiProvider) => void
   openChat: () => void
   closeChat: () => void
   toggleChat: () => void
