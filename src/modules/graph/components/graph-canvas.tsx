@@ -14,8 +14,7 @@ import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
 import type { GraphNodeData } from '@/modules/graph/types'
-import { MOCK_SUMMARY_TARGET, NodeSummarySheet } from '@/modules/node-summary'
-import type { NodeSummaryTarget } from '@/modules/node-summary'
+import { NodeSummarySheet } from '@/modules/node-summary'
 import { getDesktop } from '@/shared/lib/desktop'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 import { DiffBootstrap } from '@/modules/diff-viewer'
@@ -40,9 +39,7 @@ export function GraphCanvas() {
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
-  const [summaryTarget, setSummaryTarget] = useState<NodeSummaryTarget | null>(
-    null,
-  )
+  const [summaryNodeId, setSummaryNodeId] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     () => new Set(),
   )
@@ -67,22 +64,7 @@ export function GraphCanvas() {
       }
       pendingClickTimer.current = window.setTimeout(() => {
         pendingClickTimer.current = null
-        // TODO: replace mock body with a real summary fetched for this node.
-        setSummaryTarget({
-          ...MOCK_SUMMARY_TARGET,
-          displayName: node.data.displayName,
-          type: node.data.type,
-          signature: node.data.signature,
-          file: node.data.file,
-          line: node.data.line,
-          facts: {
-            isAsync: node.data.isAsync,
-            isExported: node.data.isExported,
-            bodyLines: node.data.bodyLines,
-            inDegree: node.data.inDegree,
-            outDegree: node.data.outDegree,
-          },
-        })
+        setSummaryNodeId(node.id)
       }, 220)
     },
     [],
@@ -260,9 +242,9 @@ export function GraphCanvas() {
         onOpenChange={handleSheetOpenChange}
       />
       <NodeSummarySheet
-        target={summaryTarget}
+        nodeId={summaryNodeId}
         onOpenChange={(open) => {
-          if (!open) setSummaryTarget(null)
+          if (!open) setSummaryNodeId(null)
         }}
       />
     </>

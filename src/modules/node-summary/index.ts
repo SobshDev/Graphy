@@ -1,7 +1,8 @@
 export { NodeSummarySheet } from './components/node-summary-sheet'
-export { MOCK_SUMMARY_TARGET } from './lib/mock-summary'
 export type {
+  CachedSummary,
   NodeSummaryFacts,
+  NodeSummaryHeader,
   NodeSummaryRelation,
-  NodeSummaryTarget,
+  SummaryStatus,
 } from './types'
