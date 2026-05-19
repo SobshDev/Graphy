@@ -4,6 +4,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { Sidebar } from '@/app/layout/sidebar'
 import { TopBar } from '@/app/layout/top-bar'
 import { AiChatPanel, AiChatProvider } from '@/modules/ai-chat'
+import { DiffView } from '@/modules/diff-viewer'
 import { FileEditor, FileExplorer, useOpenFile } from '@/modules/files'
 import { Canvas } from '@/modules/graph/components/canvas'
 import { SettingsPage } from '@/modules/settings'
@@ -54,6 +55,7 @@ function MainContent() {
   const activeView = useActiveView()
   const openFile = useOpenFile()
 
+  if (activeView === 'diff') return <DiffView />
   if (activeView === 'editor' && openFile) return <FileEditor />
   return <Canvas />
 }

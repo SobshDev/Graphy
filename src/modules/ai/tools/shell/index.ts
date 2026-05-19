@@ -1,6 +1,6 @@
 import type { AiTool } from '../tools.interface'
-import { createRunScriptTool } from './run-script.tool'
+import { createRunCommandTool } from './run-command.tool'
 
 export function createShellTools(): AiTool[] {
-  return [createRunScriptTool()]
+  return [createRunCommandTool()]
 }

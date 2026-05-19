@@ -903,15 +903,21 @@ function registerIpc() {
   })
 
   ipcMain.handle('graphy:shell:run', (_event, payload) => {
-    const ALLOWED = new Set(['lint', 'check', 'tidy', 'test'])
-    const { script } = payload ?? {}
-    if (!ALLOWED.has(script)) {
-      throw new Error('script not allowed: ' + script)
+    const { command, args, timeoutMs } = payload ?? {}
+    if (typeof command !== 'string' || command.length === 0) {
+      throw new Error('command is required')
     }
+    const argList = Array.isArray(args)
+      ? args.filter((a) => typeof a === 'string')
+      : []
     if (!currentFolder) throw new Error('No project folder is open')
     const CAP = 65536
+    const timeout =
+      typeof timeoutMs === 'number' && timeoutMs > 0 && timeoutMs <= 600_000
+        ? timeoutMs
+        : 30_000
     return new Promise((resolve) => {
-      const child = spawn('bun', ['run', script], {
+      const child = spawn(command, argList, {
         cwd: currentFolder,
         shell: false,
       })
@@ -928,7 +934,17 @@ function registerIpc() {
           stderr: stderrBuf,
           truncated: true,
         })
-      }, 30_000)
+      }, timeout)
+      child.on('error', (err) => {
+        clearTimeout(timer)
+        if (child.pid != null) _spawnedScriptPids.delete(child.pid)
+        resolve({
+          exitCode: -1,
+          stdout: stdoutBuf,
+          stderr: stderrBuf + String(err?.message ?? err),
+          truncated,
+        })
+      })
       child.stdout.on('data', (chunk) => {
         if (stdoutBuf.length < CAP) stdoutBuf += chunk.toString()
         else truncated = true
@@ -984,6 +1000,23 @@ function registerIpc() {
       return { diff: diff.slice(0, cap), truncated: true }
     }
     return { diff, truncated: false }
+  })
+
+  ipcMain.handle('graphy:git:show', async (_event, payload) => {
+    const { file, ref, maxBytes } = payload ?? {}
+    if (typeof file !== 'string' || !file) throw new Error('file is required')
+    const git = getGit()
+    const cap = typeof maxBytes === 'number' ? maxBytes : 1048576
+    const target = `${typeof ref === 'string' && ref ? ref : 'HEAD'}:${file}`
+    try {
+      const content = await git.show([target])
+      if (content.length > cap) {
+        return { content: content.slice(0, cap), truncated: true, exists: true }
+      }
+      return { content, truncated: false, exists: true }
+    } catch (err) {
+      return { content: '', truncated: false, exists: false }
+    }
   })
 
   ipcMain.handle('graphy:git:blame', (_event, payload) => {
