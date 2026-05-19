@@ -3,8 +3,6 @@ import type { Graph, GraphNode, NodeType } from '@/modules/parser'
 import type { AiTool } from '../tools.interface'
 
 const NODE_TYPES: NodeType[] = [
-  'file',
-  'route',
   'component',
   'hook',
   'function',
@@ -50,7 +48,7 @@ export function createListNodesTool(graph: Graph): AiTool {
   return {
     name: 'list_nodes',
     description:
-      'List nodes in the parsed code graph. Nodes include files, routes, components, hooks, functions, classes, objects, and methods. Filters are optional and combine with AND. Use this to discover what exists before asking for details with `get_node` or `inspect_class`.',
+      'List nodes in the parsed code graph. Nodes include components, hooks, functions, classes, objects, and methods. Filters are optional and combine with AND. Use this to discover what exists before asking for details with `get_node` or `inspect_class`.',
     inputSchema: {
       type: 'object',
       properties: {

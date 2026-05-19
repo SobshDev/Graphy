@@ -6,8 +6,6 @@
 import type { Node as TsMorphNode } from 'ts-morph'
 
 export type NodeType =
-  | 'file'
-  | 'route'
   | 'component'
   | 'hook'
   | 'function'
@@ -21,10 +19,10 @@ export type NodeType =
 
 export type EdgeType =
   | 'owns'
-  | 'imports'
+  | 'calls'
+  | 'references'
   | 'renders'
   | 'uses-hook'
-  | 'routes-to'
   | 'instantiates'
   | 'extends'
   | 'implements'

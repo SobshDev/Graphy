@@ -1,98 +1,106 @@
 import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-import { CanvasEdges } from '@/modules/graph/components/canvas-edges'
-import { CodeNode } from '@/modules/graph/components/code-node'
+import { DiffBootstrap } from '@/modules/diff-viewer'
 import { EmptyState } from '@/modules/graph/components/empty-state'
+import { FileNode } from '@/modules/graph/components/file-node'
+import { FolderNode } from '@/modules/graph/components/folder-node'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
-import { SectionNode } from '@/modules/graph/components/section-node'
-import { SummaryNode } from '@/modules/graph/components/summary-node'
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
-import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
-import type { GraphNodeData } from '@/modules/graph/types'
-import { NodeSummarySheet } from '@/modules/node-summary'
-import { getDesktop } from '@/shared/lib/desktop'
+import type { GraphLayout, GraphNodeData } from '@/modules/graph/types'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
-import { DiffBootstrap } from '@/modules/diff-viewer'
 
 const nodeTypes: NodeTypes = {
-  code: CodeNode,
-  section: SectionNode,
-  summary: SummaryNode,
+  file: FileNode,
+  folder: FolderNode,
 }
 
-export function GraphCanvas() {
-  const { graph, folder, loading, error, layout: rawLayout } = useGraph()
-  const cachedLayout = rawLayout as XYFlowGraph | null
+const OUTGOING_COLOR = '#38bdf8'
+const INCOMING_COLOR = '#fbbf24'
+
+type GraphCanvasProps = {
+  layout: GraphLayout
+}
+
+export function GraphCanvas({ layout }: GraphCanvasProps) {
+  const { graph, folder, loading, error } = useGraph()
   const { recents, openFolder, openRecent } = useProject()
   const { fitView } = useReactFlow()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node<GraphNodeData>>(
     [],
   )
-  const [layoutEdges, setLayoutEdges] = useState<Edge[]>([])
+  const [treeEdges, setTreeEdges] = useState<Edge[]>([])
+  const [callEdges, setCallEdges] = useState<Edge[]>([])
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
     null,
   )
-  const [summaryNodeId, setSummaryNodeId] = useState<string | null>(null)
-  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
-    () => new Set(),
-  )
+  const [hoveredId, setHoveredId] = useState<string | null>(null)
   const focusRequest = useGraphFocusRequest()
   const lastFocusTs = useRef(0)
-  const pendingClickTimer = useRef<number | null>(null)
+
+  const callAdjacency = useMemo(() => {
+    const outgoing = new Map<string, Edge[]>()
+    const incoming = new Map<string, Edge[]>()
+    for (const edge of callEdges) {
+      const out = outgoing.get(edge.source) ?? []
+      out.push(edge)
+      outgoing.set(edge.source, out)
+      const inc = incoming.get(edge.target) ?? []
+      inc.push(edge)
+      incoming.set(edge.target, inc)
+    }
+    return { outgoing, incoming }
+  }, [callEdges])
+
+  const hoveredCallEdges = useMemo<Edge[]>(() => {
+    if (!hoveredId) return []
+    const out = (callAdjacency.outgoing.get(hoveredId) ?? []).map((edge) => ({
+      ...edge,
+      style: { stroke: OUTGOING_COLOR, strokeWidth: 1.5 },
+      zIndex: 1000,
+    }))
+    const inc = (callAdjacency.incoming.get(hoveredId) ?? []).map((edge) => ({
+      ...edge,
+      style: { stroke: INCOMING_COLOR, strokeWidth: 1.5 },
+      zIndex: 1000,
+    }))
+    return [...out, ...inc]
+  }, [hoveredId, callAdjacency])
+
+  const renderedEdges = useMemo(
+    () => [...treeEdges, ...hoveredCallEdges],
+    [treeEdges, hoveredCallEdges],
+  )
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
-      if (node.data.kind === 'summary') {
-        setExpandedGroups((current) => {
-          const next = new Set(current)
-          next.add(node.id)
-          return next
-        })
-        return
-      }
-      if (node.data.kind !== 'code') return
+      if (node.data.kind !== 'file') return
 
-      if (pendingClickTimer.current !== null) {
-        window.clearTimeout(pendingClickTimer.current)
-      }
-      pendingClickTimer.current = window.setTimeout(() => {
-        pendingClickTimer.current = null
-        setSummaryNodeId(node.id)
-      }, 220)
-    },
-    [],
-  )
-
-  const handleNodeDoubleClick = useCallback(
-    (_event: unknown, node: Node<GraphNodeData>) => {
-      if (node.data.kind !== 'code') return
-      if (pendingClickTimer.current !== null) {
-        window.clearTimeout(pendingClickTimer.current)
-        pendingClickTimer.current = null
-      }
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
-        startLine: node.data.line,
-        endLine: node.data.endLine,
+        line: 1,
       })
     },
     [],
   )
 
-  useEffect(() => {
-    return () => {
-      if (pendingClickTimer.current !== null) {
-        window.clearTimeout(pendingClickTimer.current)
-      }
-    }
+  const handleNodeMouseEnter = useCallback(
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind !== 'file') return
+      setHoveredId(node.id)
+    },
+    [],
+  )
+
+  const handleNodeMouseLeave = useCallback(() => {
+    setHoveredId(null)
   }, [])
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
@@ -100,16 +108,13 @@ export function GraphCanvas() {
   }, [])
 
   useEffect(() => {
-    setExpandedGroups(new Set())
-  }, [graph])
-
-  useEffect(() => {
     let cancelled = false
     let fitFrame: number | null = null
 
     if (!graph) {
       setNodes([])
-      setLayoutEdges([])
+      setTreeEdges([])
+      setCallEdges([])
       setLayouting(false)
       setLayoutError(null)
       return () => {
@@ -117,31 +122,18 @@ export function GraphCanvas() {
       }
     }
 
-    if (cachedLayout && expandedGroups.size === 0) {
-      setNodes(cachedLayout.nodes)
-      setLayoutEdges(cachedLayout.edges)
-      setLayouting(false)
-      setLayoutError(null)
-      fitFrame = window.requestAnimationFrame(() => {
-        fitView({ padding: 0.25, duration: 220 })
-      })
-      return () => {
-        if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
-      }
-    }
-
     setLayouting(true)
     setLayoutError(null)
 
-    toXYFlow(graph, { expandedGroups })
+    toXYFlow(graph, layout)
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
-        setLayoutEdges(xyflow.edges)
+        setTreeEdges(xyflow.treeEdges)
+        setCallEdges(xyflow.callEdges)
         fitFrame = window.requestAnimationFrame(() => {
           fitView({ padding: 0.25, duration: 220 })
         })
-        if (expandedGroups.size === 0) getDesktop()?.cacheLayout(xyflow)
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -155,14 +147,14 @@ export function GraphCanvas() {
       cancelled = true
       if (fitFrame !== null) window.cancelAnimationFrame(fitFrame)
     }
-  }, [expandedGroups, fitView, graph, cachedLayout, setNodes])
+  }, [fitView, graph, layout, setNodes])
 
   useEffect(() => {
     if (!focusRequest || focusRequest.timestamp === lastFocusTs.current) return
     lastFocusTs.current = focusRequest.timestamp
     const matching = nodes
       .filter(
-        (n) => n.data.kind === 'code' && n.data.file === focusRequest.file,
+        (n) => n.data.kind === 'file' && n.data.file === focusRequest.file,
       )
       .map((n) => n.id)
     if (matching.length > 0) {
@@ -195,7 +187,7 @@ export function GraphCanvas() {
     )
   }
 
-  if ((loading || layouting) && nodes.length === 0 && !cachedLayout) {
+  if ((loading || layouting) && nodes.length === 0) {
     return (
       <div className="text-muted-foreground flex h-full items-center justify-center font-mono text-xs">
         {loading ? 'Parsing…' : 'Arranging…'}
@@ -208,10 +200,11 @@ export function GraphCanvas() {
       <DiffBootstrap />
       <ReactFlow
         nodes={nodes}
-        edges={[]}
+        edges={renderedEdges}
         onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
-        onNodeDoubleClick={handleNodeDoubleClick}
+        onNodeMouseEnter={handleNodeMouseEnter}
+        onNodeMouseLeave={handleNodeMouseLeave}
         nodeTypes={nodeTypes}
         fitView
         fitViewOptions={{ padding: 0.25 }}
@@ -227,25 +220,14 @@ export function GraphCanvas() {
         selectNodesOnDrag={false}
         zoomOnDoubleClick={false}
         defaultEdgeOptions={{
-          type: 'straight',
-          interactionWidth: 0,
-          selectable: false,
+          type: layout === 'radial' ? 'straight' : 'smoothstep',
         }}
         minZoom={0.05}
         maxZoom={2.5}
-      >
-        <CanvasEdges edges={layoutEdges} nodes={nodes} />
-      </ReactFlow>
+      />
       <FunctionSheet
-        root={graph?.root ?? null}
         target={sheetTarget}
         onOpenChange={handleSheetOpenChange}
-      />
-      <NodeSummarySheet
-        nodeId={summaryNodeId}
-        onOpenChange={(open) => {
-          if (!open) setSummaryNodeId(null)
-        }}
       />
     </>
   )

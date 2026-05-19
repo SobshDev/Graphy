@@ -3,16 +3,15 @@ import path from 'node:path'
 import { Project, ScriptTarget } from 'ts-morph'
 import type { Node, SourceFile } from 'ts-morph'
 
+import { extractBindings } from './bindingExtractor'
+import { extractCalls } from './callExtractor'
 import { extractClasses } from './classExtractor'
 import { extractFunctions } from './functionExtractor'
 import { extractObjects } from './objectExtractor'
+import { extractReferences } from './referenceExtractor'
 import type { Graph, GraphEdge, GraphNode } from './core/models'
 import { SCHEMA_VERSION, validateGraph } from './core/schema'
-import {
-  classifyNode,
-  extractStructuralEdges,
-  makeFileNode,
-} from './structureExtractor'
+import { classifyNode, extractStructuralEdges } from './structureExtractor'
 
 export type {
   EdgeType,
@@ -61,10 +60,8 @@ export function parseProject(root: string): Graph {
     (sourceFile) => !sourceFile.isDeclarationFile(),
   )
 
-  // Pass 1 — collect files, symbols, and the ts-morph-declaration → id map.
-  const nodes: GraphNode[] = sourceFiles.map((sourceFile) =>
-    makeFileNode(root, sourceFile),
-  )
+  // Pass 1 — collect symbols and the ts-morph-declaration → id map.
+  const nodes: GraphNode[] = []
   const declarationMap = new Map<Node, string>()
 
   for (const sourceFile of sourceFiles) {
@@ -73,6 +70,7 @@ export function parseProject(root: string): Graph {
       ...extractFunctions(sourceFile, relativePath),
       ...extractClasses(sourceFile, relativePath),
       ...extractObjects(sourceFile, relativePath),
+      ...extractBindings(sourceFile, relativePath),
     ]
 
     for (const { graphNode, declaration } of collected) {
@@ -82,14 +80,18 @@ export function parseProject(root: string): Graph {
     }
   }
 
-  // Pass 2 — resolve structure-first relationships. We intentionally do not
-  // emit direct call edges here; the graph is organized by app/module shape.
+  // Pass 2 — resolve structural relationships (ownership, JSX, hooks,
+  // instantiation, inheritance) and append plain function-call edges.
   const edges: GraphEdge[] = extractStructuralEdges(
-    root,
     sourceFiles,
     declarationMap,
     nodes,
   )
+
+  for (const sourceFile of sourceFiles) {
+    edges.push(...extractCalls(sourceFile, declarationMap))
+    edges.push(...extractReferences(sourceFile, declarationMap))
+  }
 
   // Pass 3 — annotate each node with its in/out degree
   annotateDegrees(nodes, edges)
@@ -104,97 +106,6 @@ export function parseProject(root: string): Graph {
 
   validateGraph(graph)
   return graph
-}
-
-export function parseFilesIncremental(
-  root: string,
-  changedFiles: string[],
-  previousGraph: Graph,
-): Graph {
-  const sourceFiles = loadSourceFiles(root).filter(
-    (sourceFile) => !sourceFile.isDeclarationFile(),
-  )
-
-  const changedSet = new Set(changedFiles)
-  const presentFiles = new Set<string>()
-
-  // Pass 1 — re-extract nodes and ts-morph-declaration map for every file.
-  // This is the cheap top-level scan; the expensive AST descent in pass 2 is
-  // what we skip for unchanged files.
-  const nodes: GraphNode[] = []
-  const declarationMap = new Map<Node, string>()
-
-  for (const sourceFile of sourceFiles) {
-    const rel = path.relative(root, sourceFile.getFilePath())
-    presentFiles.add(rel)
-    nodes.push(makeFileNode(root, sourceFile))
-    const collected = [
-      ...extractFunctions(sourceFile, rel),
-      ...extractClasses(sourceFile, rel),
-      ...extractObjects(sourceFile, rel),
-    ]
-    for (const { graphNode, declaration } of collected) {
-      const node = classifyNode(graphNode)
-      nodes.push(node)
-      declarationMap.set(declaration, node.id)
-    }
-  }
-
-  const nodeIds = new Set(nodes.map((n) => n.id))
-
-  // Pass 2a — keep cached edges that originate from unchanged files and whose
-  // endpoints still exist.
-  const edges: GraphEdge[] = []
-  const seen = new Set<string>()
-
-  for (const cached of previousGraph.edges) {
-    const owningFile = edgeSourceFile(cached.source)
-    if (owningFile === null) continue
-    if (changedSet.has(owningFile)) continue
-    if (!presentFiles.has(owningFile)) continue
-    if (!nodeIds.has(cached.source) || !nodeIds.has(cached.target)) continue
-    const key = `${cached.source}->${cached.target}:${cached.type}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    edges.push(cached)
-  }
-
-  // Pass 2b — re-extract structural edges for changed files only.
-  const changedSourceFiles = sourceFiles.filter((sourceFile) =>
-    changedSet.has(path.relative(root, sourceFile.getFilePath())),
-  )
-  const fresh = extractStructuralEdges(
-    root,
-    changedSourceFiles,
-    declarationMap,
-    nodes,
-  )
-  for (const edge of fresh) {
-    const key = `${edge.source}->${edge.target}:${edge.type}`
-    if (seen.has(key)) continue
-    seen.add(key)
-    edges.push(edge)
-  }
-
-  annotateDegrees(nodes, edges)
-
-  const graph: Graph = {
-    version: SCHEMA_VERSION,
-    language: 'typescript',
-    root,
-    nodes,
-    edges,
-  }
-
-  validateGraph(graph)
-  return graph
-}
-
-function edgeSourceFile(source: string): string | null {
-  if (!source.startsWith('file:')) return null
-  const tail = source.slice('file:'.length)
-  const sep = tail.indexOf('::')
-  return sep === -1 ? tail : tail.slice(0, sep)
 }
 
 function annotateDegrees(nodes: GraphNode[], edges: GraphEdge[]): void {

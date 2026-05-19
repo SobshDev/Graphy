@@ -21,9 +21,6 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
     ipcRenderer.invoke('summary:delete', { nodeId }),
   onProject: (handler) => subscribe('project:set', handler),
   onGraph: (handler) => subscribe('graph:set', handler),
-  readFunctionSource: (payload) => ipcRenderer.invoke('function:read', payload),
-  writeFunctionSource: (payload) =>
-    ipcRenderer.invoke('function:write', payload),
   getFileTree: () => ipcRenderer.invoke('graphy:file-tree'),
   createFile: (filePath) => ipcRenderer.invoke('graphy:create-file', filePath),
   createDir: (dirPath) => ipcRenderer.invoke('graphy:create-dir', dirPath),

@@ -9,8 +9,6 @@ import { createFindPathTool } from './find-path.tool'
 import { createGetNeighborsTool } from './get-neighbors.tool'
 import { createGetNodeTool } from './get-node.tool'
 import { createGraphStatsTool } from './graph-stats.tool'
-import { createImportedByTool } from './imported-by.tool'
-import { createImportsOfTool } from './imports-of.tool'
 import { createInspectClassTool } from './inspect-class.tool'
 import { createListNodesTool } from './list-nodes.tool'
 import { createReadNodeSourceTool } from './read-node-source.tool'
@@ -26,8 +24,6 @@ export function createGraphTools(graph: Graph | null): AiTool[] {
     createFindCallersTool(inspector),
     createFindCalleesTool(inspector),
     createReadNodeSourceTool(graph),
-    createImportsOfTool(graph),
-    createImportedByTool(graph),
     createTypeAtTool(),
     createGetNeighborsTool(graph, inspector),
     createFindPathTool(graph),

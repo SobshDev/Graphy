@@ -1,18 +1,21 @@
 import { GitBranch } from 'lucide-react'
+import { useState } from 'react'
 
+import { useProject } from '@/modules/graph'
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
-import { GraphLegend } from '@/modules/graph/components/graph-legend'
+import { LayoutSelector } from '@/modules/graph/components/layout-selector'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
 import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
-import { useProject } from '@/modules/graph'
+import type { GraphLayout } from '@/modules/graph/types'
 
 export function Canvas() {
   const { folder } = useProject()
   const branch = useCurrentBranch(folder)
+  const [layout, setLayout] = useState<GraphLayout>('tree')
 
   return (
     <section className="relative min-h-0 flex-1 overflow-hidden">
-      <GraphCanvas />
+      <GraphCanvas layout={layout} />
 
       <div
         aria-hidden="true"
@@ -32,7 +35,7 @@ export function Canvas() {
         <span>typescript</span>
       </div>
 
-      <GraphLegend />
+      <LayoutSelector value={layout} onChange={setLayout} />
       <ZoomControls />
     </section>
   )

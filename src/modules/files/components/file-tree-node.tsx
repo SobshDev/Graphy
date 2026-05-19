@@ -161,7 +161,7 @@ export function FileTreeNode({ node, depth }: Props) {
   }
 
   const isActive = currentFile?.path === node.path
-  const { icon: FileIcon, color } = getFileIcon(node.name)
+  const FileIcon = getFileIcon(node.name)
 
   return (
     <Row
@@ -176,7 +176,10 @@ export function FileTreeNode({ node, depth }: Props) {
       onDragStart={handleDragStart}
     >
       <span className="w-3 shrink-0" />
-      <FileIcon className={cn('size-3.5 shrink-0', color)} strokeWidth={1.6} />
+      <FileIcon
+        className="text-muted-foreground size-3.5 shrink-0"
+        strokeWidth={1.6}
+      />
       {isRenaming ? (
         <RenameInput
           ref={inputRef}
@@ -200,7 +203,7 @@ const RenameInput = forwardRef<
     onCommit: () => void
     onCancel: () => void
   }
->(function RenameInput({ value, onChange, onCommit, onCancel }, ref) {
+>(function ({ value, onChange, onCommit, onCancel }, ref) {
   return (
     <input
       ref={ref}
@@ -217,6 +220,8 @@ const RenameInput = forwardRef<
     />
   )
 })
+
+RenameInput.displayName = 'RenameInput'
 
 function Row({
   depth,

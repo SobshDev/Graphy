@@ -1,37 +1,22 @@
-import type { NodeType } from '@/modules/parser'
+export type GraphLayout = 'tree' | 'radial'
 
-export type CodeNodeData = {
-  kind: 'code'
-  displayName: string
-  type: NodeType
-  signature: string
+export type FileNodeData = {
+  kind: 'file'
   file: string
-  line: number
-  endLine: number
-  isAsync: boolean
-  isExported: boolean
-  isStatic: boolean
-  bodyLines: number
-  inDegree: number
-  outDegree: number
+  displayName: string
+  folder: string
+  callsOut: number
+  callsIn: number
+  depth: number
+  layout: GraphLayout
 }
 
-export type SummaryNodeData = {
-  kind: 'summary'
-  label: string
-  subtitle: string
-  count: number
-  fileCount: number
-  inDegree: number
-  outDegree: number
+export type FolderNodeData = {
+  kind: 'folder'
+  path: string
+  name: string
+  depth: number
+  layout: GraphLayout
 }
 
-export type SectionNodeData = {
-  kind: 'section'
-  label: string
-  subtitle: string
-  width: number
-  height: number
-}
-
-export type GraphNodeData = CodeNodeData | SummaryNodeData | SectionNodeData
+export type GraphNodeData = FileNodeData | FolderNodeData

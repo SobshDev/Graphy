@@ -4,6 +4,11 @@ const path = require('node:path')
 
 const PARSER_TIMEOUT_MS = 5 * 60 * 1000
 
+let child = null
+let childBundleMtime = 0
+let nextRequestId = 0
+const pending = new Map()
+
 function resolveParserBundle(app) {
   const candidates = [
     path.join(app.getAppPath(), 'dist-electron', 'parser.cjs'),
@@ -23,70 +28,99 @@ function resolveParserBundle(app) {
   return found
 }
 
-function runParser(app, folder, { incremental = false, input = null } = {}) {
-  return new Promise((resolve, reject) => {
-    const bundlePath = resolveParserBundle(app)
-    const args = incremental ? [folder, '--incremental'] : [folder]
-    const child = fork(bundlePath, args, {
-      env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
-      stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
-    })
+function rejectAllPending(err) {
+  for (const entry of pending.values()) {
+    clearTimeout(entry.timer)
+    entry.reject(err)
+  }
+  pending.clear()
+}
 
-    let settled = false
-    const finish = (fn) => {
-      if (settled) return
-      settled = true
-      clearTimeout(timer)
-      child.removeAllListeners()
-      fn()
-    }
+function killChild() {
+  if (!child) return
+  const existing = child
+  child = null
+  existing.removeAllListeners()
+  try {
+    existing.kill('SIGKILL')
+  } catch {
+    // ignore — process may already be gone
+  }
+}
 
-    const timer = setTimeout(() => {
-      child.kill('SIGKILL')
-      finish(() =>
-        reject(new Error(`Parser timed out after ${PARSER_TIMEOUT_MS}ms`)),
-      )
-    }, PARSER_TIMEOUT_MS)
+function ensureChild(app) {
+  const bundlePath = resolveParserBundle(app)
+  const mtime = fs.statSync(bundlePath).mtimeMs
 
-    child.on('message', (msg) => {
-      if (!msg || typeof msg !== 'object') return
-      if (msg.type === 'graph') {
-        finish(() => resolve(msg.graph))
-      } else if (msg.type === 'error') {
-        finish(() => reject(new Error(msg.message)))
-      }
-    })
+  // Dev: when the parser bundle is rebuilt, recycle the worker so
+  // the next request runs the freshly built code.
+  if (child && mtime !== childBundleMtime) {
+    rejectAllPending(new Error('Parser bundle changed; restarting worker'))
+    killChild()
+  }
 
-    child.on('error', (err) => {
-      finish(() => reject(err))
-    })
+  if (child) return child
 
-    child.on('exit', (code, signal) => {
-      if (settled) return
-      finish(() =>
-        reject(
-          new Error(
-            `Parser exited unexpectedly (code=${code}, signal=${signal})`,
-          ),
-        ),
-      )
-    })
+  childBundleMtime = mtime
+  child = fork(bundlePath, [], {
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+  })
 
-    if (incremental && input) {
-      child.send({ type: 'input', ...input })
+  child.on('message', (msg) => {
+    if (!msg || typeof msg !== 'object' || typeof msg.id !== 'number') return
+    const entry = pending.get(msg.id)
+    if (!entry) return
+    pending.delete(msg.id)
+    clearTimeout(entry.timer)
+    if (msg.type === 'result') {
+      entry.resolve(msg.graph)
+    } else if (msg.type === 'error') {
+      entry.reject(new Error(msg.message))
     }
   })
+
+  child.on('error', (err) => {
+    rejectAllPending(err)
+  })
+
+  child.on('exit', (code, signal) => {
+    child = null
+    rejectAllPending(
+      new Error(`Parser exited unexpectedly (code=${code}, signal=${signal})`),
+    )
+  })
+
+  return child
 }
 
 function parseFolder(app, folder) {
-  return runParser(app, folder)
-}
+  return new Promise((resolve, reject) => {
+    let worker
+    try {
+      worker = ensureChild(app)
+    } catch (err) {
+      reject(err)
+      return
+    }
 
-function parseFiles(app, folder, changedFiles, previousGraph) {
-  return runParser(app, folder, {
-    incremental: true,
-    input: { changedFiles, previousGraph },
+    const id = ++nextRequestId
+    const timer = setTimeout(() => {
+      pending.delete(id)
+      // The worker may be wedged in a long parse; force a respawn so
+      // the next request gets a clean state.
+      killChild()
+      reject(new Error(`Parser timed out after ${PARSER_TIMEOUT_MS}ms`))
+    }, PARSER_TIMEOUT_MS)
+
+    pending.set(id, { resolve, reject, timer })
+    worker.send({ type: 'parse', id, folder })
   })
 }
 
-module.exports = { parseFolder, parseFiles }
+function disposeParser() {
+  rejectAllPending(new Error('Parser disposed'))
+  killChild()
+}
+
+module.exports = { parseFolder, disposeParser }

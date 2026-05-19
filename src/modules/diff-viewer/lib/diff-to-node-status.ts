@@ -22,8 +22,6 @@ export function diffToNodeStatus(
   const result = new Map<string, NodeDiffStatus>()
 
   for (const node of graph.nodes) {
-    if (node.type === 'file') continue
-
     const ranges = fileRanges.get(node.file)
     if (!ranges) continue
 

@@ -11,7 +11,6 @@ export function createReadNodeSourceTool(graph: Graph): AiTool {
   const byId = new Map<string, GraphNode>(
     graph.nodes.map((node) => [node.id, node]),
   )
-  const root = graph.root
   return {
     name: 'read_node_source',
     description:
@@ -44,12 +43,14 @@ export function createReadNodeSourceTool(graph: Graph): AiTool {
           reason: 'Desktop bridge unavailable in this runtime.',
         }
       }
-      const result = await desktop.readFunctionSource({
-        root,
-        file: node.file,
+      const result = await desktop.readProjectFile({
+        path: node.file,
         startLine: node.line,
         endLine: node.endLine,
       })
+      if (!result.found) {
+        return { found: false, id }
+      }
       return {
         found: true,
         id,

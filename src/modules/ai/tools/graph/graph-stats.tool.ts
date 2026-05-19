@@ -51,10 +51,10 @@ export function createGraphStatsTool(graph: Graph): AiTool {
       const { topN = DEFAULT_TOP_N } = input as GraphStatsInput
       const n = Math.min(Math.max(topN, 1), 50)
 
-      const countsByType = { function: 0, method: 0, arrow: 0, class: 0 }
+      const countsByType: Partial<Record<GraphNode['type'], number>> = {}
       const fileCounts = new Map<string, number>()
       for (const node of graph.nodes) {
-        if (node.type in countsByType) countsByType[node.type]++
+        countsByType[node.type] = (countsByType[node.type] ?? 0) + 1
         fileCounts.set(node.file, (fileCounts.get(node.file) ?? 0) + 1)
       }
 

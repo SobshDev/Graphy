@@ -43,11 +43,9 @@ function matchGlob(pattern, filePath) {
 }
 
 const { applyMenu } = require('./menu.cjs')
-const { parseFolder, parseFiles } = require('./parser-service.cjs')
+const { parseFolder, disposeParser } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
 const { watchFolder, buildIgnoreSet } = require('./watcher.cjs')
-
-const INCREMENTAL_FILE_THRESHOLD = 25
 
 let _gitCache = null
 function getGit() {
@@ -116,14 +114,6 @@ async function resolveSafePath(file) {
     throw new Error('File path escapes project root')
   }
   return absoluteFile
-}
-
-function detectLineEnding(text) {
-  return text.includes('\r\n') ? '\r\n' : '\n'
-}
-
-function splitLines(text) {
-  return text.split(/\r\n|\n/)
 }
 
 app.setName('Graphy')
@@ -290,40 +280,32 @@ async function openFolder(folder) {
     stopWatcher()
     stopWatcher = null
   }
-  stopWatcher = watchFolder(resolved, (changedFiles) => {
+  stopWatcher = watchFolder(resolved, () => {
     if (currentFolder === resolved) {
-      void runParse(resolved, changedFiles)
+      void runParse(resolved)
     }
   })
 
   await runParse(resolved)
 }
 
-async function runParse(folder, changedFiles = null) {
+async function runParse(folder) {
   const generation = ++parseGeneration
   parseError = null
   parseInFlight = folder
   broadcastGraph()
 
-  const useIncremental =
-    Array.isArray(changedFiles) &&
-    changedFiles.length > 0 &&
-    changedFiles.length <= INCREMENTAL_FILE_THRESHOLD &&
-    currentGraph !== null
-
   try {
-    const graph = useIncremental
-      ? await parseFiles(app, folder, changedFiles, currentGraph)
-      : await parseFolder(app, folder)
+    const graph = await parseFolder(app, folder)
     if (generation !== parseGeneration) return
     currentGraph = graph
-    if (!useIncremental) currentLayout = null
+    currentLayout = null
     parseError = null
     projectState.writeCache(folder, graph, currentLayout)
   } catch (err) {
     if (generation !== parseGeneration) return
     parseError = err instanceof Error ? err.message : String(err)
-    if (!useIncremental) currentGraph = null
+    currentGraph = null
   } finally {
     if (generation === parseGeneration) {
       parseInFlight = null
@@ -1317,4 +1299,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  disposeParser()
 })

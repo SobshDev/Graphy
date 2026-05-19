@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { openFile } from '@/modules/files/lib/open-file'
+import { getDesktop } from '@/shared/lib/desktop'
 import { Button } from '@/shared/ui/button'
 import {
   Sheet,
@@ -16,40 +17,31 @@ import { CodeEditor } from './code-editor'
 export type FunctionSheetTarget = {
   displayName: string
   file: string
-  startLine: number
-  endLine: number
+  line: number
 }
 
 type FunctionSheetProps = {
-  root: string | null
   target: FunctionSheetTarget | null
   onOpenChange: (open: boolean) => void
-  onSaved?: (next: { endLine: number }) => void
 }
 
 type Status = 'idle' | 'loading' | 'ready' | 'saving' | 'error'
 
-export function FunctionSheet({
-  root,
-  target,
-  onOpenChange,
-  onSaved,
-}: FunctionSheetProps) {
+export function FunctionSheet({ target, onOpenChange }: FunctionSheetProps) {
   const [original, setOriginal] = useState('')
   const [draft, setDraft] = useState('')
-  const [resolvedEndLine, setResolvedEndLine] = useState<number | null>(null)
   const [status, setStatus] = useState<Status>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
   const open = target !== null
 
   useEffect(() => {
-    if (!target || !root) return
-    const desktop = window.graphyDesktop
-    if (!desktop?.readFunctionSource) {
+    if (!target) return
+    const desktop = getDesktop()
+    if (!desktop?.readFile) {
       setStatus('error')
       setErrorMessage(
-        'Function editing requires the Graphy desktop app (Electron).',
+        'File editing requires the Graphy desktop app (Electron).',
       )
       return
     }
@@ -58,17 +50,11 @@ export function FunctionSheet({
     setStatus('loading')
     setErrorMessage(null)
     desktop
-      .readFunctionSource({
-        root,
-        file: target.file,
-        startLine: target.startLine,
-        endLine: target.endLine,
-      })
-      .then((result) => {
+      .readFile(target.file)
+      .then((source) => {
         if (cancelled) return
-        setOriginal(result.source)
-        setDraft(result.source)
-        setResolvedEndLine(result.endLine)
+        setOriginal(source)
+        setDraft(source)
         setStatus('ready')
       })
       .catch((err: unknown) => {
@@ -80,30 +66,22 @@ export function FunctionSheet({
     return () => {
       cancelled = true
     }
-  }, [open, root, target])
+  }, [target])
 
   const dirty = status === 'ready' && draft !== original
   const isTsx = target?.file.endsWith('.tsx') ? 'tsx' : 'ts'
 
   async function handleSave() {
-    if (!target || !root || resolvedEndLine === null) return
-    const desktop = window.graphyDesktop
-    if (!desktop?.writeFunctionSource) return
+    if (!target) return
+    const desktop = getDesktop()
+    if (!desktop?.writeFile) return
 
     setStatus('saving')
     setErrorMessage(null)
     try {
-      const result = await desktop.writeFunctionSource({
-        root,
-        file: target.file,
-        startLine: target.startLine,
-        endLine: resolvedEndLine,
-        source: draft,
-      })
+      await desktop.writeFile(target.file, draft)
       setOriginal(draft)
-      setResolvedEndLine(result.endLine)
       setStatus('ready')
-      onSaved?.({ endLine: result.endLine })
     } catch (err) {
       setErrorMessage(err instanceof Error ? err.message : String(err))
       setStatus('error')
@@ -130,7 +108,7 @@ export function FunctionSheet({
                 openFile(target.file, name)
               }}
             >
-              {target ? `${target.file}:${target.startLine}` : ''}
+              {target ? `${target.file}:${target.line}` : ''}
             </button>
           </SheetDescription>
         </SheetHeader>
@@ -147,7 +125,12 @@ export function FunctionSheet({
             </div>
           )}
           {(status === 'ready' || status === 'saving') && (
-            <CodeEditor value={draft} onChange={setDraft} language={isTsx} />
+            <CodeEditor
+              value={draft}
+              onChange={setDraft}
+              language={isTsx}
+              scrollToLine={target?.line}
+            />
           )}
         </div>
 

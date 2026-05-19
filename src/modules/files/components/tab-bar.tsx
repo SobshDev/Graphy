@@ -15,7 +15,7 @@ export function TabBar() {
       {tabs.map((tab, i) => {
         const isActive = i === activeIndex
         const isDirty = tab.content !== tab.savedContent
-        const { icon: Icon, color } = getFileIcon(tab.name)
+        const Icon = getFileIcon(tab.name)
         return (
           <button
             key={tab.path}
@@ -28,7 +28,7 @@ export function TabBar() {
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            <Icon className={cn('size-3 shrink-0', color)} strokeWidth={1.6} />
+            <Icon className="size-3 shrink-0" strokeWidth={1.6} />
             <span className={cn('truncate', isDirty && 'italic')}>
               {tab.name}
               {isDirty && ' •'}

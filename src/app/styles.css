@@ -25,7 +25,7 @@ body {
 
 .thin-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.06) transparent;
+  scrollbar-color: var(--chat-scrollbar) transparent;
 }
 
 .thin-scrollbar::-webkit-scrollbar {
@@ -36,17 +36,17 @@ body {
   background: transparent;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--chat-scrollbar);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--chat-scrollbar-hover);
   background-clip: padding-box;
 }
 .thin-scrollbar::-webkit-scrollbar-thumb:active {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--chat-scrollbar-hover);
   background-clip: padding-box;
 }
 .thin-scrollbar::-webkit-scrollbar-corner {
@@ -249,9 +249,9 @@ body {
     transparent
   );
   --xy-node-color-default: var(--foreground);
-  --xy-node-border-default: 1px solid var(--border);
+  --xy-node-border-default: none;
   --xy-node-background-color-default: var(--card);
-  --xy-node-boxshadow-selected-default: 0 0 0 1px var(--primary);
+  --xy-node-boxshadow-selected-default: none;
   --xy-node-border-radius-default: var(--radius-md);
   --xy-edge-stroke-default: color-mix(
     in oklab,
@@ -268,29 +268,6 @@ body {
     transparent
   );
   --xy-selection-border-default: 1px dashed var(--primary);
-}
-
-.react-flow__edge.graph-edge .react-flow__edge-path {
-  stroke: color-mix(in oklab, var(--muted-foreground) 46%, transparent);
-  stroke-width: 1;
-  stroke-linecap: square;
-  shape-rendering: optimizeSpeed;
-}
-
-.react-flow__edge.graph-edge:hover .react-flow__edge-path,
-.react-flow__edge.graph-edge.selected .react-flow__edge-path {
-  stroke: color-mix(in oklab, var(--muted-foreground) 60%, transparent);
-}
-
-.graph-canvas-edges {
-  color: color-mix(in oklab, var(--muted-foreground) 62%, transparent);
-}
-
-.react-flow__node-code,
-.react-flow__node-section,
-.react-flow__node-summary {
-  contain: layout paint style;
-  z-index: 2;
 }
 
 @supports (corner-shape: round) {

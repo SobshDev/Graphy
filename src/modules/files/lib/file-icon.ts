@@ -16,87 +16,80 @@ import {
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
-type FileIconEntry = { icon: LucideIcon; color: string }
+const EXT_MAP: Partial<Record<string, LucideIcon>> = {
+  ts: FileCode,
+  tsx: FileCode,
+  js: FileCode,
+  jsx: FileCode,
+  mjs: FileCode,
+  cjs: FileCode,
 
-const EXT_MAP: Partial<Record<string, FileIconEntry>> = {
-  ts: { icon: FileCode, color: 'text-blue-400' },
-  tsx: { icon: FileCode, color: 'text-blue-400' },
-  js: { icon: FileCode, color: 'text-yellow-400' },
-  jsx: { icon: FileCode, color: 'text-yellow-400' },
-  mjs: { icon: FileCode, color: 'text-yellow-400' },
-  cjs: { icon: FileCode, color: 'text-yellow-400' },
+  json: FileJson,
 
-  json: { icon: FileJson, color: 'text-yellow-300' },
+  html: Code,
+  htm: Code,
+  xml: Code,
+  svg: Code,
 
-  html: { icon: Code, color: 'text-orange-400' },
-  htm: { icon: Code, color: 'text-orange-400' },
-  xml: { icon: Code, color: 'text-orange-400' },
-  svg: { icon: Code, color: 'text-orange-400' },
+  css: Braces,
+  scss: Braces,
+  less: Braces,
 
-  css: { icon: Braces, color: 'text-purple-400' },
-  scss: { icon: Braces, color: 'text-pink-400' },
-  less: { icon: Braces, color: 'text-purple-400' },
+  md: FileText,
+  mdx: FileText,
+  txt: FileText,
+  csv: FileText,
 
-  md: { icon: FileText, color: 'text-slate-300' },
-  mdx: { icon: FileText, color: 'text-slate-300' },
-  txt: { icon: FileText, color: 'text-slate-400' },
-  csv: { icon: FileText, color: 'text-green-400' },
+  png: Image,
+  jpg: Image,
+  jpeg: Image,
+  gif: Image,
+  webp: Image,
+  ico: FileImage,
 
-  png: { icon: Image, color: 'text-green-300' },
-  jpg: { icon: Image, color: 'text-green-300' },
-  jpeg: { icon: Image, color: 'text-green-300' },
-  gif: { icon: Image, color: 'text-green-300' },
-  webp: { icon: Image, color: 'text-green-300' },
-  ico: { icon: FileImage, color: 'text-green-300' },
+  py: FileCode,
+  rs: FileCode,
+  go: FileCode,
+  c: FileCode,
+  h: FileCode,
+  cpp: FileCode,
+  java: FileCode,
 
-  py: { icon: FileCode, color: 'text-yellow-300' },
-  rs: { icon: FileCode, color: 'text-orange-300' },
-  go: { icon: FileCode, color: 'text-cyan-400' },
-  c: { icon: FileCode, color: 'text-blue-300' },
-  h: { icon: FileCode, color: 'text-blue-300' },
-  cpp: { icon: FileCode, color: 'text-blue-300' },
-  java: { icon: FileCode, color: 'text-red-400' },
+  sh: Terminal,
+  bash: Terminal,
+  zsh: Terminal,
 
-  sh: { icon: Terminal, color: 'text-green-400' },
-  bash: { icon: Terminal, color: 'text-green-400' },
-  zsh: { icon: Terminal, color: 'text-green-400' },
+  sql: Database,
 
-  sql: { icon: Database, color: 'text-yellow-300' },
+  yaml: Settings,
+  yml: Settings,
+  toml: Settings,
+  ini: Settings,
 
-  yaml: { icon: Settings, color: 'text-red-300' },
-  yml: { icon: Settings, color: 'text-red-300' },
-  toml: { icon: Settings, color: 'text-slate-300' },
-  ini: { icon: Settings, color: 'text-slate-300' },
+  woff: FileType,
+  woff2: FileType,
+  ttf: FileType,
+  otf: FileType,
 
-  woff: { icon: FileType, color: 'text-slate-400' },
-  woff2: { icon: FileType, color: 'text-slate-400' },
-  ttf: { icon: FileType, color: 'text-slate-400' },
-  otf: { icon: FileType, color: 'text-slate-400' },
+  lock: Lock,
 
-  lock: { icon: Lock, color: 'text-slate-500' },
-
-  d: { icon: Hash, color: 'text-blue-300' },
+  d: Hash,
 }
 
-const NAME_MAP: Partial<Record<string, FileIconEntry>> = {
-  Dockerfile: { icon: Terminal, color: 'text-cyan-400' },
-  Makefile: { icon: Terminal, color: 'text-orange-300' },
-  '.gitignore': { icon: Settings, color: 'text-slate-500' },
-  '.eslintrc': { icon: Settings, color: 'text-purple-400' },
-  '.prettierrc': { icon: Settings, color: 'text-purple-400' },
-  '.env': { icon: Lock, color: 'text-yellow-400' },
-  '.env.local': { icon: Lock, color: 'text-yellow-400' },
-  'tsconfig.json': { icon: Settings, color: 'text-blue-400' },
-  'package.json': { icon: FileJson, color: 'text-green-400' },
-  'bun.lockb': { icon: Lock, color: 'text-slate-500' },
+const NAME_MAP: Partial<Record<string, LucideIcon>> = {
+  Dockerfile: Terminal,
+  Makefile: Terminal,
+  '.gitignore': Settings,
+  '.eslintrc': Settings,
+  '.prettierrc': Settings,
+  '.env': Lock,
+  '.env.local': Lock,
+  'tsconfig.json': Settings,
+  'package.json': FileJson,
+  'bun.lockb': Lock,
 }
 
-const DEFAULT_ENTRY: FileIconEntry = {
-  icon: File,
-  color: 'text-muted-foreground/70',
-}
-
-export function getFileIcon(name: string): FileIconEntry {
+export function getFileIcon(name: string): LucideIcon {
   const byName = NAME_MAP[name]
   if (byName) return byName
 
@@ -104,12 +97,12 @@ export function getFileIcon(name: string): FileIconEntry {
   if (parts.length > 2) {
     const compoundExt = parts.slice(-2).join('.')
     if (compoundExt === 'd.ts' || compoundExt === 'd.tsx') {
-      return EXT_MAP['d']
+      return EXT_MAP['d']!
     }
   }
 
   const ext = parts.pop()?.toLowerCase()
-  if (ext && ext in EXT_MAP) return EXT_MAP[ext]
+  if (ext && ext in EXT_MAP) return EXT_MAP[ext]!
 
-  return DEFAULT_ENTRY
+  return File
 }
