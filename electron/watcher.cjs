@@ -6,6 +6,7 @@ const chokidar = require('chokidar')
 const DEFAULT_IGNORES = [
   'node_modules',
   '.git',
+  '.graphy',
   'dist',
   'dist-ssr',
   'dist-electron',
@@ -54,12 +55,20 @@ function watchFolder(root, onChange) {
   })
 
   let timer = null
+  const pending = new Set()
+
   const trigger = (filePath) => {
     if (filePath && !/\.(ts|tsx)$/.test(filePath)) return
+    if (filePath) {
+      const rel = path.relative(root, filePath)
+      if (rel && !rel.startsWith('..')) pending.add(rel)
+    }
     if (timer) clearTimeout(timer)
     timer = setTimeout(() => {
       timer = null
-      onChange()
+      const changed = Array.from(pending)
+      pending.clear()
+      onChange(changed)
     }, DEBOUNCE_MS)
   }
 

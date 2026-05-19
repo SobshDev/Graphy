@@ -1,10 +1,17 @@
 import path from 'node:path'
 
-import { parseProject } from './index'
+import { parseFilesIncremental, parseProject } from './index'
+import type { Graph } from './core/models'
 
 type Outbound =
   | { type: 'graph'; graph: unknown }
   | { type: 'error'; message: string }
+
+type Inbound = {
+  type: 'input'
+  changedFiles: string[]
+  previousGraph: Graph
+}
 
 function emit(message: Outbound): Promise<void> {
   return new Promise((resolve) => {
@@ -21,6 +28,24 @@ function emit(message: Outbound): Promise<void> {
   })
 }
 
+function waitForInput(timeoutMs: number): Promise<Inbound> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(new Error('parser-cli: timed out waiting for incremental input'))
+    }, timeoutMs)
+    process.on('message', (msg: unknown) => {
+      if (
+        msg &&
+        typeof msg === 'object' &&
+        (msg as { type?: string }).type === 'input'
+      ) {
+        clearTimeout(timer)
+        resolve(msg as Inbound)
+      }
+    })
+  })
+}
+
 async function main(): Promise<void> {
   const rawArg = process.argv[2]
   if (!rawArg) {
@@ -32,9 +57,20 @@ async function main(): Promise<void> {
   }
 
   const root = path.resolve(rawArg)
+  const incremental = process.argv.includes('--incremental')
 
   try {
-    const graph = parseProject(root)
+    let graph
+    if (incremental) {
+      const input = await waitForInput(30_000)
+      graph = parseFilesIncremental(
+        root,
+        input.changedFiles,
+        input.previousGraph,
+      )
+    } else {
+      graph = parseProject(root)
+    }
     await emit({ type: 'graph', graph })
     process.exit(0)
   } catch (err) {
