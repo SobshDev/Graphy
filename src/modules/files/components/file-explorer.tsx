@@ -7,6 +7,7 @@ import {
   FolderPlus,
 } from 'lucide-react'
 
+import { usePanelResize } from '@/shared/hooks/use-panel-resize'
 import { useActivePanel } from '@/shared/lib/active-panel'
 import { getDesktop } from '@/shared/lib/desktop'
 import type { FileNode } from '@/shared/lib/desktop'
@@ -30,6 +31,11 @@ export function FileExplorer() {
   const newInputRef = useRef<HTMLInputElement>(null)
   const [expandAll, setExpandAll] = useState(0)
   const [collapseAll, setCollapseAll] = useState(0)
+  const resize = usePanelResize({
+    defaultWidth: 288,
+    minWidth: 200,
+    maxWidth: 560,
+  })
 
   const openContextMenu = useCallback((e: React.MouseEvent, node: FileNode) => {
     e.preventDefault()
@@ -113,7 +119,21 @@ export function FileExplorer() {
 
   return (
     <FileTreeContext value={actions}>
-      <aside className="bg-sidebar border-sidebar-border flex w-60 shrink-0 flex-col border-r">
+      <aside
+        className="bg-sidebar border-sidebar-border relative flex shrink-0 flex-col border-r"
+        style={{ width: resize.width }}
+      >
+        <div
+          role="separator"
+          aria-label="Resize files panel"
+          aria-orientation="vertical"
+          aria-valuemin={resize.minWidth}
+          aria-valuemax={resize.maxWidth}
+          aria-valuenow={resize.width}
+          tabIndex={0}
+          onPointerDown={resize.beginResize}
+          className="app-no-drag absolute inset-y-0 -right-1 z-10 w-2 cursor-col-resize touch-none outline-none before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:bg-transparent before:transition-colors hover:before:bg-sidebar-border focus-visible:before:bg-primary"
+        />
         <div className="flex items-center justify-between px-3 py-2">
           <span className="text-muted-foreground/70 text-[11px] font-medium uppercase tracking-wider">
             Explorer

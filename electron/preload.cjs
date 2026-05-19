@@ -41,9 +41,10 @@ contextBridge.exposeInMainWorld('graphyDesktop', {
   renameSymbol: (payload) =>
     ipcRenderer.invoke('graphy:edits:rename-symbol', payload),
   reparseProject: () => ipcRenderer.invoke('graphy:graph:reparse'),
-  runScript: (payload) => ipcRenderer.invoke('graphy:shell:run', payload),
+  runCommand: (payload) => ipcRenderer.invoke('graphy:shell:run', payload),
   gitStatus: () => ipcRenderer.invoke('graphy:git:status'),
   gitDiff: (payload) => ipcRenderer.invoke('graphy:git:diff', payload),
+  gitShow: (payload) => ipcRenderer.invoke('graphy:git:show', payload),
   gitBlame: (payload) => ipcRenderer.invoke('graphy:git:blame', payload),
   focusNode: (payload) => ipcRenderer.invoke('graphy:ui:focus-node', payload),
   tsTypeAt: (payload) => ipcRenderer.invoke('graphy:ts:type-at', payload),

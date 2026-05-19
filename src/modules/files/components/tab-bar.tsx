@@ -1,7 +1,5 @@
-import { Network, X } from 'lucide-react'
+import { X } from 'lucide-react'
 
-import { setActiveView } from '@/shared/lib/active-view'
-import { requestGraphFocus } from '@/shared/lib/graph-focus'
 import { cn } from '@/shared/lib/utils'
 
 import { getFileIcon } from '../lib/file-icon'
@@ -11,11 +9,6 @@ export function TabBar() {
   const { tabs, activeIndex } = useOpenTabs()
 
   if (tabs.length === 0) return null
-
-  const jumpToGraph = () => {
-    requestGraphFocus(tabs[activeIndex].path)
-    setActiveView('graph')
-  }
 
   return (
     <div className="bg-sidebar border-sidebar-border flex h-9 shrink-0 items-center border-b px-1">
@@ -60,16 +53,6 @@ export function TabBar() {
           </button>
         )
       })}
-      <div className="ml-auto pr-1">
-        <button
-          type="button"
-          onClick={jumpToGraph}
-          className="text-muted-foreground hover:text-foreground hover:bg-sidebar-accent flex items-center gap-1.5 rounded px-2 py-1 text-[12px]"
-        >
-          <Network className="size-3.5" strokeWidth={1.6} />
-          <span>Show in graph</span>
-        </button>
-      </div>
     </div>
   )
 }

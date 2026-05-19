@@ -16,6 +16,7 @@ import type { XYFlowGraph } from '@/modules/graph/lib/to-xyflow'
 import type { GraphNodeData } from '@/modules/graph/types'
 import { getDesktop } from '@/shared/lib/desktop'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
+import { DiffBootstrap } from '@/modules/diff-viewer'
 
 const nodeTypes: NodeTypes = {
   code: CodeNode,
@@ -175,6 +176,7 @@ export function GraphCanvas() {
 
   return (
     <>
+      <DiffBootstrap />
       <ReactFlow
         nodes={nodes}
         edges={[]}

@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-export type ActiveView = 'editor' | 'graph'
+export type ActiveView = 'editor' | 'graph' | 'diff'
 
 let active: ActiveView = 'graph'
 const listeners = new Set<() => void>()

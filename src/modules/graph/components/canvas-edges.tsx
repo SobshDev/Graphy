@@ -1,8 +1,13 @@
 import { useStore } from '@xyflow/react'
 import type { Edge, Node } from '@xyflow/react'
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useSyncExternalStore } from 'react'
 
 import type { GraphNodeData } from '@/modules/graph/types'
+import { getNodeStatusMap, subscribeNodeStatusMap } from '@/modules/diff-viewer'
+import {
+  getDiffOverlay,
+  subscribeDiffOverlay,
+} from '@/modules/diff-viewer/state/diff-overlay'
 
 const CODE_NODE_WIDTH = 240
 const CODE_NODE_HEIGHT = 54
@@ -13,6 +18,8 @@ type CanvasEdgesProps = {
 }
 
 type EdgeEndpoint = {
+  sourceId: string
+  targetId: string
   sourceX: number
   sourceY: number
   targetX: number
@@ -34,6 +41,16 @@ export function CanvasEdges({ edges, nodes }: CanvasEdgesProps) {
   const edgeEndpoints = useMemo(
     () => buildEdgeEndpoints(nodes, edges),
     [edges, nodes],
+  )
+  const statusMap = useSyncExternalStore(
+    subscribeNodeStatusMap,
+    getNodeStatusMap,
+    getNodeStatusMap,
+  )
+  const overlay = useSyncExternalStore(
+    subscribeDiffOverlay,
+    getDiffOverlay,
+    getDiffOverlay,
   )
 
   useEffect(() => {
@@ -66,8 +83,6 @@ export function CanvasEdges({ edges, nodes }: CanvasEdgesProps) {
       context.save()
       context.translate(transform[0], transform[1])
       context.scale(transform[2], transform[2])
-      context.strokeStyle = edgeColor || 'rgba(148, 163, 184, 0.46)'
-      context.globalAlpha = 0.58
       context.lineWidth = Math.max(1 / transform[2], 0.7)
       context.lineCap = 'square'
 
@@ -76,23 +91,68 @@ export function CanvasEdges({ edges, nodes }: CanvasEdgesProps) {
       const viewRight = viewLeft + width / transform[2]
       const viewBottom = viewTop + height / transform[2]
 
-      context.beginPath()
-      for (const endpoint of edgeEndpoints) {
-        if (
-          !isEdgeVisible(endpoint, viewLeft, viewTop, viewRight, viewBottom)
-        ) {
-          continue
+      if (overlay.active && overlay.dimOthers && statusMap.size > 0) {
+        const normalEndpoints: typeof edgeEndpoints = []
+        const dimmedEndpoints: typeof edgeEndpoints = []
+
+        for (const endpoint of edgeEndpoints) {
+          if (
+            !isEdgeVisible(endpoint, viewLeft, viewTop, viewRight, viewBottom)
+          )
+            continue
+          const hasStatus =
+            statusMap.has(endpoint.sourceId) || statusMap.has(endpoint.targetId)
+          if (hasStatus) {
+            normalEndpoints.push(endpoint)
+          } else {
+            dimmedEndpoints.push(endpoint)
+          }
         }
 
-        context.moveTo(endpoint.sourceX, endpoint.sourceY)
-        context.lineTo(endpoint.targetX, endpoint.targetY)
+        if (dimmedEndpoints.length > 0) {
+          context.beginPath()
+          context.strokeStyle = edgeColor || 'rgba(148, 163, 184, 0.46)'
+          context.globalAlpha = 0.15
+          for (const endpoint of dimmedEndpoints) {
+            context.moveTo(endpoint.sourceX, endpoint.sourceY)
+            context.lineTo(endpoint.targetX, endpoint.targetY)
+          }
+          context.stroke()
+        }
+
+        if (normalEndpoints.length > 0) {
+          context.beginPath()
+          context.strokeStyle = edgeColor || 'rgba(148, 163, 184, 0.46)'
+          context.globalAlpha = 0.58
+          for (const endpoint of normalEndpoints) {
+            context.moveTo(endpoint.sourceX, endpoint.sourceY)
+            context.lineTo(endpoint.targetX, endpoint.targetY)
+          }
+          context.stroke()
+        }
+      } else {
+        context.beginPath()
+        context.strokeStyle = edgeColor || 'rgba(148, 163, 184, 0.46)'
+        context.globalAlpha = 0.58
+
+        for (const endpoint of edgeEndpoints) {
+          if (
+            !isEdgeVisible(endpoint, viewLeft, viewTop, viewRight, viewBottom)
+          ) {
+            continue
+          }
+
+          context.moveTo(endpoint.sourceX, endpoint.sourceY)
+          context.lineTo(endpoint.targetX, endpoint.targetY)
+        }
+        context.stroke()
       }
-      context.stroke()
+
       context.restore()
     })
 
     return () => window.cancelAnimationFrame(frame)
-  }, [edgeEndpoints, height, transform, width])
+  }, [edgeEndpoints, height, transform, width, statusMap, overlay])
 
   return (
     <canvas
@@ -121,6 +181,8 @@ function buildEdgeEndpoints(
       if (!source || !target) return null
 
       return {
+        sourceId: edge.source,
+        targetId: edge.target,
         sourceX: source.x + source.width,
         sourceY: source.y + source.height / 2,
         targetX: target.x,

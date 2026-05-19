@@ -121,11 +121,13 @@ export type RenameSymbolResult =
   | { applied: true; id: string; newId: string; affectedFiles: string[] }
   | { applied: false; id: string; reason: string }
 
-export interface RunScriptPayload {
-  script: 'lint' | 'check' | 'tidy' | 'test'
+export interface RunCommandPayload {
+  command: string
+  args?: string[]
+  timeoutMs?: number
 }
 
-export interface RunScriptResult {
+export interface RunCommandResult {
   exitCode: number
   stdout: string
   stderr: string
@@ -148,6 +150,18 @@ export interface GitDiffPayload {
 export interface GitDiffResult {
   diff: string
   truncated: boolean
+}
+
+export interface GitShowPayload {
+  file: string
+  ref?: string
+  maxBytes?: number
+}
+
+export interface GitShowResult {
+  content: string
+  truncated: boolean
+  exists: boolean
 }
 
 export interface GitBlamePayload {
@@ -236,9 +250,10 @@ export interface GraphyDesktop {
   applyEdit: (payload: ApplyEditPayload) => Promise<ApplyEditResult>
   renameSymbol: (payload: RenameSymbolPayload) => Promise<RenameSymbolResult>
   reparseProject: () => Promise<{ ok: true }>
-  runScript: (payload: RunScriptPayload) => Promise<RunScriptResult>
+  runCommand: (payload: RunCommandPayload) => Promise<RunCommandResult>
   gitStatus: () => Promise<GitStatusResult>
   gitDiff: (payload: GitDiffPayload) => Promise<GitDiffResult>
+  gitShow: (payload: GitShowPayload) => Promise<GitShowResult>
   gitBlame: (payload: GitBlamePayload) => Promise<GitBlameResult>
   focusNode: (payload: FocusNodePayload) => Promise<FocusNodeResult>
   tsTypeAt: (payload: TsTypeAtPayload) => Promise<TsTypeAtResult>

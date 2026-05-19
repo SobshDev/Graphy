@@ -10,13 +10,13 @@ import {
   historyKeymap,
   indentWithTab,
 } from '@codemirror/commands'
-import { javascript } from '@codemirror/lang-javascript'
 import { indentUnit } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { langFromName } from '../lib/lang-from-name'
 import {
   requestCloseActiveTab,
   saveFile,
@@ -25,13 +25,6 @@ import {
 } from '../lib/open-file'
 import { TabBar } from './tab-bar'
 import { UnsavedChangesDialog } from './unsaved-changes-dialog'
-
-function langFromName(name: string) {
-  if (/\.[jt]sx$/.test(name)) return javascript({ jsx: true, typescript: true })
-  if (/\.ts$/.test(name)) return javascript({ typescript: true })
-  if (/\.[mc]?js$/.test(name)) return javascript()
-  return javascript({ typescript: true })
-}
 
 export function FileEditor() {
   const file = useOpenFile()
