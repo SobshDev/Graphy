@@ -15,7 +15,7 @@ declare const Bun: {
 }
 
 const root = process.cwd()
-const entry = path.join(root, 'src/modules/parser/parse-cli.ts')
+const entry = path.join(root, 'src/modules/parser/parse-service.ts')
 const outDir = path.join(root, 'dist-electron')
 const outFile = 'parser.cjs'
 

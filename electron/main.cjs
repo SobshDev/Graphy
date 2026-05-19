@@ -9,7 +9,7 @@ const { pathToFileURL } = require('node:url')
 const IGNORED_DIRS = new Set(['.git'])
 
 const { applyMenu } = require('./menu.cjs')
-const { parseFolder } = require('./parser-service.cjs')
+const { parseFolder, disposeParser } = require('./parser-service.cjs')
 const projectState = require('./project-state.cjs')
 const { watchFolder } = require('./watcher.cjs')
 
@@ -507,4 +507,8 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  disposeParser()
 })

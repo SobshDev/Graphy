@@ -1,17 +1,9 @@
-import type { NodeType } from '@/modules/parser'
-
-export type CodeNodeData = {
-  kind: 'code'
-  displayName: string
-  type: NodeType
-  signature: string
+export type FileNodeData = {
+  kind: 'file'
   file: string
-  line: number
-  endLine: number
-  isAsync: boolean
-  isExported: boolean
-  isStatic: boolean
-  bodyLines: number
+  displayName: string
+  folder: string
+  symbolCount: number
   inDegree: number
   outDegree: number
 }
@@ -24,4 +16,4 @@ export type SectionNodeData = {
   height: number
 }
 
-export type GraphNodeData = CodeNodeData | SectionNodeData
+export type GraphNodeData = FileNodeData | SectionNodeData

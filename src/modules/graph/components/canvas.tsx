@@ -1,7 +1,6 @@
 import { GitBranch } from 'lucide-react'
 
 import { GraphCanvas } from '@/modules/graph/components/graph-canvas'
-import { GraphLegend } from '@/modules/graph/components/graph-legend'
 import { ZoomControls } from '@/modules/graph/components/zoom-controls'
 import { useCurrentBranch } from '@/modules/graph/hooks/use-current-branch'
 
@@ -30,7 +29,6 @@ export function Canvas() {
         <span>typescript</span>
       </div>
 
-      <GraphLegend />
       <ZoomControls />
     </section>
   )

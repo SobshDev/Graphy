@@ -278,12 +278,12 @@ function sectionLabel(
     .filter((node): node is Node<GraphNodeData> => Boolean(node))
   const firstEntry = entries.length > 0 ? entries[0] : undefined
   let title = 'Entry flow'
-  if (firstEntry?.data.kind === 'code') title = firstEntry.data.displayName
+  if (firstEntry?.data.kind === 'file') title = firstEntry.data.displayName
   const suffix = entries.length > 1 ? ` + ${entries.length - 1} more` : ''
 
   return {
     title: `${title}${suffix}`,
-    subtitle: `${nodes.length} symbols`,
+    subtitle: `${nodes.length} files`,
   }
 }
 
@@ -519,49 +519,56 @@ function nodeHeight(node: Node<GraphNodeData>): number {
   return node.data.kind === 'section' ? node.data.height : NODE_HEIGHT
 }
 
-function qualifiedName(id: string, fallback: string): string {
-  const idx = id.indexOf('::')
-  return idx >= 0 ? id.slice(idx + 2) : fallback
-}
-
 function graphToFlow(graph: Graph): XYFlowGraph {
-  const nodes: Array<Node<GraphNodeData>> = graph.nodes.map((node) => ({
-    id: node.id,
-    type: 'code',
-    position: { x: 0, y: 0 },
-    data: {
-      kind: 'code',
-      displayName: qualifiedName(node.id, node.name),
-      type: node.type,
-      signature: node.signature,
-      file: node.file,
-      line: node.line,
-      endLine: node.endLine,
-      isAsync: node.isAsync,
-      isExported: node.isExported,
-      isStatic: node.isStatic,
-      bodyLines: node.bodyLines,
-      inDegree: node.inDegree,
-      outDegree: node.outDegree,
-    },
-  }))
+  const fileBySymbolId = new Map<string, string>()
+  const fileSymbolCount = new Map<string, number>()
+
+  for (const node of graph.nodes) {
+    fileBySymbolId.set(node.id, node.file)
+    fileSymbolCount.set(node.file, (fileSymbolCount.get(node.file) ?? 0) + 1)
+  }
 
   const edgeKeys = new Set<string>()
   const edges: Edge[] = []
+  const inDegree = new Map<string, number>()
+  const outDegree = new Map<string, number>()
 
   for (const edge of graph.edges) {
-    if (edge.source === edge.target) continue
-    const key = `${edge.source}->${edge.target}`
+    const source = fileBySymbolId.get(edge.source)
+    const target = fileBySymbolId.get(edge.target)
+    if (!source || !target || source === target) continue
+
+    const key = `${source}->${target}`
     if (edgeKeys.has(key)) continue
     edgeKeys.add(key)
 
-    edges.push({
-      id: key,
-      source: edge.source,
-      target: edge.target,
-      type: 'straight',
-    })
+    edges.push({ id: key, source, target, type: 'straight' })
+    outDegree.set(source, (outDegree.get(source) ?? 0) + 1)
+    inDegree.set(target, (inDegree.get(target) ?? 0) + 1)
   }
+
+  const nodes: Array<Node<GraphNodeData>> = Array.from(
+    fileSymbolCount.entries(),
+  ).map(([file, symbolCount]) => {
+    const parts = file.split('/')
+    const displayName = parts[parts.length - 1] ?? file
+    const folder = parts.slice(0, -1).join('/')
+
+    return {
+      id: file,
+      type: 'file',
+      position: { x: 0, y: 0 },
+      data: {
+        kind: 'file',
+        file,
+        displayName,
+        folder,
+        symbolCount,
+        inDegree: inDegree.get(file) ?? 0,
+        outDegree: outDegree.get(file) ?? 0,
+      },
+    }
+  })
 
   return { nodes, edges }
 }

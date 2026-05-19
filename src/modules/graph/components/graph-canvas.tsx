@@ -2,8 +2,8 @@ import { ReactFlow, useNodesState, useReactFlow } from '@xyflow/react'
 import type { Edge, Node, NodeTypes } from '@xyflow/react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-import { CodeNode } from '@/modules/graph/components/code-node'
 import { EmptyState } from '@/modules/graph/components/empty-state'
+import { FileNode } from '@/modules/graph/components/file-node'
 import { FunctionSheet } from '@/modules/graph/components/function-sheet'
 import type { FunctionSheetTarget } from '@/modules/graph/components/function-sheet'
 import { SectionNode } from '@/modules/graph/components/section-node'
@@ -14,7 +14,7 @@ import type { GraphNodeData } from '@/modules/graph/types'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = {
-  code: CodeNode,
+  file: FileNode,
   section: SectionNode,
 }
 
@@ -36,12 +36,12 @@ export function GraphCanvas() {
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
-      if (node.data.kind === 'section') return
+      if (node.data.kind !== 'file') return
 
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
-        line: node.data.line,
+        line: 1,
       })
     },
     [],
@@ -96,7 +96,7 @@ export function GraphCanvas() {
     lastFocusTs.current = focusRequest.timestamp
     const matching = nodes
       .filter(
-        (n) => n.data.kind === 'code' && n.data.file === focusRequest.file,
+        (n) => n.data.kind === 'file' && n.data.file === focusRequest.file,
       )
       .map((n) => n.id)
     if (matching.length > 0) {
