@@ -1,9 +1,9 @@
 import { Decoration, EditorView, lineNumbers } from '@codemirror/view'
 import { EditorState, RangeSetBuilder } from '@codemirror/state'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { useEffect, useRef } from 'react'
 
-import { langFromName } from '@/modules/files/lib/lang-from-name'
+import { createLanguageAdapter } from '@/modules/files'
+import { createCodeMirrorTheme } from '@/modules/themes'
 
 import type { DiffRow } from '../types'
 
@@ -37,7 +37,6 @@ const diffTheme = EditorView.theme({
     fontFamily: 'var(--font-mono, monospace)',
     overflow: 'auto',
   },
-  '.cm-gutters': { backgroundColor: 'transparent', borderRight: 'none' },
   '.cm-diff-del': { backgroundColor: 'rgba(248, 113, 113, 0.18)' },
   '.cm-diff-add': { backgroundColor: 'rgba(74, 222, 128, 0.18)' },
   '.cm-diff-empty': { backgroundColor: 'rgba(148, 163, 184, 0.10)' },
@@ -81,6 +80,8 @@ export function DiffPane({
 
     const content = rows.map((r) => r[side].text).join('\n')
 
+    const themeAdapter = createCodeMirrorTheme()
+    const langAdapter = createLanguageAdapter(fileName)
     const editorView = new EditorView({
       parent: host,
       state: EditorState.create({
@@ -89,8 +90,8 @@ export function DiffPane({
           lineNumbers({
             formatNumber: (n) => mappedLineNumber(n, side, rows),
           }),
-          langFromName(fileName),
-          oneDark,
+          langAdapter.extension,
+          themeAdapter.extension,
           diffTheme,
           lineDecorationPlugin(rows, side),
           EditorView.editable.of(false),
@@ -104,6 +105,8 @@ export function DiffPane({
         ],
       }),
     })
+    const detachTheme = themeAdapter.attach(editorView)
+    langAdapter.attach(editorView)
 
     internalViewRef.current = editorView
     if (viewRef) {
@@ -111,6 +114,7 @@ export function DiffPane({
     }
 
     return () => {
+      detachTheme()
       editorView.destroy()
       internalViewRef.current = null
       if (viewRef) viewRef.current = null

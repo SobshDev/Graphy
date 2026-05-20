@@ -1,13 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import {
-  Bell,
-  Folder,
-  GitBranch,
-  Network,
-  Puzzle,
-  Search,
-  Settings,
-} from 'lucide-react'
+import { Folder, GitBranch, Network, Search, Settings } from 'lucide-react'
 
 import { toggleActivePanel, useActivePanel } from '@/shared/lib/active-panel'
 import type { ActivePanel } from '@/shared/lib/active-panel'
@@ -55,12 +47,6 @@ const navItems: Array<NavItem> = [
     label: 'Graphs',
     shortcut: '⌘⇧H',
     view: 'graph',
-  },
-  {
-    id: 'extensions',
-    icon: Puzzle,
-    label: 'Extensions',
-    shortcut: '⌘⇧X',
   },
 ]
 
@@ -129,19 +115,6 @@ export function Sidebar() {
       </div>
 
       <div className="app-no-drag flex flex-col items-center gap-2">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-lg"
-              className="text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
-            >
-              <Bell className="size-5" strokeWidth={1.6} />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="right">Notifications</TooltipContent>
-        </Tooltip>
-
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

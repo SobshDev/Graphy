@@ -1,4 +1,4 @@
-import { Network, Orbit } from 'lucide-react'
+import { Network, Orbit, Workflow } from 'lucide-react'
 
 import { Button } from '@/shared/ui/button'
 import { Separator } from '@/shared/ui/separator'
@@ -30,6 +30,16 @@ export function LayoutSelector({ value, onChange }: Props) {
         onClick={() => onChange('radial')}
       >
         <Orbit className="size-3.5" strokeWidth={1.7} />
+      </LayoutBtn>
+      <div className="flex h-4 items-center">
+        <Separator orientation="vertical" />
+      </div>
+      <LayoutBtn
+        active={value === 'calls'}
+        tip="Call graph"
+        onClick={() => onChange('calls')}
+      >
+        <Workflow className="size-3.5" strokeWidth={1.7} />
       </LayoutBtn>
     </div>
   )

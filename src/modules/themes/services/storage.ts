@@ -1,22 +1,36 @@
-import { DEFAULT_PRESET_ID } from '../data/presets'
-import type { ThemeState } from '../types'
+import { DEFAULT_PRESET_ID, themePresetById } from '../data/presets'
+import type { ThemeMode, ThemeState } from '../types'
 
-const STORAGE_KEY = 'graphy.theme.v1'
+const STORAGE_KEY = 'graphy.theme.v2'
+const DEFAULT_MODE: ThemeMode = 'system'
+
+const VALID_MODES: ReadonlySet<ThemeMode> = new Set<ThemeMode>([
+  'system',
+  'light',
+  'dark',
+])
+
+function defaultState(): ThemeState {
+  return { preset: DEFAULT_PRESET_ID, mode: DEFAULT_MODE }
+}
 
 export function loadThemeState(): ThemeState {
-  if (typeof window === 'undefined') {
-    return { preset: DEFAULT_PRESET_ID }
-  }
+  if (typeof window === 'undefined') return defaultState()
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY)
-    if (!raw) return { preset: DEFAULT_PRESET_ID }
+    if (!raw) return defaultState()
     const parsed = JSON.parse(raw) as Partial<ThemeState>
-    return {
-      preset:
-        typeof parsed.preset === 'string' ? parsed.preset : DEFAULT_PRESET_ID,
-    }
+    const preset =
+      typeof parsed.preset === 'string' && themePresetById.has(parsed.preset)
+        ? parsed.preset
+        : DEFAULT_PRESET_ID
+    const mode =
+      typeof parsed.mode === 'string' && VALID_MODES.has(parsed.mode)
+        ? parsed.mode
+        : DEFAULT_MODE
+    return { preset, mode }
   } catch {
-    return { preset: DEFAULT_PRESET_ID }
+    return defaultState()
   }
 }
 

@@ -3,28 +3,34 @@ import { Check } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 
 import { themeTokenById } from '../data/tokens'
-import type { ThemePreset } from '../types'
+import type { ResolvedMode, ThemePreset } from '../types'
 
 type ThemePresetCardProps = {
   preset: ThemePreset
+  mode: ResolvedMode
   selected: boolean
   onSelect: () => void
 }
 
-function tokenFromPreset(preset: ThemePreset, id: string): string {
-  return preset.values[id] ?? themeTokenById.get(id)?.defaultValue ?? '#000'
+function tokenFromPreset(
+  preset: ThemePreset,
+  id: string,
+  mode: ResolvedMode,
+): string {
+  return preset[mode][id] ?? themeTokenById.get(id)?.[mode] ?? '#000'
 }
 
 export function ThemePresetCard({
   preset,
+  mode,
   selected,
   onSelect,
 }: ThemePresetCardProps) {
-  const bg = tokenFromPreset(preset, 'background')
-  const card = tokenFromPreset(preset, 'card')
-  const foreground = tokenFromPreset(preset, 'foreground')
-  const muted = tokenFromPreset(preset, 'muted-foreground')
-  const primary = preset.accent
+  const bg = tokenFromPreset(preset, 'background', mode)
+  const card = tokenFromPreset(preset, 'card', mode)
+  const foreground = tokenFromPreset(preset, 'foreground', mode)
+  const muted = tokenFromPreset(preset, 'muted-foreground', mode)
+  const primary = preset.accent[mode]
 
   return (
     <button

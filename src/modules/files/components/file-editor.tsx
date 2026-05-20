@@ -12,13 +12,14 @@ import {
 } from '@codemirror/commands'
 import { indentUnit } from '@codemirror/language'
 import { EditorState } from '@codemirror/state'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useCallback, useEffect, useRef } from 'react'
 
+import { createCodeMirrorTheme } from '@/modules/themes'
+
 import { useFileLineDiff } from '../hooks/use-file-line-diff'
 import { diffGutter, setDiffLineStatusEffect } from '../lib/diff-gutter'
-import { langFromName } from '../lib/lang-from-name'
+import { createLanguageAdapter } from '../lib/lang-from-name'
 import {
   requestCloseActiveTab,
   saveFile,
@@ -87,6 +88,8 @@ export function FileEditor() {
     }
 
     filePathRef.current = file.path
+    const themeAdapter = createCodeMirrorTheme()
+    const langAdapter = createLanguageAdapter(file.name)
     const view = new EditorView({
       parent: host,
       state: EditorState.create({
@@ -106,16 +109,12 @@ export function FileEditor() {
             ...defaultKeymap,
             ...historyKeymap,
           ]),
-          langFromName(file.name),
-          oneDark,
+          langAdapter.extension,
+          themeAdapter.extension,
           EditorView.lineWrapping,
           EditorView.theme({
             '&': { height: '100%', fontSize: '13px' },
             '.cm-scroller': { fontFamily: 'var(--font-mono, monospace)' },
-            '.cm-gutters': {
-              backgroundColor: 'transparent',
-              borderRight: 'none',
-            },
           }),
           EditorView.updateListener.of((update) => {
             if (update.docChanged) {
@@ -125,9 +124,12 @@ export function FileEditor() {
         ],
       }),
     })
+    const detachTheme = themeAdapter.attach(view)
+    langAdapter.attach(view)
 
     viewRef.current = view
     return () => {
+      detachTheme()
       view.destroy()
       viewRef.current = null
       filePathRef.current = null

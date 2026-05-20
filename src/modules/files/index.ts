@@ -1,6 +1,6 @@
 export { FileEditor } from './components/file-editor'
 export { FileExplorer } from './components/file-explorer'
-export { langFromName } from './lib/lang-from-name'
+export { createLanguageAdapter } from './lib/lang-from-name'
 export {
   closeActiveTab,
   closeTab,
