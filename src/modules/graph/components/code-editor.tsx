@@ -13,9 +13,10 @@ import {
 import { javascript } from '@codemirror/lang-javascript'
 import { indentUnit } from '@codemirror/language'
 import { EditorSelection, EditorState } from '@codemirror/state'
-import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView, keymap, lineNumbers } from '@codemirror/view'
 import { useEffect, useRef } from 'react'
+
+import { createCodeMirrorTheme } from '@/modules/themes'
 
 type CodeEditorProps = {
   value: string
@@ -44,6 +45,7 @@ export function CodeEditor({
     const host = hostRef.current
     if (!host) return
 
+    const themeAdapter = createCodeMirrorTheme()
     const view = new EditorView({
       parent: host,
       state: EditorState.create({
@@ -63,7 +65,7 @@ export function CodeEditor({
             ...historyKeymap,
           ]),
           javascript({ jsx: language === 'tsx', typescript: true }),
-          oneDark,
+          themeAdapter.extension,
           EditorView.lineWrapping,
           EditorView.theme({
             '&': { height: '100%', fontSize: '12.5px' },
@@ -77,9 +79,11 @@ export function CodeEditor({
         ],
       }),
     })
+    const detachTheme = themeAdapter.attach(view)
 
     viewRef.current = view
     return () => {
+      detachTheme()
       view.destroy()
       viewRef.current = null
     }

@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Trash2 } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
 import {
@@ -27,13 +27,21 @@ export function ProviderKeyRow({ provider }: ProviderKeyRowProps) {
   }, [storedKey])
 
   const trimmed = value.trim()
-  const canSave = trimmed.length > 0 && trimmed !== storedKey
-  const canRemove = storedKey.length > 0
+  const canSave = trimmed !== storedKey
+
+  const handleSave = () => {
+    if (trimmed.length === 0) {
+      removeKey(provider)
+      setReveal(false)
+    } else {
+      setKey(provider, trimmed)
+    }
+  }
 
   return (
     <SettingRow
       label={AI_PROVIDER_LABELS[provider]}
-      hint="Stored locally in this browser."
+      hint="Stored locally in this browser. Empty the field and save to remove."
       align="center"
     >
       <div className="flex items-center gap-2">
@@ -64,25 +72,10 @@ export function ProviderKeyRow({ provider }: ProviderKeyRowProps) {
           variant="outline"
           size="sm"
           disabled={!canSave}
-          onClick={() => setKey(provider, trimmed)}
+          onClick={handleSave}
         >
           Save
         </Button>
-        {canRemove ? (
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon-sm"
-            onClick={() => {
-              removeKey(provider)
-              setValue('')
-              setReveal(false)
-            }}
-            aria-label={`Remove ${AI_PROVIDER_LABELS[provider]} key`}
-          >
-            <Trash2 className="size-3.5" strokeWidth={1.7} />
-          </Button>
-        ) : null}
       </div>
     </SettingRow>
   )

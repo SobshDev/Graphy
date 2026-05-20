@@ -11,6 +11,7 @@ import type { FunctionSheetTarget } from '@/modules/graph/components/function-sh
 import { useGraph } from '@/modules/graph/hooks/use-graph'
 import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
+import { toXYFlowCalls } from '@/modules/graph/lib/to-xyflow-calls'
 import type { GraphLayout, GraphNodeData } from '@/modules/graph/types'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
@@ -73,15 +74,19 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
     return [...out, ...inc]
   }, [hoveredId, callAdjacency])
 
-  const renderedEdges = useMemo(
-    () => [...treeEdges, ...hoveredCallEdges],
-    [treeEdges, hoveredCallEdges],
-  )
+  const renderedEdges = useMemo(() => {
+    if (layout === 'calls') {
+      if (!hoveredId) return callEdges
+      const highlight = new Set(hoveredCallEdges.map((e) => e.id))
+      const base = callEdges.filter((e) => !highlight.has(e.id))
+      return [...base, ...hoveredCallEdges]
+    }
+    return [...treeEdges, ...hoveredCallEdges]
+  }, [layout, treeEdges, callEdges, hoveredCallEdges, hoveredId])
 
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
       if (node.data.kind !== 'file') return
-
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -125,7 +130,10 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
     setLayouting(true)
     setLayoutError(null)
 
-    toXYFlow(graph, layout)
+    const job =
+      layout === 'calls' ? toXYFlowCalls(graph) : toXYFlow(graph, layout)
+
+    job
       .then((xyflow) => {
         if (cancelled) return
         setNodes(xyflow.nodes)
@@ -220,7 +228,7 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
         selectNodesOnDrag={false}
         zoomOnDoubleClick={false}
         defaultEdgeOptions={{
-          type: layout === 'radial' ? 'straight' : 'smoothstep',
+          type: layout === 'tree' ? 'smoothstep' : 'straight',
         }}
         minZoom={0.05}
         maxZoom={2.5}

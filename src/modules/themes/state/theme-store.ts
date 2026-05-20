@@ -1,12 +1,13 @@
 import { applyThemeToDocument } from '../services/apply-theme'
 import { loadThemeState, saveThemeState } from '../services/storage'
-import type { ThemePresetId, ThemeState } from '../types'
+import type { ThemeMode, ThemePresetId, ThemeState } from '../types'
 
 type Listener = () => void
 
 let state: ThemeState = loadThemeState()
 const listeners = new Set<Listener>()
 let initialized = false
+let mediaUnsubscribe: (() => void) | null = null
 
 if (typeof document !== 'undefined') {
   applyThemeToDocument(state)
@@ -24,6 +25,25 @@ function commit(next: ThemeState) {
   emit()
 }
 
+function attachSystemListener() {
+  if (typeof window === 'undefined') return
+  if (mediaUnsubscribe) return
+  const mql = window.matchMedia('(prefers-color-scheme: light)')
+  const handler = () => {
+    if (state.mode === 'system') {
+      state = { ...state }
+      applyThemeToDocument(state)
+      emit()
+    }
+  }
+  mql.addEventListener('change', handler)
+  mediaUnsubscribe = () => mql.removeEventListener('change', handler)
+}
+
+if (typeof window !== 'undefined') {
+  attachSystemListener()
+}
+
 export const themeStore = {
   getState(): ThemeState {
     return state
@@ -35,12 +55,16 @@ export const themeStore = {
     }
   },
   init(): void {
+    attachSystemListener()
     if (initialized) return
     initialized = true
     state = loadThemeState()
     applyThemeToDocument(state)
   },
   setPreset(presetId: ThemePresetId): void {
-    commit({ preset: presetId })
+    commit({ ...state, preset: presetId })
+  },
+  setMode(mode: ThemeMode): void {
+    commit({ ...state, mode })
   },
 }

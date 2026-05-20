@@ -1,4 +1,4 @@
-export type GraphLayout = 'tree' | 'radial'
+export type GraphLayout = 'tree' | 'radial' | 'calls'
 
 export type FileNodeData = {
   kind: 'file'
