@@ -13,6 +13,8 @@ import { useProject } from '@/modules/graph/hooks/use-project'
 import { toXYFlow } from '@/modules/graph/lib/to-xyflow'
 import { toXYFlowCalls } from '@/modules/graph/lib/to-xyflow-calls'
 import type { GraphLayout, GraphNodeData } from '@/modules/graph/types'
+import { NodeSummarySheet } from '@/modules/node-summary'
+import type { NodeSummaryTarget } from '@/modules/node-summary'
 import { clearGraphFocus, useGraphFocusRequest } from '@/shared/lib/graph-focus'
 
 const nodeTypes: NodeTypes = {
@@ -39,6 +41,9 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
   const [layouting, setLayouting] = useState(false)
   const [layoutError, setLayoutError] = useState<Error | null>(null)
   const [sheetTarget, setSheetTarget] = useState<FunctionSheetTarget | null>(
+    null,
+  )
+  const [summaryTarget, setSummaryTarget] = useState<NodeSummaryTarget | null>(
     null,
   )
   const [hoveredId, setHoveredId] = useState<string | null>(null)
@@ -87,6 +92,20 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
   const handleNodeClick = useCallback(
     (_event: unknown, node: Node<GraphNodeData>) => {
       if (node.data.kind !== 'file') return
+
+      setSummaryTarget({
+        displayName: node.data.displayName,
+        file: node.data.file,
+      })
+    },
+    [],
+  )
+
+  const handleNodeDoubleClick = useCallback(
+    (_event: unknown, node: Node<GraphNodeData>) => {
+      if (node.data.kind !== 'file') return
+
+      setSummaryTarget(null)
       setSheetTarget({
         displayName: node.data.displayName,
         file: node.data.file,
@@ -110,6 +129,10 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
 
   const handleSheetOpenChange = useCallback((open: boolean) => {
     if (!open) setSheetTarget(null)
+  }, [])
+
+  const handleSummaryOpenChange = useCallback((open: boolean) => {
+    if (!open) setSummaryTarget(null)
   }, [])
 
   useEffect(() => {
@@ -211,6 +234,7 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
         edges={renderedEdges}
         onNodesChange={onNodesChange}
         onNodeClick={handleNodeClick}
+        onNodeDoubleClick={handleNodeDoubleClick}
         onNodeMouseEnter={handleNodeMouseEnter}
         onNodeMouseLeave={handleNodeMouseLeave}
         nodeTypes={nodeTypes}
@@ -236,6 +260,10 @@ export function GraphCanvas({ layout }: GraphCanvasProps) {
       <FunctionSheet
         target={sheetTarget}
         onOpenChange={handleSheetOpenChange}
+      />
+      <NodeSummarySheet
+        target={summaryTarget}
+        onOpenChange={handleSummaryOpenChange}
       />
     </>
   )
