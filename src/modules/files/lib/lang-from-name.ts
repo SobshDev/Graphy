@@ -1,7 +1,7 @@
 import { LanguageDescription } from '@codemirror/language'
 import { languages } from '@codemirror/language-data'
-import { Compartment  } from '@codemirror/state'
-import type {Extension} from '@codemirror/state';
+import { Compartment } from '@codemirror/state'
+import type { Extension } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 
 function findDescription(name: string): LanguageDescription | null {

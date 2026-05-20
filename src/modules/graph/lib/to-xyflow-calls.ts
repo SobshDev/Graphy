@@ -25,9 +25,8 @@ const CALL_EDGE_TYPES: ReadonlySet<EdgeType> = new Set<EdgeType>([
 ])
 
 const CALL_EDGE_STYLE = {
-  stroke: 'var(--muted-foreground)',
-  strokeWidth: 1,
-  opacity: 0.35,
+  stroke: 'color-mix(in oklab, var(--muted-foreground) 35%, var(--canvas))',
+  strokeWidth: 2,
 }
 
 export interface XYFlowCallGraph {

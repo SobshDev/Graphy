@@ -12,13 +12,15 @@ function FolderNodeImpl({ data }: FolderNodeProps) {
 
   return (
     <div
-      className="flex h-8 items-center gap-2 rounded-md border px-2.5"
-      style={{
-        borderColor: colors.accent,
-        backgroundColor: colors.surface,
-      }}
+      className="bg-background relative flex h-8 items-center gap-2 rounded-md border px-2.5"
+      style={{ borderColor: colors.accent }}
       title={data.path || '/'}
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-md"
+        style={{ backgroundColor: colors.surface }}
+      />
       <Handle
         type="target"
         position={Position.Left}
@@ -29,10 +31,10 @@ function FolderNodeImpl({ data }: FolderNodeProps) {
       />
       <span
         aria-hidden
-        className="size-1.5 shrink-0 rounded-full"
+        className="relative size-1.5 shrink-0 rounded-full"
         style={{ backgroundColor: colors.accent }}
       />
-      <span className="text-foreground truncate font-mono text-[12px] font-medium">
+      <span className="text-foreground relative truncate font-mono text-[12px] font-medium">
         {data.name || '/'}
       </span>
       <Handle

@@ -22,7 +22,7 @@ const ROW_GAP = 78
 const SUBTREE_GAP = 96
 
 const TREE_EDGE_STYLE = {
-  stroke: 'var(--muted-foreground)',
+  stroke: 'color-mix(in oklab, var(--muted-foreground) 35%, var(--canvas))',
   strokeWidth: 2,
 }
 
@@ -115,9 +115,10 @@ function sortTree(folder: FolderTree): void {
 }
 
 function layoutTidyTree(root: FolderTree): Map<string, Placed> {
-  // Columns left-to-right, one per depth. Each column is centered on the
-  // widest node it holds. Children stack vertically inside their parent's
-  // sub-range; placements store node *centers*.
+  // Columns left-to-right, one per depth. All nodes in a column share the
+  // same left edge so folders and files line up vertically even though they
+  // have different widths. Children stack vertically inside their parent's
+  // sub-range; placements store node *centers* (per-node, width-aware).
   const widths: number[] = []
   function walkWidth(folder: FolderTree, depth: number): void {
     widths[depth] = Math.max(widths[depth] ?? 0, FOLDER_NODE_WIDTH)
@@ -128,11 +129,11 @@ function layoutTidyTree(root: FolderTree): Map<string, Placed> {
   }
   walkWidth(root, 0)
 
-  const columnCenters: number[] = []
+  const columnLefts: number[] = []
   let xCursor = 0
   for (let i = 0; i < widths.length; i++) {
     const w = widths[i] ?? FOLDER_NODE_WIDTH
-    columnCenters[i] = xCursor + w / 2
+    columnLefts[i] = xCursor
     xCursor += w + COL_CLEARANCE
   }
 
@@ -140,7 +141,8 @@ function layoutTidyTree(root: FolderTree): Map<string, Placed> {
   let nextCenterY = FILE_NODE_HEIGHT / 2
 
   function place(folder: FolderTree, depth: number): number {
-    const x = columnCenters[depth] ?? 0
+    const folderCenterX = (columnLefts[depth] ?? 0) + FOLDER_NODE_WIDTH / 2
+    const fileCenterX = (columnLefts[depth + 1] ?? 0) + FILE_NODE_WIDTH / 2
     const childCenters: number[] = []
 
     folder.subfolders.forEach((sub, idx) => {
@@ -157,7 +159,7 @@ function layoutTidyTree(root: FolderTree): Map<string, Placed> {
       nextCenterY += ROW_GAP
       placements.set(file.id, {
         id: file.id,
-        x: columnCenters[depth + 1] ?? 0,
+        x: fileCenterX,
         y: centerY,
       })
       childCenters.push(centerY)
@@ -174,7 +176,7 @@ function layoutTidyTree(root: FolderTree): Map<string, Placed> {
     }
     placements.set(folderId(folder.path), {
       id: folderId(folder.path),
-      x,
+      x: folderCenterX,
       y: centerY,
     })
     return centerY
