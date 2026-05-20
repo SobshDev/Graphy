@@ -529,13 +529,56 @@ export class OpenRouterService implements AiService {
             content: text.length > 0 ? text : null,
             tool_calls: requestedCalls,
           })
-          const { resultMessages, calls } = await runToolCalls(
-            requestedCalls,
-            tools,
-            options.signal,
-          )
-          toolCalls.push(...calls)
-          messages.push(...resultMessages)
+
+          for (const call of requestedCalls) {
+            yield {
+              delta: '',
+              done: false,
+              toolCall: {
+                id: call.id,
+                name: call.function.name,
+                input: safeParseJson(call.function.arguments),
+                output: undefined,
+                pending: true,
+              },
+            }
+          }
+
+          for (const call of requestedCalls) {
+            const tool = tools.find((t) => t.name === call.function.name)
+            const input = safeParseJson(call.function.arguments)
+            let output: unknown
+            let isError = false
+
+            if (!tool) {
+              output = { message: `Unknown tool: ${call.function.name}` }
+              isError = true
+            } else {
+              try {
+                output = await tool.handler(input, { signal: options.signal })
+              } catch (err) {
+                output = {
+                  message: err instanceof Error ? err.message : String(err),
+                }
+                isError = true
+              }
+            }
+
+            const finalCall: AiToolCall = {
+              id: call.id,
+              name: call.function.name,
+              input,
+              output,
+              isError: isError || undefined,
+            }
+            toolCalls.push(finalCall)
+            messages.push({
+              role: 'tool',
+              tool_call_id: call.id,
+              content: stringifyToolOutput(output),
+            })
+            yield { delta: '', done: false, toolCall: finalCall }
+          }
         }
 
         const result: AiChatResult = {

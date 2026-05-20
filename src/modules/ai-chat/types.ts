@@ -83,6 +83,10 @@ export const EMPTY_TOKEN_USAGE: TokenUsage = {
   total: 0,
 }
 
+export type ChatSegment =
+  | { kind: 'text'; text: string }
+  | { kind: 'tool'; call: AiToolCall }
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -90,6 +94,7 @@ export interface ChatMessage {
   pending?: boolean
   error?: string
   toolCalls?: AiToolCall[]
+  segments?: ChatSegment[]
 }
 
 export interface Conversation {

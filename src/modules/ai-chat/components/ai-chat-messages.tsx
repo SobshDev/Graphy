@@ -3,7 +3,7 @@ import { useEffect, useRef } from 'react'
 import { cn } from '@/shared/lib/utils'
 
 import { useAiChat } from '../hooks/use-ai-chat'
-import type { ChatMessage } from '../types'
+import type { ChatMessage, ChatSegment } from '../types'
 import { CHAT_MODEL_LABELS } from '../types'
 import { ClaudeLogo } from './claude-logo'
 import { Markdown } from './markdown'
@@ -106,10 +106,10 @@ function MessageRow({
     )
   }
 
-  const showCaret = message.pending && !message.error
   const isError = Boolean(message.error)
   const isThinking = message.pending && message.content.length === 0
-  const toolCalls = message.toolCalls ?? []
+  const segments = resolveSegments(message)
+  const lastTextIndex = findLastTextIndex(segments)
 
   return (
     <div className="flex flex-col gap-2">
@@ -121,34 +121,61 @@ function MessageRow({
           {byline}
         </b>
       </div>
-      {toolCalls.length > 0 && (
-        <div className="flex flex-col gap-1.5">
-          {toolCalls.map((call) => (
-            <ToolCallCard key={call.id} call={call} />
-          ))}
+      {isError ? (
+        <div
+          className={cn(proseClass, 'text-chat-danger [white-space:pre-wrap]')}
+        >
+          {message.error}
+        </div>
+      ) : isThinking ? (
+        <div className={cn(proseClass, 'text-chat-text-3')}>
+          Thinking
+          <span className={caretClass} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {segments.map((segment, i) => {
+            if (segment.kind === 'tool') {
+              return (
+                <ToolCallCard
+                  key={`tool-${segment.call.id}`}
+                  call={segment.call}
+                />
+              )
+            }
+            const showCaret = message.pending && i === lastTextIndex
+            return (
+              <div key={`text-${i}`} className={proseClass}>
+                <Markdown content={segment.text} />
+                {showCaret && <span className={caretClass} />}
+              </div>
+            )
+          })}
         </div>
       )}
-      <div
-        className={cn(
-          proseClass,
-          isError && 'text-chat-danger [white-space:pre-wrap]',
-          isThinking && 'text-chat-text-3',
-        )}
-      >
-        {isError ? (
-          message.error
-        ) : isThinking ? (
-          <>
-            Thinking
-            <span className={caretClass} />
-          </>
-        ) : (
-          <>
-            <Markdown content={message.content} />
-            {showCaret && <span className={caretClass} />}
-          </>
-        )}
-      </div>
     </div>
   )
+}
+
+function resolveSegments(message: ChatMessage): ChatSegment[] {
+  if (message.segments && message.segments.length > 0) {
+    return message.segments
+  }
+  const segments: ChatSegment[] = []
+  if (message.toolCalls) {
+    for (const call of message.toolCalls) {
+      segments.push({ kind: 'tool', call })
+    }
+  }
+  if (message.content.length > 0) {
+    segments.push({ kind: 'text', text: message.content })
+  }
+  return segments
+}
+
+function findLastTextIndex(segments: ChatSegment[]): number {
+  for (let i = segments.length - 1; i >= 0; i--) {
+    if (segments[i].kind === 'text') return i
+  }
+  return -1
 }

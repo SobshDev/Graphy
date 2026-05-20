@@ -301,12 +301,59 @@ export class ClaudeService implements AiService {
             }
 
             messages.push({ role: 'assistant', content: finalMessage.content })
-            const { resultBlocks, calls } = await runToolBlocks(
-              toolUseBlocks,
-              tools,
-              options.signal,
-            )
-            toolCalls.push(...calls)
+
+            for (const block of toolUseBlocks) {
+              yield {
+                delta: '',
+                done: false,
+                toolCall: {
+                  id: block.id,
+                  name: block.name,
+                  input: block.input,
+                  output: undefined,
+                  pending: true,
+                },
+              }
+            }
+
+            const resultBlocks: ToolResultBlockParam[] = []
+            for (const block of toolUseBlocks) {
+              const tool = tools.find((t) => t.name === block.name)
+              let output: unknown
+              let isError = false
+
+              if (!tool) {
+                output = { message: `Unknown tool: ${block.name}` }
+                isError = true
+              } else {
+                try {
+                  output = await tool.handler(block.input, {
+                    signal: options.signal,
+                  })
+                } catch (err) {
+                  output = {
+                    message: err instanceof Error ? err.message : String(err),
+                  }
+                  isError = true
+                }
+              }
+
+              const call: AiToolCall = {
+                id: block.id,
+                name: block.name,
+                input: block.input,
+                output,
+                isError: isError || undefined,
+              }
+              toolCalls.push(call)
+              resultBlocks.push({
+                type: 'tool_result',
+                tool_use_id: block.id,
+                content: stringifyToolOutput(output),
+                is_error: isError || undefined,
+              })
+              yield { delta: '', done: false, toolCall: call }
+            }
             messages.push({ role: 'user', content: resultBlocks })
           } finally {
             stream.abort()

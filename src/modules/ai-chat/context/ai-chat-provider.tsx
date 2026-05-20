@@ -24,7 +24,13 @@ import {
 } from '../lib/conversation-storage'
 import { generateTitle } from '../lib/generate-title'
 import { readAiConfig, writeAiConfig } from '../lib/storage'
-import type { AiProvider, ChatMessage, ChatModel, Conversation } from '../types'
+import type {
+  AiProvider,
+  ChatMessage,
+  ChatModel,
+  ChatSegment,
+  Conversation,
+} from '../types'
 import {
   CHAT_MODEL_API_ID,
   CHAT_MODEL_PROVIDER,
@@ -278,6 +284,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
         role: 'assistant',
         content: '',
         pending: true,
+        segments: [],
       }
 
       const isFirstTurn = convo.messages.length === 0
@@ -320,15 +327,56 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
           })
 
           let acc = ''
+          let segments: ChatSegment[] = []
           let finalToolCalls: ChatMessage['toolCalls']
           for await (const chunk of stream) {
             if (chunk.delta) {
               acc += chunk.delta
+              const delta = chunk.delta
+              const last =
+                segments.length > 0 ? segments[segments.length - 1] : null
+              if (last && last.kind === 'text') {
+                segments = [
+                  ...segments.slice(0, -1),
+                  { kind: 'text', text: last.text + delta },
+                ]
+              } else {
+                segments = [...segments, { kind: 'text', text: delta }]
+              }
+              const nextSegments = segments
               patchConversation(convoId, (c) => ({
                 ...c,
                 messages: c.messages.map((m) =>
-                  m.id === assistantId ? { ...m, content: acc } : m,
+                  m.id === assistantId
+                    ? { ...m, content: acc, segments: nextSegments }
+                    : m,
                 ),
+              }))
+            }
+            if (chunk.toolCall) {
+              const incoming = chunk.toolCall
+              const idx = segments.findIndex(
+                (s) => s.kind === 'tool' && s.call.id === incoming.id,
+              )
+              segments =
+                idx >= 0
+                  ? segments.map((s, i) =>
+                      i === idx ? { kind: 'tool', call: incoming } : s,
+                    )
+                  : [...segments, { kind: 'tool', call: incoming }]
+              const nextSegments = segments
+              patchConversation(convoId, (c) => ({
+                ...c,
+                messages: c.messages.map((m) => {
+                  if (m.id !== assistantId) return m
+                  const existing = m.toolCalls ?? []
+                  const tIdx = existing.findIndex((tc) => tc.id === incoming.id)
+                  const nextCalls =
+                    tIdx >= 0
+                      ? existing.map((tc, i) => (i === tIdx ? incoming : tc))
+                      : [...existing, incoming]
+                  return { ...m, toolCalls: nextCalls, segments: nextSegments }
+                }),
               }))
             }
             if (chunk.done) {
@@ -351,6 +399,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
 
           firstAssistantText = acc
           streamSucceeded = acc.length > 0
+          const finalSegments = segments
           patchConversation(convoId, (c) => ({
             ...c,
             updatedAt: Date.now(),
@@ -361,6 +410,7 @@ export function AiChatProvider({ children }: AiChatProviderProps) {
                     content: acc,
                     pending: false,
                     toolCalls: finalToolCalls,
+                    segments: finalSegments,
                   }
                 : m,
             ),

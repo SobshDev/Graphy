@@ -116,6 +116,14 @@ async function resolveSafePath(file) {
   return absoluteFile
 }
 
+function detectLineEnding(text) {
+  return text.includes('\r\n') ? '\r\n' : '\n'
+}
+
+function splitLines(text) {
+  return text.split(/\r\n|\n/)
+}
+
 app.setName('Graphy')
 app.setAppUserModelId('com.ntgrm.graphy')
 

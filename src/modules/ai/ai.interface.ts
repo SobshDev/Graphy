@@ -40,6 +40,7 @@ export interface AiStreamChunk {
   delta: string
   done: boolean
   result?: AiChatResult
+  toolCall?: AiToolCall
 }
 
 export interface AiStructuredOptions<T> extends AiChatOptions {

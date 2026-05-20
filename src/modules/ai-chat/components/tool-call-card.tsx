@@ -1,4 +1,4 @@
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Loader2 } from 'lucide-react'
 
 import type { AiToolCall } from '@/modules/ai'
 import { cn } from '@/shared/lib/utils'
@@ -28,7 +28,12 @@ export function ToolCallCard({ call }: { call: AiToolCall }) {
         />
         <span className="text-chat-accent">{call.name}</span>
         <span className="flex-1" />
-        {call.isError ? (
+        {call.pending ? (
+          <span className="flex items-center gap-1 text-[10.5px] uppercase tracking-[0.08em] text-chat-text-3">
+            <Loader2 size={11} className="animate-spin" />
+            running
+          </span>
+        ) : call.isError ? (
           <span className="rounded border border-[rgba(255,104,104,0.4)] px-1.5 py-px text-[10.5px] uppercase tracking-[0.08em] text-chat-danger">
             error
           </span>
@@ -40,7 +45,7 @@ export function ToolCallCard({ call }: { call: AiToolCall }) {
       </summary>
       <div className="flex flex-col gap-2 border-t border-chat-line px-2.5 py-2">
         <Section label="input" body={pretty(call.input)} />
-        <Section label="output" body={pretty(call.output)} />
+        {!call.pending && <Section label="output" body={pretty(call.output)} />}
       </div>
     </details>
   )

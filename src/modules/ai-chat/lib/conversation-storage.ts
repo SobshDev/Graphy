@@ -38,6 +38,7 @@ function parseMessage(value: unknown): ChatMessage | null {
     content?: unknown
     error?: unknown
     toolCalls?: unknown
+    segments?: unknown
   }
   if (typeof m.id !== 'string') return null
   if (m.role !== 'user' && m.role !== 'assistant') return null
@@ -46,6 +47,9 @@ function parseMessage(value: unknown): ChatMessage | null {
   if (typeof m.error === 'string' && m.error.length > 0) message.error = m.error
   if (Array.isArray(m.toolCalls)) {
     message.toolCalls = m.toolCalls as ChatMessage['toolCalls']
+  }
+  if (Array.isArray(m.segments)) {
+    message.segments = m.segments as ChatMessage['segments']
   }
   return message
 }

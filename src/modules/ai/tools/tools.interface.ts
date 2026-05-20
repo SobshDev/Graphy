@@ -14,4 +14,5 @@ export interface AiToolCall {
   input: unknown
   output: unknown
   isError?: boolean
+  pending?: boolean
 }
