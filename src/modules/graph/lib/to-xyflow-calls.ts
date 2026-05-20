@@ -39,19 +39,15 @@ function clusterId(folder: string): string {
   return `cluster:${folder || '/'}`
 }
 
-export async function toXYFlowCalls(graph: Graph): Promise<XYFlowCallGraph> {
-  const { files, edges } = collectFileGraph(graph)
-  if (files.length === 0) {
-    return { nodes: [], treeEdges: [], callEdges: [] }
-  }
-
-  const folders = new Set<string>()
-  for (const file of files) folders.add(file.data.folder)
-
+function buildLayoutGraph(
+  files: Array<{ id: string; data: FileNodeData }>,
+  edges: Array<{ source: string; target: string }>,
+  withClusters: boolean,
+) {
   const g = new dagre.graphlib.Graph({
     directed: true,
     multigraph: false,
-    compound: true,
+    compound: withClusters,
   })
   g.setGraph({
     rankdir: 'LR',
@@ -65,27 +61,55 @@ export async function toXYFlowCalls(graph: Graph): Promise<XYFlowCallGraph> {
   })
   g.setDefaultEdgeLabel(() => ({}))
 
-  for (const folder of folders) {
-    g.setNode(clusterId(folder), {
-      label: folder || '/',
-      clusterLabelPos: 'top',
-      paddingTop: CLUSTER_PAD + 12,
-      paddingBottom: CLUSTER_PAD,
-      paddingLeft: CLUSTER_PAD,
-      paddingRight: CLUSTER_PAD,
-    })
+  if (withClusters) {
+    const folders = new Set<string>()
+    for (const file of files) folders.add(file.data.folder)
+    for (const folder of folders) {
+      g.setNode(clusterId(folder), {
+        label: folder || '/',
+        clusterLabelPos: 'top',
+        paddingTop: CLUSTER_PAD + 12,
+        paddingBottom: CLUSTER_PAD,
+        paddingLeft: CLUSTER_PAD,
+        paddingRight: CLUSTER_PAD,
+      })
+    }
   }
 
   for (const file of files) {
     g.setNode(file.id, { width: FILE_NODE_WIDTH, height: FILE_NODE_HEIGHT })
-    g.setParent(file.id, clusterId(file.data.folder))
+    if (withClusters) g.setParent(file.id, clusterId(file.data.folder))
   }
 
   for (const edge of edges) {
     g.setEdge(edge.source, edge.target)
   }
 
-  dagre.layout(g)
+  return g
+}
+
+function layoutWithFallback(
+  files: Array<{ id: string; data: FileNodeData }>,
+  edges: Array<{ source: string; target: string }>,
+) {
+  try {
+    const g = buildLayoutGraph(files, edges, true)
+    dagre.layout(g)
+    return g
+  } catch {
+    const g = buildLayoutGraph(files, edges, false)
+    dagre.layout(g)
+    return g
+  }
+}
+
+export async function toXYFlowCalls(graph: Graph): Promise<XYFlowCallGraph> {
+  const { files, edges } = collectFileGraph(graph)
+  if (files.length === 0) {
+    return { nodes: [], treeEdges: [], callEdges: [] }
+  }
+
+  const g = layoutWithFallback(files, edges)
 
   const fileNodes: Array<Node<FileNodeData>> = files.map((file) => {
     const placed = g.node(file.id)
